@@ -39,6 +39,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   Table,
   TableBody,
   TableCell,
@@ -46,7 +51,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ORGS, ORG_LABELS, type Org, type Profile } from "@/lib/types"
+import { APP_PAGES, APP_PAGE_LABELS, ORGS, ORG_LABELS, type AppPage, type Org, type Profile } from "@/lib/types"
 
 export default function AdminPage() {
   const { profile } = useAuth()
@@ -112,6 +117,23 @@ function AccountsSection() {
     }
   }
 
+  async function togglePage(p: Profile, page: AppPage) {
+    // Admins and firstfix users aren't restricted by allowed_pages.
+    const current: AppPage[] = (p.allowed_pages as AppPage[] | null) ?? [...APP_PAGES]
+    const next = current.includes(page)
+      ? current.filter((pg) => pg !== page)
+      : [...current, page]
+    // null means "all" — normalise back to null if all pages enabled
+    const patch = next.length === APP_PAGES.length ? null : next
+    try {
+      await updateProfile.mutateAsync({ id: p.id, patch: { allowed_pages: patch } })
+    } catch (e) {
+      toast.error("Could not update", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      })
+    }
+  }
+
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between">
@@ -134,6 +156,7 @@ function AccountsSection() {
                   <TableHead>Username</TableHead>
                   <TableHead>Team</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Pages</TableHead>
                   <TableHead className="w-20"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -182,6 +205,43 @@ function AccountsSection() {
                           <SelectItem value="admin">Admin</SelectItem>
                         </SelectContent>
                       </Select>
+                    </TableCell>
+                    <TableCell>
+                      {/* Pages are fixed for firstfix and admins */}
+                      {p.org === "firstfix" || p.is_admin ? (
+                        <span className="text-xs text-muted-foreground">
+                          {p.is_admin ? "All" : "Documents only"}
+                        </span>
+                      ) : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-7 text-xs">
+                              {!p.allowed_pages || p.allowed_pages.length === 0
+                                ? "All"
+                                : p.allowed_pages.map((pg) => APP_PAGE_LABELS[pg as AppPage] ?? pg).join(", ")}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="p-2">
+                            <p className="mb-2 px-1 text-xs text-muted-foreground">Toggle page access</p>
+                            {APP_PAGES.map((pg) => {
+                              const enabled = !p.allowed_pages || p.allowed_pages.includes(pg)
+                              return (
+                                <button
+                                  key={pg}
+                                  type="button"
+                                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-accent"
+                                  onClick={() => togglePage(p, pg)}
+                                >
+                                  <span className={`size-3.5 rounded-sm border flex items-center justify-center shrink-0 ${enabled ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground"}`}>
+                                    {enabled && <span className="text-[10px] leading-none">✓</span>}
+                                  </span>
+                                  {APP_PAGE_LABELS[pg]}
+                                </button>
+                              )
+                            })}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">

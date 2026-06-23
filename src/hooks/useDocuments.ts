@@ -42,7 +42,12 @@ export function useDocumentsRealtime() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "document_files" },
-        () => qc.invalidateQueries({ queryKey: ["document_files"] })
+        (payload) => {
+          const docId = (payload.new as { document_id?: string } | null)?.document_id
+            ?? (payload.old as { document_id?: string } | null)?.document_id
+          if (docId) qc.invalidateQueries({ queryKey: ["document_files", docId] })
+          qc.invalidateQueries({ queryKey: ["document_file_counts"] })
+        }
       )
       .subscribe()
     return () => {

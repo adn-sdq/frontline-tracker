@@ -71,13 +71,13 @@ export function useDeleteAccount() {
   })
 }
 
-// Org / admin-flag changes go straight through RLS (admins may update profiles).
+// Org / admin-flag / allowed_pages changes go straight through RLS (admins may update profiles).
 export function useUpdateProfile() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (args: {
       id: string
-      patch: Partial<Pick<Profile, "org" | "is_admin" | "full_name">>
+      patch: Partial<Pick<Profile, "org" | "is_admin" | "full_name" | "allowed_pages">>
     }) => {
       const { error } = await supabase
         .from("profiles")

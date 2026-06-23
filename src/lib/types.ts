@@ -119,6 +119,16 @@ export const ORG_LABELS: Record<string, string> = {
   firstfix: "First Fix",
 }
 
+// Pages that can be individually granted/revoked per frontline user.
+// Admins see all pages; firstfix users only see "documents" regardless.
+export const APP_PAGES = ["tracker", "documents", "dashboard"] as const
+export type AppPage = (typeof APP_PAGES)[number]
+export const APP_PAGE_LABELS: Record<AppPage, string> = {
+  tracker: "Procurement",
+  documents: "Documents",
+  dashboard: "Dashboard",
+}
+
 export interface Profile {
   id: string
   username: string | null
@@ -126,6 +136,7 @@ export interface Profile {
   role: string
   org: Org | null
   is_admin: boolean
+  allowed_pages: string[] | null
   created_at: string
 }
 
@@ -211,4 +222,16 @@ export interface ItemHistory {
   changed_at: string
   diff: Record<string, { old: unknown; new: unknown }> | null
   snapshot: Record<string, unknown> | null
+}
+
+export interface ItemFile {
+  id: string
+  item_id: string
+  storage_path: string
+  file_name: string
+  file_size: number | null
+  note: string | null
+  dated: string
+  uploaded_by: string | null
+  uploaded_at: string
 }

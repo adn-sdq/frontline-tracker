@@ -2,6 +2,8 @@ import { useRef, useState } from "react"
 import { format, formatDistanceToNow } from "date-fns"
 import {
   Download,
+  Eye,
+  EyeOff,
   FileText,
   Loader2,
   MessageSquare,
@@ -48,6 +50,57 @@ function fmtSize(bytes: number | null) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
+function isPdf(name: string) {
+  return name.toLowerCase().endsWith(".pdf")
+}
+
+function PdfPreview({ path }: { path: string }) {
+  const [url, setUrl] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function load() {
+    setLoading(true)
+    setError(null)
+    try {
+      const signed = await getSignedUrl(path)
+      setUrl(signed)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not load preview")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!url && !loading && !error) {
+    void load()
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-32 items-center justify-center rounded-lg border bg-muted/30">
+        <Loader2 className="size-5 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+  if (error) {
+    return (
+      <div className="flex h-20 items-center justify-center rounded-lg border bg-muted/30 text-sm text-destructive">
+        {error}
+      </div>
+    )
+  }
+  if (!url) return null
+
+  return (
+    <iframe
+      src={url}
+      title="PDF preview"
+      className="h-[60vh] w-full rounded-lg border bg-muted/10"
+    />
+  )
+}
+
 export function DocumentDrawer({
   doc,
   profiles,
@@ -70,6 +123,7 @@ export function DocumentDrawer({
   const [uploadDate, setUploadDate] = useState(today())
   const [comment, setComment] = useState("")
   const [downloading, setDownloading] = useState<string | null>(null)
+  const [previewId, setPreviewId] = useState<string | null>(null)
 
   function who(id: string | null) {
     if (!id) return "—"
@@ -105,7 +159,13 @@ export function DocumentDrawer({
     setDownloading(path)
     try {
       const url = await getSignedUrl(path)
-      window.open(url, "_blank")
+      const a = document.createElement("a")
+      a.href = url
+      a.target = "_blank"
+      a.rel = "noopener"
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
     } catch (err) {
       toast.error("Could not open file", {
         description: err instanceof Error ? err.message : "Unknown error",
@@ -228,70 +288,93 @@ export function DocumentDrawer({
               )}
               <div className="flex flex-col gap-2">
                 {files.data?.map((f, idx) => (
-                  <div
-                    key={f.id}
-                    className="flex items-center gap-2 rounded-lg border p-2"
-                  >
-                    <FileText className="size-4 shrink-0 text-muted-foreground" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="truncate text-sm font-medium">
-                          {f.file_name}
-                        </span>
-                        {idx === 0 && (
-                          <Badge variant="secondary" className="shrink-0">
-                            Latest
-                          </Badge>
-                        )}
-                        {f.rev_label && (
-                          <Badge variant="outline" className="shrink-0">
-                            {f.rev_label}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {who(f.uploaded_by)} ·{" "}
-                        {formatDistanceToNow(new Date(f.uploaded_at), {
-                          addSuffix: true,
-                        })}
-                        {f.file_size ? ` · ${fmtSize(f.file_size)}` : ""}
-                      </div>
-                      <div className="mt-1 flex items-center gap-1.5">
-                        <span className="text-xs text-muted-foreground">Dated</span>
-                        <Input
-                          type="date"
-                          aria-label="Document date"
-                          value={f.dated ?? ""}
-                          onChange={(e) =>
-                            doc &&
-                            updateFileDate.mutate({
-                              id: f.id,
-                              documentId: doc.id,
-                              dated: e.target.value,
-                            })
-                          }
-                          className="h-7 w-36 px-2 text-xs"
-                        />
-                      </div>
-                      {f.note && (
-                        <div className="text-xs text-muted-foreground italic">
-                          {f.note}
+                  <div key={f.id} className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 rounded-lg border p-2">
+                      <FileText className="size-4 shrink-0 text-muted-foreground" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-sm font-medium">
+                            {f.file_name}
+                          </span>
+                          {idx === 0 && (
+                            <Badge variant="secondary" className="shrink-0">
+                              Latest
+                            </Badge>
+                          )}
+                          {f.rev_label && (
+                            <Badge variant="outline" className="shrink-0">
+                              {f.rev_label}
+                            </Badge>
+                          )}
                         </div>
-                      )}
+                        <div className="text-xs text-muted-foreground">
+                          {who(f.uploaded_by)} ·{" "}
+                          {formatDistanceToNow(new Date(f.uploaded_at), {
+                            addSuffix: true,
+                          })}
+                          {f.file_size ? ` · ${fmtSize(f.file_size)}` : ""}
+                        </div>
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <span className="text-xs text-muted-foreground">Dated</span>
+                          <Input
+                            type="date"
+                            aria-label="Document date"
+                            value={f.dated ?? ""}
+                            onChange={(e) =>
+                              doc &&
+                              updateFileDate.mutate({
+                                id: f.id,
+                                documentId: doc.id,
+                                dated: e.target.value,
+                              })
+                            }
+                            className="h-7 w-36 px-2 text-xs"
+                          />
+                        </div>
+                        {f.note && (
+                          <div className="text-xs text-muted-foreground italic">
+                            {f.note}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 gap-1">
+                        {isPdf(f.file_name) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            title={previewId === f.id ? "Hide preview" : "Preview PDF"}
+                            onClick={() =>
+                              setPreviewId((cur) => (cur === f.id ? null : f.id))
+                            }
+                          >
+                            {previewId === f.id ? (
+                              <EyeOff className="size-4" />
+                            ) : (
+                              <Eye className="size-4" />
+                            )}
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={() => download(f.storage_path)}
+                          disabled={downloading === f.storage_path}
+                        >
+                          {downloading === f.storage_path ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <Download className="size-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 shrink-0"
-                      onClick={() => download(f.storage_path)}
-                      disabled={downloading === f.storage_path}
-                    >
-                      {downloading === f.storage_path ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <Download className="size-4" />
-                      )}
-                    </Button>
+
+                    {/* Inline PDF preview */}
+                    {isPdf(f.file_name) && previewId === f.id && (
+                      <PdfPreview path={f.storage_path} />
+                    )}
                   </div>
                 ))}
               </div>

@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react"
 import { formatDistanceToNow } from "date-fns"
 import {
+  CheckSquare,
   FileText,
   Loader2,
   MoreHorizontal,
   Pencil,
   Plus,
   Search,
+  Square,
   Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -35,7 +37,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { DocStatusBadge } from "@/components/DocStatus"
+import { DocStatusBadge, DocStatusSelect } from "@/components/DocStatus"
 import { DocumentDialog } from "@/components/DocumentDialog"
 import { DocumentDrawer } from "@/components/DocumentDrawer"
 import {
@@ -43,12 +45,14 @@ import {
   useDocuments,
   useDocumentsRealtime,
   useFileCounts,
+  useUpdateDocument,
 } from "@/hooks/useDocuments"
 import { useProfiles } from "@/hooks/useItems"
 import { useSystems } from "@/hooks/useSystems"
 import {
   DOC_STATUSES,
   DOC_STATUS_LABELS,
+  type DocStatus,
   type DocumentRow,
 } from "@/lib/types"
 
@@ -59,6 +63,7 @@ export default function DocumentsPage() {
   const { data: fileCounts = {} } = useFileCounts()
   const { activeSystems, labelFor } = useSystems()
   const del = useDeleteDocument()
+  const updateDoc = useUpdateDocument()
 
   const [search, setSearch] = useState("")
   const [system, setSystem] = useState("ALL")
@@ -67,6 +72,12 @@ export default function DocumentsPage() {
   const [editDoc, setEditDoc] = useState<DocumentRow | null>(null)
   const [openDoc, setOpenDoc] = useState<DocumentRow | null>(null)
   const [deleteDoc, setDeleteDoc] = useState<DocumentRow | null>(null)
+
+  // Bulk selection state
+  const [selectMode, setSelectMode] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [bulkStatus, setBulkStatus] = useState<DocStatus>("pending")
+  const [bulkBusy, setBulkBusy] = useState(false)
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -87,6 +98,48 @@ export default function DocumentsPage() {
     if (!id) return "—"
     const p = profiles[id]
     return p?.full_name ?? p?.username ?? "Unknown"
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    if (selected.size === filtered.length) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(filtered.map((d) => d.id)))
+    }
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false)
+    setSelected(new Set())
+  }
+
+  async function applyBulkStatus() {
+    if (!selected.size) return
+    setBulkBusy(true)
+    try {
+      await Promise.all(
+        [...selected].map((id) =>
+          updateDoc.mutateAsync({ id, patch: { status: bulkStatus } })
+        )
+      )
+      toast.success(`Updated ${selected.size} document${selected.size > 1 ? "s" : ""}`)
+      exitSelectMode()
+    } catch (e) {
+      toast.error("Could not update some documents", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      })
+    } finally {
+      setBulkBusy(false)
+    }
   }
 
   async function confirmDelete() {
@@ -112,16 +165,64 @@ export default function DocumentsPage() {
             Submittals & reviews between Frontline and First Fix.
           </p>
         </div>
-        <Button
-          size="sm"
-          onClick={() => {
-            setEditDoc(null)
-            setDialogOpen(true)
-          }}
-        >
-          <Plus className="size-4" /> Add document
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant={selectMode ? "secondary" : "outline"}
+            onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+          >
+            <CheckSquare className="size-4" />
+            {selectMode ? "Cancel" : "Select"}
+          </Button>
+          {!selectMode && (
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditDoc(null)
+                setDialogOpen(true)
+              }}
+            >
+              <Plus className="size-4" /> Add document
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Bulk action bar */}
+      {selectMode && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 px-4 py-3">
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+            onClick={toggleAll}
+          >
+            {selected.size === filtered.length && filtered.length > 0 ? (
+              <CheckSquare className="size-4" />
+            ) : (
+              <Square className="size-4" />
+            )}
+            {selected.size > 0 ? `${selected.size} selected` : "Select all"}
+          </button>
+          <div className="flex flex-1 items-center gap-2">
+            <span className="text-sm text-muted-foreground">Set status to</span>
+            <DocStatusSelect
+              value={bulkStatus}
+              onChange={(v) => setBulkStatus(v as DocStatus)}
+              className="w-36"
+            />
+            <Button
+              size="sm"
+              disabled={!selected.size || bulkBusy}
+              onClick={applyBulkStatus}
+            >
+              {bulkBusy ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
+              Apply
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative flex-1">
@@ -172,68 +273,85 @@ export default function DocumentsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {filtered.map((d) => (
-            <div
-              key={d.id}
-              className="group flex cursor-pointer flex-col gap-2 rounded-xl border bg-card p-4 transition-colors hover:border-primary/40"
-              onClick={() => setOpenDoc(d)}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="truncate font-medium">{d.title}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {[d.doc_number, d.revision].filter(Boolean).join(" · ") ||
-                      "No number"}
+          {filtered.map((d) => {
+            const isSelected = selected.has(d.id)
+            return (
+              <div
+                key={d.id}
+                className={`group flex cursor-pointer flex-col gap-2 rounded-xl border bg-card p-4 transition-colors hover:border-primary/40 ${isSelected ? "border-primary/60 bg-primary/5" : ""}`}
+                onClick={() => {
+                  if (selectMode) toggleSelect(d.id)
+                  else setOpenDoc(d)
+                }}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  {selectMode && (
+                    <div className="mt-0.5 shrink-0">
+                      {isSelected ? (
+                        <CheckSquare className="size-4 text-primary" />
+                      ) : (
+                        <Square className="size-4 text-muted-foreground" />
+                      )}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{d.title}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {[d.doc_number, d.revision].filter(Boolean).join(" · ") ||
+                        "No number"}
+                    </div>
                   </div>
+                  {!selectMode && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="size-7 shrink-0">
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setEditDoc(d)
+                            setDialogOpen(true)
+                          }}
+                        >
+                          <Pencil className="size-4" /> Edit details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setDeleteDoc(d)}
+                        >
+                          <Trash2 className="size-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="size-7 shrink-0">
-                      <MoreHorizontal className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setEditDoc(d)
-                        setDialogOpen(true)
-                      }}
-                    >
-                      <Pencil className="size-4" /> Edit details
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={() => setDeleteDoc(d)}
-                    >
-                      <Trash2 className="size-4" /> Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <DocStatusBadge status={d.status} />
-                {d.system && (
-                  <Badge variant="outline">{labelFor(d.system)}</Badge>
-                )}
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <FileText className="size-3.5" />
-                  {fileCounts[d.id] ?? 0}
-                </span>
-              </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <DocStatusBadge status={d.status} />
+                  {d.system && (
+                    <Badge variant="outline">{labelFor(d.system)}</Badge>
+                  )}
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <FileText className="size-3.5" />
+                    {fileCounts[d.id] ?? 0}
+                  </span>
+                </div>
 
-              <div className="text-xs text-muted-foreground">
-                Updated by{" "}
-                <span className="font-medium text-foreground">
-                  {who(d.updated_by)}
-                </span>{" "}
-                {formatDistanceToNow(new Date(d.updated_at), { addSuffix: true })}
+                <div className="text-xs text-muted-foreground">
+                  Updated by{" "}
+                  <span className="font-medium text-foreground">
+                    {who(d.updated_by)}
+                  </span>{" "}
+                  {formatDistanceToNow(new Date(d.updated_at), { addSuffix: true })}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

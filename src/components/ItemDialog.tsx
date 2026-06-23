@@ -1,5 +1,13 @@
-import { useEffect, useState } from "react"
-import { Loader2 } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import {
+  Download,
+  FileText,
+  Loader2,
+  Paperclip,
+  Trash2,
+  Upload,
+} from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"
 
 import {
@@ -14,6 +22,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import {
   Select,
   SelectContent,
@@ -22,6 +32,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ConflictError, useCreateItem, useUpdateItem } from "@/hooks/useItems"
+import {
+  getItemFileSignedUrl,
+  useDeleteItemFile,
+  useItemFiles,
+  useItemFilesRealtime,
+  useUploadItemFile,
+} from "@/hooks/useItemFiles"
 import { useSystems } from "@/hooks/useSystems"
 import { useAuth } from "@/contexts/AuthContext"
 import {
@@ -32,6 +49,156 @@ import {
   type Item,
   type System,
 } from "@/lib/types"
+
+function fmtSize(bytes: number | null) {
+  if (!bytes) return ""
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
+
+function ItemAttachments({ itemId }: { itemId: string }) {
+  useItemFilesRealtime(itemId)
+  const files = useItemFiles(itemId)
+  const uploadFile = useUploadItemFile()
+  const deleteFile = useDeleteItemFile()
+  const fileInput = useRef<HTMLInputElement>(null)
+  const [note, setNote] = useState("")
+  const [downloading, setDownloading] = useState<string | null>(null)
+
+  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      await uploadFile.mutateAsync({ itemId, file, note: note || undefined })
+      toast.success("File attached")
+      setNote("")
+    } catch (err) {
+      toast.error("Upload failed", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      })
+    } finally {
+      if (fileInput.current) fileInput.current.value = ""
+    }
+  }
+
+  async function download(path: string) {
+    setDownloading(path)
+    try {
+      const url = await getItemFileSignedUrl(path)
+      const a = document.createElement("a")
+      a.href = url
+      a.target = "_blank"
+      a.rel = "noopener"
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } catch (err) {
+      toast.error("Could not open file", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      })
+    } finally {
+      setDownloading(null)
+    }
+  }
+
+  async function remove(id: string, storagePath: string) {
+    try {
+      await deleteFile.mutateAsync({ id, itemId, storagePath })
+      toast.success("File removed")
+    } catch (err) {
+      toast.error("Could not remove file", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      })
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        <Paperclip className="size-4" /> Attachments
+        <Badge variant="secondary">{files.data?.length ?? 0}</Badge>
+      </div>
+
+      <div className="rounded-lg border bg-muted/30 p-3">
+        <Input
+          placeholder="Note (optional)"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          className="h-8 mb-2"
+        />
+        <input
+          ref={fileInput}
+          type="file"
+          aria-label="Attach file"
+          className="hidden"
+          onChange={onPickFile}
+        />
+        <Button
+          type="button"
+          size="sm"
+          className="w-full"
+          onClick={() => fileInput.current?.click()}
+          disabled={uploadFile.isPending}
+        >
+          {uploadFile.isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Upload className="size-4" />
+          )}
+          Attach file
+        </Button>
+      </div>
+
+      {(files.data?.length ?? 0) > 0 && (
+        <div className="flex flex-col gap-1.5">
+          {files.data?.map((f) => (
+            <div
+              key={f.id}
+              className="flex items-center gap-2 rounded-lg border p-2"
+            >
+              <FileText className="size-4 shrink-0 text-muted-foreground" />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium">{f.file_name}</div>
+                <div className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(f.uploaded_at), { addSuffix: true })}
+                  {f.file_size ? ` · ${fmtSize(f.file_size)}` : ""}
+                  {f.note ? ` · ${f.note}` : ""}
+                </div>
+              </div>
+              <div className="flex shrink-0 gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-7"
+                  onClick={() => download(f.storage_path)}
+                  disabled={downloading === f.storage_path}
+                >
+                  {downloading === f.storage_path ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Download className="size-4" />
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 text-destructive"
+                  onClick={() => remove(f.id, f.storage_path)}
+                  disabled={deleteFile.isPending}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 type FormState = {
   system: System
@@ -264,6 +431,13 @@ export function ItemDialog({
         <Field label="Notes">
           <Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} />
         </Field>
+
+        {editing && item && (
+          <>
+            <Separator />
+            <ItemAttachments itemId={item.id} />
+          </>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>

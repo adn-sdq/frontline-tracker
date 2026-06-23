@@ -4,9 +4,11 @@ import { Loader2 } from "lucide-react"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { hasSupabaseConfig } from "@/lib/supabase"
+import type { AppPage } from "@/lib/types"
 import LoginPage from "@/pages/LoginPage"
 import TrackerPage from "@/pages/TrackerPage"
 import DocumentsPage from "@/pages/DocumentsPage"
+import DashboardPage from "@/pages/DashboardPage"
 import AdminPage from "@/pages/AdminPage"
 import { AppLayout } from "@/components/AppLayout"
 
@@ -22,6 +24,18 @@ export default function App() {
   const { session, loading, profile } = useAuth()
   const isFirstfix = profile?.org === "firstfix"
   const isAdmin = !!profile?.is_admin
+
+  // Compute allowed pages the same way AppLayout does, so routes match nav.
+  function canAccess(page: AppPage) {
+    if (!profile) return false
+    if (isAdmin) return true
+    if (isFirstfix) return page === "documents"
+    const pages = profile.allowed_pages
+    if (!pages || pages.length === 0) return true
+    return pages.includes(page)
+  }
+
+  const defaultRedirect = isFirstfix ? "/documents" : canAccess("tracker") ? "/" : canAccess("dashboard") ? "/dashboard" : "/documents"
 
   if (!hasSupabaseConfig) {
     return (
@@ -49,16 +63,15 @@ export default function App() {
     <Routes>
       <Route
         path="/login"
-        element={session ? <Navigate to="/" replace /> : <LoginPage />}
+        element={session ? <Navigate to={defaultRedirect} replace /> : <LoginPage />}
       />
       <Route
         path="/"
         element={
           !session ? (
             <Navigate to="/login" replace />
-          ) : isFirstfix ? (
-            // Contractors only get the Documents area.
-            <Navigate to="/documents" replace />
+          ) : !canAccess("tracker") ? (
+            <Navigate to={defaultRedirect} replace />
           ) : (
             <AppLayout>
               <TrackerPage />
@@ -69,12 +82,28 @@ export default function App() {
       <Route
         path="/documents"
         element={
-          session ? (
+          !session ? (
+            <Navigate to="/login" replace />
+          ) : !canAccess("documents") ? (
+            <Navigate to={defaultRedirect} replace />
+          ) : (
             <AppLayout>
               <DocumentsPage />
             </AppLayout>
-          ) : (
+          )
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          !session ? (
             <Navigate to="/login" replace />
+          ) : !canAccess("dashboard") ? (
+            <Navigate to={defaultRedirect} replace />
+          ) : (
+            <AppLayout>
+              <DashboardPage />
+            </AppLayout>
           )
         }
       />
@@ -84,7 +113,7 @@ export default function App() {
           !session ? (
             <Navigate to="/login" replace />
           ) : !isAdmin ? (
-            <Navigate to={isFirstfix ? "/documents" : "/"} replace />
+            <Navigate to={defaultRedirect} replace />
           ) : (
             <AppLayout>
               <AdminPage />
@@ -94,7 +123,7 @@ export default function App() {
       />
       <Route
         path="*"
-        element={<Navigate to={isFirstfix ? "/documents" : "/"} replace />}
+        element={<Navigate to={defaultRedirect} replace />}
       />
     </Routes>
   )

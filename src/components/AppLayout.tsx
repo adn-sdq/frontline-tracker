@@ -1,20 +1,34 @@
 import { useEffect, useState, type ReactNode } from "react"
 import { NavLink } from "react-router-dom"
 import {
+  BarChart3,
   FileText,
+  KeyRound,
   LogOut,
   Moon,
   PackageCheck,
   Shield,
   Sun,
 } from "lucide-react"
+import { toast } from "sonner"
 
 import { useAuth } from "@/contexts/AuthContext"
+import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { ORG_LABELS } from "@/lib/types"
+import { ORG_LABELS, type AppPage } from "@/lib/types"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Loader2 } from "lucide-react"
 
 function useTheme() {
   const [dark, setDark] = useState(
@@ -41,11 +56,102 @@ function initials(name?: string | null) {
   return (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")
 }
 
+// Returns which pages this profile is allowed to see.
+// Admins always see everything. Firstfix always only documents.
+// Frontline users see allowed_pages (null = all).
+function useAllowedPages(profile: ReturnType<typeof useAuth>["profile"]) {
+  if (!profile) return new Set<AppPage>()
+  if (profile.is_admin) return new Set<AppPage>(["tracker", "documents", "dashboard"])
+  if (profile.org === "firstfix") return new Set<AppPage>(["documents"])
+  if (!profile.allowed_pages || profile.allowed_pages.length === 0) {
+    return new Set<AppPage>(["tracker", "documents", "dashboard"])
+  }
+  return new Set<AppPage>(profile.allowed_pages as AppPage[])
+}
+
+function ChangePasswordDialog({
+  open,
+  onClose,
+}: {
+  open: boolean
+  onClose: () => void
+}) {
+  const [newPw, setNewPw] = useState("")
+  const [confirm, setConfirm] = useState("")
+  const [busy, setBusy] = useState(false)
+
+  async function submit() {
+    if (newPw.length < 6) {
+      toast.error("Password must be at least 6 characters")
+      return
+    }
+    if (newPw !== confirm) {
+      toast.error("Passwords do not match")
+      return
+    }
+    setBusy(true)
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPw })
+      if (error) throw error
+      toast.success("Password updated")
+      setNewPw("")
+      setConfirm("")
+      onClose()
+    } catch (e) {
+      toast.error("Could not update password", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Change password</DialogTitle>
+          <DialogDescription>Choose a new password for your account.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">New password</Label>
+            <Input
+              type="password"
+              value={newPw}
+              onChange={(e) => setNewPw(e.target.value)}
+              placeholder="at least 6 characters"
+              autoFocus
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Confirm password</Label>
+            <Input
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submit()}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button onClick={submit} disabled={busy || newPw.length < 6}>
+            {busy && <Loader2 className="size-4 animate-spin" />}
+            Update
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export function AppLayout({ children }: { children: ReactNode }) {
   const { profile, user, signOut } = useAuth()
   const { dark, toggle } = useTheme()
   const name = profile?.full_name ?? profile?.username ?? user?.email ?? "User"
-  const isFirstfix = profile?.org === "firstfix"
+  const allowedPages = useAllowedPages(profile)
+  const [changePwOpen, setChangePwOpen] = useState(false)
 
   return (
     <div className="min-h-svh bg-background">
@@ -62,10 +168,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
 
           <nav className="hidden items-center gap-1 md:flex">
-            {!isFirstfix && (
+            {allowedPages.has("tracker") && (
               <NavItem to="/" icon={PackageCheck} label="Procurement" />
             )}
-            <NavItem to="/documents" icon={FileText} label="Documents" />
+            {allowedPages.has("documents") && (
+              <NavItem to="/documents" icon={FileText} label="Documents" />
+            )}
+            {allowedPages.has("dashboard") && (
+              <NavItem to="/dashboard" icon={BarChart3} label="Dashboard" />
+            )}
             {profile?.is_admin && (
               <NavItem to="/admin" icon={Shield} label="Admin" />
             )}
@@ -99,6 +210,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   )}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setChangePwOpen(true)}>
+                  <KeyRound className="size-4" />
+                  Change password
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => void signOut()}>
                   <LogOut className="size-4" />
                   Sign out
@@ -110,15 +226,22 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         {/* Mobile nav */}
         <nav className="flex items-center gap-1 overflow-x-auto border-t px-2 py-1.5 md:hidden">
-          {!isFirstfix && (
+          {allowedPages.has("tracker") && (
             <NavItem to="/" icon={PackageCheck} label="Procurement" />
           )}
-          <NavItem to="/documents" icon={FileText} label="Documents" />
+          {allowedPages.has("documents") && (
+            <NavItem to="/documents" icon={FileText} label="Documents" />
+          )}
+          {allowedPages.has("dashboard") && (
+            <NavItem to="/dashboard" icon={BarChart3} label="Dashboard" />
+          )}
           {profile?.is_admin && <NavItem to="/admin" icon={Shield} label="Admin" />}
         </nav>
       </header>
 
       <main className="mx-auto max-w-[1400px] px-4 py-6">{children}</main>
+
+      <ChangePasswordDialog open={changePwOpen} onClose={() => setChangePwOpen(false)} />
     </div>
   )
 }
