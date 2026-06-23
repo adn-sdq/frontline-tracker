@@ -1,5 +1,6 @@
 import { useState } from "react"
 import {
+  FolderOpen,
   KeyRound,
   Loader2,
   Plus,
@@ -17,6 +18,14 @@ import {
   useSetPassword,
   useUpdateProfile,
 } from "@/hooks/useAdmin"
+import {
+  useAllProjectMembers,
+  useAllProjects,
+  useAssignProject,
+  useCreateProject,
+  useUnassignProject,
+  useUpdateProject,
+} from "@/hooks/useProjects"
 import { useSystems, useUpsertSystem } from "@/hooks/useSystems"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -76,6 +85,7 @@ export default function AdminPage() {
           Manage team accounts and the system list.
         </p>
       </div>
+      <ProjectsSection />
       <AccountsSection />
       <SystemsSection />
     </div>
@@ -86,6 +96,10 @@ export default function AdminPage() {
 function AccountsSection() {
   const { user } = useAuth()
   const { data: profiles = [], isLoading } = useAllProfiles()
+  const { data: projects = [] } = useAllProjects()
+  const { data: memberships = [] } = useAllProjectMembers()
+  const assign = useAssignProject()
+  const unassign = useUnassignProject()
   const updateProfile = useUpdateProfile()
   const setPassword = useSetPassword()
   const deleteAccount = useDeleteAccount()
@@ -93,6 +107,20 @@ function AccountsSection() {
   const [createOpen, setCreateOpen] = useState(false)
   const [pwUser, setPwUser] = useState<Profile | null>(null)
   const [delUser, setDelUser] = useState<Profile | null>(null)
+
+  async function toggleProjectMember(p: Profile, projectId: string) {
+    const assigned = memberships.some(
+      (m) => m.user_id === p.id && m.project_id === projectId
+    )
+    try {
+      if (assigned) await unassign.mutateAsync({ projectId, userId: p.id })
+      else await assign.mutateAsync({ projectId, userId: p.id })
+    } catch (e) {
+      toast.error("Could not update projects", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      })
+    }
+  }
 
   async function changeOrg(p: Profile, org: string) {
     try {
@@ -157,6 +185,7 @@ function AccountsSection() {
                   <TableHead>Team</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Pages</TableHead>
+                  <TableHead>Projects</TableHead>
                   <TableHead className="w-20"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -241,6 +270,57 @@ function AccountsSection() {
                             })}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {p.is_admin ? (
+                        <span className="text-xs text-muted-foreground">All</span>
+                      ) : projects.length === 0 ? (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      ) : (
+                        (() => {
+                          const mine = projects.filter((pr) =>
+                            memberships.some(
+                              (m) => m.user_id === p.id && m.project_id === pr.id
+                            )
+                          )
+                          return (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-7 max-w-[180px] text-xs">
+                                  <span className="truncate">
+                                    {mine.length === 0
+                                      ? "None"
+                                      : mine.map((pr) => pr.name).join(", ")}
+                                  </span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="p-2">
+                                <p className="mb-2 px-1 text-xs text-muted-foreground">
+                                  Assign projects
+                                </p>
+                                {projects.map((pr) => {
+                                  const on = memberships.some(
+                                    (m) => m.user_id === p.id && m.project_id === pr.id
+                                  )
+                                  return (
+                                    <button
+                                      key={pr.id}
+                                      type="button"
+                                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-accent"
+                                      onClick={() => toggleProjectMember(p, pr.id)}
+                                    >
+                                      <span className={`size-3.5 rounded-sm border flex items-center justify-center shrink-0 ${on ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground"}`}>
+                                        {on && <span className="text-[10px] leading-none">✓</span>}
+                                      </span>
+                                      <span className="truncate">{pr.name}</span>
+                                    </button>
+                                  )
+                                })}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )
+                        })()
                       )}
                     </TableCell>
                     <TableCell>
@@ -509,6 +589,121 @@ function DeleteAccountDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+// ---------------------------------------------------------------------------
+function ProjectsSection() {
+  const { data: projects = [], isLoading } = useAllProjects()
+  const create = useCreateProject()
+  const update = useUpdateProject()
+  const [name, setName] = useState("")
+  const [description, setDescription] = useState("")
+
+  async function add() {
+    if (!name.trim()) {
+      toast.error("Project name is required")
+      return
+    }
+    try {
+      await create.mutateAsync({
+        name: name.trim(),
+        description: description.trim() || null,
+        sort: projects.length + 1,
+      })
+      toast.success(`Project "${name.trim()}" created`)
+      setName("")
+      setDescription("")
+    } catch (e) {
+      toast.error("Could not create project", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      })
+    }
+  }
+
+  async function toggleActive(id: string, active: boolean) {
+    try {
+      await update.mutateAsync({ id, patch: { active } })
+    } catch (e) {
+      toast.error("Could not update", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      })
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Projects</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <p className="text-sm text-muted-foreground">
+          Each project has its own items and documents. Assign people to a
+          project in the Accounts table below — they'll only see projects they're
+          assigned to. Admins see every project.
+        </p>
+
+        {isLoading ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="size-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {projects.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center justify-between gap-2 rounded-lg border p-2.5"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate font-medium">{p.name}</span>
+                  {p.description && (
+                    <span className="hidden truncate text-sm text-muted-foreground sm:inline">
+                      — {p.description}
+                    </span>
+                  )}
+                  {!p.active && <Badge variant="secondary">Inactive</Badge>}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleActive(p.id, !p.active)}
+                >
+                  {p.active ? "Deactivate" : "Activate"}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3 sm:flex-row sm:items-end">
+          <div className="grid flex-1 gap-1.5">
+            <Label className="text-xs text-muted-foreground">Project name</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. NEOM Phase 2"
+            />
+          </div>
+          <div className="grid flex-1 gap-1.5">
+            <Label className="text-xs text-muted-foreground">Description (optional)</Label>
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Short note"
+            />
+          </div>
+          <Button onClick={add} disabled={create.isPending}>
+            {create.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Plus className="size-4" />
+            )}
+            Add
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 

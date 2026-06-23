@@ -67,6 +67,7 @@ export const STATUS_STYLES: Record<string, string> = {
 
 export interface Item {
   id: string
+  project_id: string
   system: System
   location: string | null
   sno: number | null
@@ -117,6 +118,22 @@ export type Org = (typeof ORGS)[number]
 export const ORG_LABELS: Record<string, string> = {
   frontline: "Frontline",
   firstfix: "First Fix",
+}
+
+export interface Project {
+  id: string
+  name: string
+  description: string | null
+  sort: number
+  active: boolean
+  created_by: string | null
+  created_at: string
+}
+
+export interface ProjectMember {
+  project_id: string
+  user_id: string
+  created_at: string
 }
 
 // Pages that can be individually granted/revoked per frontline user.
@@ -179,6 +196,7 @@ export const DOC_STATUS_STYLES: Record<string, string> = {
 
 export interface DocumentRow {
   id: string
+  project_id: string
   title: string
   doc_number: string | null
   system: string | null

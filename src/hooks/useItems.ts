@@ -6,17 +6,21 @@ import {
 } from "@tanstack/react-query"
 
 import { supabase } from "@/lib/supabase"
+import { useProject } from "@/contexts/ProjectContext"
 import type { Item, ItemHistory, ItemPatch, Profile } from "@/lib/types"
 
 const ITEMS_KEY = ["items"]
 
 export function useItems() {
+  const { currentProjectId } = useProject()
   return useQuery<Item[]>({
-    queryKey: ITEMS_KEY,
+    queryKey: [...ITEMS_KEY, currentProjectId],
+    enabled: !!currentProjectId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("items")
         .select("*")
+        .eq("project_id", currentProjectId)
         .order("system", { ascending: true })
         .order("sno", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true })
@@ -96,11 +100,12 @@ export function useUpdateItem() {
 
 export function useCreateItem() {
   const qc = useQueryClient()
+  const { currentProjectId } = useProject()
   return useMutation({
     mutationFn: async (item: Partial<Item>) => {
       const { data, error } = await supabase
         .from("items")
-        .insert(item)
+        .insert({ ...item, project_id: item.project_id ?? currentProjectId })
         .select()
         .single()
       if (error) throw error
@@ -123,11 +128,13 @@ export function useDeleteItem() {
 
 export function useBulkInsert() {
   const qc = useQueryClient()
+  const { currentProjectId } = useProject()
   return useMutation({
     mutationFn: async (rows: Partial<Item>[]) => {
-      const { error } = await supabase.from("items").insert(rows)
+      const scoped = rows.map((r) => ({ ...r, project_id: r.project_id ?? currentProjectId }))
+      const { error } = await supabase.from("items").insert(scoped)
       if (error) throw error
-      return rows.length
+      return scoped.length
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ITEMS_KEY }),
   })

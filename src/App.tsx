@@ -3,12 +3,14 @@ import { Navigate, Route, Routes } from "react-router-dom"
 import { Loader2 } from "lucide-react"
 
 import { useAuth } from "@/contexts/AuthContext"
+import { useProject } from "@/contexts/ProjectContext"
 import { hasSupabaseConfig } from "@/lib/supabase"
 import type { AppPage } from "@/lib/types"
 import LoginPage from "@/pages/LoginPage"
 import TrackerPage from "@/pages/TrackerPage"
 import DocumentsPage from "@/pages/DocumentsPage"
 import DashboardPage from "@/pages/DashboardPage"
+import ProjectsPage from "@/pages/ProjectsPage"
 import AdminPage from "@/pages/AdminPage"
 import { AppLayout } from "@/components/AppLayout"
 
@@ -22,6 +24,7 @@ function FullScreen({ children }: { children: ReactNode }) {
 
 export default function App() {
   const { session, loading, profile } = useAuth()
+  const { currentProjectId, loading: projectsLoading } = useProject()
   const isFirstfix = profile?.org === "firstfix"
   const isAdmin = !!profile?.is_admin
 
@@ -35,7 +38,17 @@ export default function App() {
     return pages.includes(page)
   }
 
-  const defaultRedirect = isFirstfix ? "/documents" : canAccess("tracker") ? "/" : canAccess("dashboard") ? "/dashboard" : "/documents"
+  // Where a logged-in user with a selected project should land.
+  const pageRedirect = isFirstfix
+    ? "/documents"
+    : canAccess("tracker")
+      ? "/"
+      : canAccess("dashboard")
+        ? "/dashboard"
+        : "/documents"
+
+  // No project chosen yet → the project picker.
+  const homeRedirect = currentProjectId ? pageRedirect : "/projects"
 
   if (!hasSupabaseConfig) {
     return (
@@ -51,7 +64,7 @@ export default function App() {
     )
   }
 
-  if (loading) {
+  if (loading || (session && projectsLoading)) {
     return (
       <FullScreen>
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -59,53 +72,58 @@ export default function App() {
     )
   }
 
+  // Gate a data page on having a project selected.
+  function withProject(node: ReactNode) {
+    if (!session) return <Navigate to="/login" replace />
+    if (!currentProjectId) return <Navigate to="/projects" replace />
+    return node
+  }
+
   return (
     <Routes>
       <Route
         path="/login"
-        element={session ? <Navigate to={defaultRedirect} replace /> : <LoginPage />}
+        element={session ? <Navigate to={homeRedirect} replace /> : <LoginPage />}
+      />
+      <Route
+        path="/projects"
+        element={!session ? <Navigate to="/login" replace /> : <ProjectsPage />}
       />
       <Route
         path="/"
-        element={
-          !session ? (
-            <Navigate to="/login" replace />
-          ) : !canAccess("tracker") ? (
-            <Navigate to={defaultRedirect} replace />
+        element={withProject(
+          !canAccess("tracker") ? (
+            <Navigate to={pageRedirect} replace />
           ) : (
             <AppLayout>
               <TrackerPage />
             </AppLayout>
           )
-        }
+        )}
       />
       <Route
         path="/documents"
-        element={
-          !session ? (
-            <Navigate to="/login" replace />
-          ) : !canAccess("documents") ? (
-            <Navigate to={defaultRedirect} replace />
+        element={withProject(
+          !canAccess("documents") ? (
+            <Navigate to={pageRedirect} replace />
           ) : (
             <AppLayout>
               <DocumentsPage />
             </AppLayout>
           )
-        }
+        )}
       />
       <Route
         path="/dashboard"
-        element={
-          !session ? (
-            <Navigate to="/login" replace />
-          ) : !canAccess("dashboard") ? (
-            <Navigate to={defaultRedirect} replace />
+        element={withProject(
+          !canAccess("dashboard") ? (
+            <Navigate to={pageRedirect} replace />
           ) : (
             <AppLayout>
               <DashboardPage />
             </AppLayout>
           )
-        }
+        )}
       />
       <Route
         path="/admin"
@@ -113,7 +131,7 @@ export default function App() {
           !session ? (
             <Navigate to="/login" replace />
           ) : !isAdmin ? (
-            <Navigate to={defaultRedirect} replace />
+            <Navigate to={homeRedirect} replace />
           ) : (
             <AppLayout>
               <AdminPage />
@@ -121,10 +139,7 @@ export default function App() {
           )
         }
       />
-      <Route
-        path="*"
-        element={<Navigate to={defaultRedirect} replace />}
-      />
+      <Route path="*" element={<Navigate to={homeRedirect} replace />} />
     </Routes>
   )
 }

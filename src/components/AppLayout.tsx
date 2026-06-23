@@ -1,9 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react"
-import { NavLink } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 import {
   BarChart3,
+  Check,
+  ChevronsUpDown,
   FileText,
+  FolderOpen,
   KeyRound,
+  LayoutGrid,
   LogOut,
   Moon,
   PackageCheck,
@@ -13,6 +17,7 @@ import {
 import { toast } from "sonner"
 
 import { useAuth } from "@/contexts/AuthContext"
+import { useProject } from "@/contexts/ProjectContext"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -163,7 +168,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <div className="leading-tight">
               <div className="text-sm font-semibold">Frontline Tracker</div>
-              <div className="text-xs text-muted-foreground">MiSK Ilmi</div>
+              <ProjectSwitcher />
             </div>
           </div>
 
@@ -243,6 +248,52 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       <ChangePasswordDialog open={changePwOpen} onClose={() => setChangePwOpen(false)} />
     </div>
+  )
+}
+
+function ProjectSwitcher() {
+  const { projects, currentProject, currentProjectId, setCurrentProject } = useProject()
+  const navigate = useNavigate()
+
+  // Nothing to show until a project is active (e.g. admin on /admin pre-select).
+  const label = currentProject?.name ?? "Select project"
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <span className="max-w-[160px] truncate">{label}</span>
+          <ChevronsUpDown className="size-3" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuLabel>Projects</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {projects.map((p) => (
+          <DropdownMenuItem
+            key={p.id}
+            onClick={() => setCurrentProject(p.id)}
+            className="gap-2"
+          >
+            <FolderOpen className="size-4 text-muted-foreground" />
+            <span className="flex-1 truncate">{p.name}</span>
+            {p.id === currentProjectId && <Check className="size-4 text-primary" />}
+          </DropdownMenuItem>
+        ))}
+        {projects.length > 1 && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate("/projects")}>
+              <LayoutGrid className="size-4" />
+              All projects
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 

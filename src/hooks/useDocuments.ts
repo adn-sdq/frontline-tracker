@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query"
 
 import { supabase } from "@/lib/supabase"
+import { useProject } from "@/contexts/ProjectContext"
 import type {
   DocStatus,
   DocumentComment,
@@ -16,12 +17,15 @@ import type {
 const DOCS_KEY = ["documents"]
 
 export function useDocuments() {
+  const { currentProjectId } = useProject()
   return useQuery<DocumentRow[]>({
-    queryKey: DOCS_KEY,
+    queryKey: [...DOCS_KEY, currentProjectId],
+    enabled: !!currentProjectId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
         .select("*")
+        .eq("project_id", currentProjectId)
         .order("updated_at", { ascending: false })
       if (error) throw error
       return (data ?? []) as DocumentRow[]
@@ -58,11 +62,12 @@ export function useDocumentsRealtime() {
 
 export function useCreateDocument() {
   const qc = useQueryClient()
+  const { currentProjectId } = useProject()
   return useMutation({
     mutationFn: async (doc: Partial<DocumentRow>) => {
       const { data, error } = await supabase
         .from("documents")
-        .insert(doc)
+        .insert({ ...doc, project_id: doc.project_id ?? currentProjectId })
         .select()
         .single()
       if (error) throw error

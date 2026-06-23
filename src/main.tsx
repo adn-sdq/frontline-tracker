@@ -6,6 +6,7 @@ import { HashRouter } from "react-router-dom"
 import "./index.css"
 import App from "./App.tsx"
 import { AuthProvider } from "@/contexts/AuthContext"
+import { ProjectProvider } from "@/contexts/ProjectContext"
 import { Toaster } from "@/components/ui/sonner"
 
 const queryClient = new QueryClient({
@@ -19,8 +20,10 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <HashRouter>
         <AuthProvider>
-          <App />
-          <Toaster richColors position="top-right" />
+          <ProjectProvider>
+            <App />
+            <Toaster richColors position="top-right" />
+          </ProjectProvider>
         </AuthProvider>
       </HashRouter>
     </QueryClientProvider>
