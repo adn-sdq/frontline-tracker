@@ -1,11 +1,22 @@
-export const SYSTEMS = ["AV", "PAVA", "IPTV", "SCREENS"] as const
-export type System = (typeof SYSTEMS)[number]
+// Systems are now editable in the DB (see the `systems` table / Admin page).
+// These remain only as defaults / fallback labels.
+export type System = string
 
-export const SYSTEM_LABELS: Record<System, string> = {
+export const DEFAULT_SYSTEM_KEYS = ["AV", "PAVA", "IPTV", "SCREENS"] as const
+
+export const SYSTEM_LABELS: Record<string, string> = {
   AV: "AV",
   PAVA: "PAVA",
   IPTV: "IPTV",
   SCREENS: "Screens",
+}
+
+export interface SystemRow {
+  key: string
+  label: string
+  sort: number
+  active: boolean
+  created_at: string
 }
 
 export const PROCUREMENT_STATUSES = [
@@ -101,11 +112,93 @@ export type ItemPatch = Partial<
   >
 >
 
+export const ORGS = ["frontline", "firstfix"] as const
+export type Org = (typeof ORGS)[number]
+export const ORG_LABELS: Record<string, string> = {
+  frontline: "Frontline",
+  firstfix: "First Fix",
+}
+
 export interface Profile {
   id: string
   username: string | null
   full_name: string | null
   role: string
+  org: Org | null
+  is_admin: boolean
+  created_at: string
+}
+
+// ---- Documents ----------------------------------------------------------
+export const DOC_STATUSES = [
+  "pending",
+  "under_review",
+  "code_a",
+  "code_b",
+  "code_c",
+] as const
+export type DocStatus = (typeof DOC_STATUSES)[number]
+
+export const DOC_STATUS_LABELS: Record<string, string> = {
+  pending: "Pending",
+  under_review: "Under review",
+  code_a: "Code A",
+  code_b: "Code B",
+  code_c: "Code C",
+}
+
+export const DOC_STATUS_HINTS: Record<string, string> = {
+  pending: "Awaiting review",
+  under_review: "Being reviewed by Frontline",
+  code_a: "Approved — no comments",
+  code_b: "Approved with comments",
+  code_c: "Revise & resubmit",
+}
+
+export const DOC_STATUS_STYLES: Record<string, string> = {
+  pending: "bg-muted text-muted-foreground border-transparent",
+  under_review:
+    "bg-blue-100 text-blue-800 border-transparent dark:bg-blue-950 dark:text-blue-300",
+  code_a: "bg-emerald-600 text-white border-transparent",
+  code_b:
+    "bg-amber-100 text-amber-800 border-transparent dark:bg-amber-950 dark:text-amber-300",
+  code_c:
+    "bg-red-100 text-red-800 border-transparent dark:bg-red-950 dark:text-red-300",
+}
+
+export interface DocumentRow {
+  id: string
+  title: string
+  doc_number: string | null
+  system: string | null
+  description: string | null
+  status: DocStatus
+  revision: string | null
+  created_by: string | null
+  created_at: string
+  updated_by: string | null
+  updated_at: string
+  version: number
+}
+
+export interface DocumentFile {
+  id: string
+  document_id: string
+  storage_path: string
+  file_name: string
+  file_size: number | null
+  rev_label: string | null
+  note: string | null
+  uploaded_by: string | null
+  uploaded_at: string
+}
+
+export interface DocumentComment {
+  id: number
+  document_id: string
+  body: string
+  code: string | null
+  author: string | null
   created_at: string
 }
 

@@ -1,9 +1,20 @@
 import { useEffect, useState, type ReactNode } from "react"
-import { LogOut, Moon, PackageCheck, Sun } from "lucide-react"
+import { NavLink } from "react-router-dom"
+import {
+  FileText,
+  LogOut,
+  Moon,
+  PackageCheck,
+  Shield,
+  Sun,
+} from "lucide-react"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import { ORG_LABELS } from "@/lib/types"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,13 +60,21 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
 
+          <nav className="hidden items-center gap-1 md:flex">
+            <NavItem to="/" icon={PackageCheck} label="Procurement" />
+            <NavItem to="/documents" icon={FileText} label="Documents" />
+            {profile?.is_admin && (
+              <NavItem to="/admin" icon={Shield} label="Admin" />
+            )}
+          </nav>
+
           <div className="flex items-center gap-1.5">
             <Button variant="ghost" size="icon" onClick={toggle} title="Toggle theme">
               {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2 px-2">
+                <Button variant="ghost" className="gap-2 px-1.5 sm:px-2">
                   <Avatar>
                     <AvatarFallback className="bg-primary/10 text-primary uppercase">
                       {initials(name)}
@@ -66,8 +85,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel className="truncate">{name}</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuLabel className="flex flex-col gap-1">
+                  <span className="truncate">{name}</span>
+                  {profile?.org && (
+                    <Badge variant="outline" className="w-fit font-normal">
+                      {ORG_LABELS[profile.org] ?? profile.org}
+                      {profile.is_admin ? " · Admin" : ""}
+                    </Badge>
+                  )}
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => void signOut()}>
                   <LogOut className="size-4" />
@@ -77,9 +104,44 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </DropdownMenu>
           </div>
         </div>
+
+        {/* Mobile nav */}
+        <nav className="flex items-center gap-1 overflow-x-auto border-t px-2 py-1.5 md:hidden">
+          <NavItem to="/" icon={PackageCheck} label="Procurement" />
+          <NavItem to="/documents" icon={FileText} label="Documents" />
+          {profile?.is_admin && <NavItem to="/admin" icon={Shield} label="Admin" />}
+        </nav>
       </header>
 
       <main className="mx-auto max-w-[1400px] px-4 py-6">{children}</main>
     </div>
+  )
+}
+
+function NavItem({
+  to,
+  icon: Icon,
+  label,
+}: {
+  to: string
+  icon: typeof PackageCheck
+  label: string
+}) {
+  return (
+    <NavLink
+      to={to}
+      end={to === "/"}
+      className={({ isActive }) =>
+        cn(
+          "flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+          isActive
+            ? "bg-secondary text-foreground"
+            : "text-muted-foreground hover:bg-accent hover:text-foreground"
+        )
+      }
+    >
+      <Icon className="size-4" />
+      {label}
+    </NavLink>
   )
 }

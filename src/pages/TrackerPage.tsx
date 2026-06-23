@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { DashboardCards } from "@/components/DashboardCards"
 import { ItemsTable } from "@/components/ItemsTable"
+import { ItemsCards } from "@/components/ItemsCards"
 import { ItemDialog } from "@/components/ItemDialog"
 import { HistoryDrawer } from "@/components/HistoryDrawer"
 import { ImportDialog } from "@/components/ImportDialog"
@@ -24,18 +25,15 @@ import {
   useItemsRealtime,
   useProfiles,
 } from "@/hooks/useItems"
+import { useSystems } from "@/hooks/useSystems"
 import { exportItemsCsv } from "@/lib/csv"
-import {
-  SYSTEMS,
-  SYSTEM_LABELS,
-  type Item,
-  type System,
-} from "@/lib/types"
+import { type Item, type System } from "@/lib/types"
 
 export default function TrackerPage() {
   useItemsRealtime()
   const { data: items = [], isLoading } = useItems()
   const { data: profiles = {} } = useProfiles()
+  const { activeSystems } = useSystems()
   const del = useDeleteItem()
 
   const [system, setSystem] = useState<System | "ALL">("ALL")
@@ -59,10 +57,10 @@ export default function TrackerPage() {
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { ALL: items.length }
-    for (const s of SYSTEMS) c[s] = 0
+    for (const s of activeSystems) c[s.key] = 0
     for (const i of items) c[i.system] = (c[i.system] ?? 0) + 1
     return c
-  }, [items])
+  }, [items, activeSystems])
 
   function openAdd() {
     setEditItem(null)
@@ -119,11 +117,11 @@ export default function TrackerPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Tabs value={system} onValueChange={(v) => setSystem(v as System | "ALL")}>
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="ALL">All · {counts.ALL ?? 0}</TabsTrigger>
-            {SYSTEMS.map((s) => (
-              <TabsTrigger key={s} value={s}>
-                {SYSTEM_LABELS[s]} · {counts[s] ?? 0}
+            {activeSystems.map((s) => (
+              <TabsTrigger key={s.key} value={s.key}>
+                {s.label} · {counts[s.key] ?? 0}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -145,20 +143,36 @@ export default function TrackerPage() {
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <ItemsTable
-          items={filtered}
-          profiles={profiles}
-          onEdit={openEdit}
-          onHistory={setHistoryItem}
-          onDelete={setDeleteItem}
-        />
+        <>
+          {/* Table on desktop, cards on phones */}
+          <div className="hidden md:block">
+            <ItemsTable
+              items={filtered}
+              profiles={profiles}
+              onEdit={openEdit}
+              onHistory={setHistoryItem}
+              onDelete={setDeleteItem}
+            />
+          </div>
+          <div className="md:hidden">
+            <ItemsCards
+              items={filtered}
+              profiles={profiles}
+              onEdit={openEdit}
+              onHistory={setHistoryItem}
+              onDelete={setDeleteItem}
+            />
+          </div>
+        </>
       )}
 
       <ItemDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         item={editItem}
-        defaultSystem={system === "ALL" ? "AV" : system}
+        defaultSystem={
+          system === "ALL" ? activeSystems[0]?.key ?? "AV" : system
+        }
       />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
       <HistoryDrawer

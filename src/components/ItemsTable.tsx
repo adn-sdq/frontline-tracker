@@ -21,11 +21,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { EditableQty, StatusSelect } from "@/components/StatusControls"
 import { ConflictError, useUpdateItem } from "@/hooks/useItems"
+import { useSystems } from "@/hooks/useSystems"
 import {
   DELIVERY_STATUSES,
   INSTALLATION_STATUSES,
   PROCUREMENT_STATUSES,
-  SYSTEM_LABELS,
   type Item,
   type ItemPatch,
   type Profile,
@@ -48,6 +48,7 @@ export function ItemsTable({
 }: Props) {
   const update = useUpdateItem()
   const qc = useQueryClient()
+  const { labelFor } = useSystems()
 
   async function patch(item: Item, p: ItemPatch) {
     try {
@@ -109,7 +110,7 @@ export function ItemsTable({
               <TableCell className="text-muted-foreground">{item.sno ?? ""}</TableCell>
               <TableCell>
                 <Badge variant="outline" className="font-medium">
-                  {SYSTEM_LABELS[item.system]}
+                  {labelFor(item.system)}
                 </Badge>
               </TableCell>
               <TableCell className="font-mono text-xs">{item.location}</TableCell>

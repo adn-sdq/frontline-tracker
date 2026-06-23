@@ -1,0 +1,90 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+
+import { supabase } from "@/lib/supabase"
+import type { Org, Profile } from "@/lib/types"
+
+const PROFILES_KEY = ["profiles", "all"]
+
+export function useAllProfiles() {
+  return useQuery<Profile[]>({
+    queryKey: PROFILES_KEY,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: true })
+      if (error) throw error
+      return (data ?? []) as Profile[]
+    },
+  })
+}
+
+async function callAdmin(body: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke("admin-users", {
+    body,
+  })
+  // Edge function returns { error } in the body for handled failures.
+  if (error) {
+    // Try to surface the function's JSON error message.
+    let msg = error.message
+    const ctx = (error as { context?: Response }).context
+    if (ctx && typeof ctx.json === "function") {
+      try {
+        const j = await ctx.json()
+        if (j?.error) msg = j.error
+      } catch {
+        /* ignore */
+      }
+    }
+    throw new Error(msg)
+  }
+  if (data?.error) throw new Error(data.error)
+  return data
+}
+
+export function useCreateAccount() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (args: {
+      username: string
+      password: string
+      full_name?: string
+      org?: Org | null
+      is_admin?: boolean
+    }) => callAdmin({ action: "create", ...args }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),
+  })
+}
+
+export function useSetPassword() {
+  return useMutation({
+    mutationFn: (args: { id: string; password: string }) =>
+      callAdmin({ action: "set_password", ...args }),
+  })
+}
+
+export function useDeleteAccount() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => callAdmin({ action: "delete", id }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),
+  })
+}
+
+// Org / admin-flag changes go straight through RLS (admins may update profiles).
+export function useUpdateProfile() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: {
+      id: string
+      patch: Partial<Pick<Profile, "org" | "is_admin" | "full_name">>
+    }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update(args.patch)
+        .eq("id", args.id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),
+  })
+}

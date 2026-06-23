@@ -29,7 +29,29 @@ each other — so nothing gets lost.
 - **Full history:** every create/update/delete is logged in `item_history`
   with field-level diffs and a full snapshot (so deletes are recoverable).
 - **Realtime:** the table updates live as teammates make changes.
-- **CSV import/export** for bulk loading and sharing.
+- **CSV import/export** for bulk loading and sharing (with an in-app column guide).
+- **Mobile friendly:** responsive layout with card views on phones.
+
+### Documents tab
+
+A submittal tracker to replace the Aconex back-and-forth with First Fix:
+
+- Each document has a **status / review code** (Pending, Under review, Code A/B/C).
+- **Stacked file uploads** — every upload is kept, newest on top, so nothing is
+  overwritten. Files live in a private Supabase Storage bucket, opened via
+  short-lived signed URLs.
+- **Comments thread** per document for review notes.
+- Both Frontline and First Fix users can upload, comment, and set codes; every
+  action is attributed.
+
+### Admin
+
+Users with the admin flag get an **Admin** tab to:
+
+- **Create / delete accounts** and reset passwords (via a secure Edge Function
+  that holds the service-role key — it never touches the browser).
+- Tag each user **Frontline** or **First Fix** and grant/revoke admin.
+- **Manage the systems list** (categories) used across Procurement & Documents.
 
 ## Local development
 

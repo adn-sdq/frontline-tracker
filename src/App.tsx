@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/AuthContext"
 import { hasSupabaseConfig } from "@/lib/supabase"
 import LoginPage from "@/pages/LoginPage"
 import TrackerPage from "@/pages/TrackerPage"
+import DocumentsPage from "@/pages/DocumentsPage"
+import AdminPage from "@/pages/AdminPage"
 import { AppLayout } from "@/components/AppLayout"
 
 function FullScreen({ children }: { children: ReactNode }) {
@@ -53,6 +55,30 @@ export default function App() {
           session ? (
             <AppLayout>
               <TrackerPage />
+            </AppLayout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/documents"
+        element={
+          session ? (
+            <AppLayout>
+              <DocumentsPage />
+            </AppLayout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          session ? (
+            <AppLayout>
+              <AdminPage />
             </AppLayout>
           ) : (
             <Navigate to="/login" replace />

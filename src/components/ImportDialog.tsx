@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Loader2, Upload } from "lucide-react"
+import { Info, Loader2, Upload } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -28,6 +28,7 @@ export function ImportDialog({
   const bulk = useBulkInsert()
   const [text, setText] = useState("")
   const [errors, setErrors] = useState<string[]>([])
+  const [showHelp, setShowHelp] = useState(false)
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -65,12 +66,69 @@ export function ImportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Import items from CSV</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Import items from CSV
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-6"
+              title="What should the CSV contain?"
+              onClick={() => setShowHelp((s) => !s)}
+            >
+              <Info className="size-4 text-muted-foreground" />
+            </Button>
+          </DialogTitle>
           <DialogDescription>
-            Required column: <code>system</code> (AV, PAVA, IPTV, SCREENS). Optional:
-            location, sno, brand, model_no, description, qty_required, supplier, eta, notes.
+            Add the first row as column headers, then one row per item. Click the
+            <Info className="mx-1 inline size-3.5" />icon for the full column guide.
           </DialogDescription>
         </DialogHeader>
+
+        {showHelp && (
+          <div className="rounded-lg border bg-muted/30 p-3 text-xs">
+            <p className="mb-2 font-medium text-foreground">CSV columns</p>
+            <ul className="flex flex-col gap-1 text-muted-foreground">
+              <li>
+                <code className="text-foreground">system</code> —{" "}
+                <strong>required.</strong> One of AV, PAVA, IPTV, SCREENS (or any
+                system you've added in Admin).
+              </li>
+              <li>
+                <code className="text-foreground">location</code> — room / zone
+                code (e.g. L03-005)
+              </li>
+              <li>
+                <code className="text-foreground">sno</code> — line number
+                (optional)
+              </li>
+              <li>
+                <code className="text-foreground">brand</code> — make (e.g.
+                Samsung, Bosch)
+              </li>
+              <li>
+                <code className="text-foreground">model_no</code> — model number
+              </li>
+              <li>
+                <code className="text-foreground">description</code> — item
+                description
+              </li>
+              <li>
+                <code className="text-foreground">qty_required</code> — quantity
+                needed (number)
+              </li>
+              <li>
+                <code className="text-foreground">supplier</code>,{" "}
+                <code className="text-foreground">eta</code> (YYYY-MM-DD),{" "}
+                <code className="text-foreground">notes</code> — optional
+              </li>
+            </ul>
+            <p className="mt-2 text-muted-foreground">
+              Statuses default to “not started / pending” and are set inside the
+              app. Use <strong>Load template</strong> below for a ready example.
+            </p>
+          </div>
+        )}
 
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">

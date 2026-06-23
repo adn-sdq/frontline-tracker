@@ -22,14 +22,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ConflictError, useCreateItem, useUpdateItem } from "@/hooks/useItems"
+import { useSystems } from "@/hooks/useSystems"
 import { useAuth } from "@/contexts/AuthContext"
 import {
   DELIVERY_STATUSES,
   INSTALLATION_STATUSES,
   PROCUREMENT_STATUSES,
   STATUS_LABELS,
-  SYSTEMS,
-  SYSTEM_LABELS,
   type Item,
   type System,
 } from "@/lib/types"
@@ -107,6 +106,7 @@ export function ItemDialog({
   defaultSystem?: System
 }) {
   const { user } = useAuth()
+  const { activeSystems } = useSystems()
   const create = useCreateItem()
   const update = useUpdateItem()
   const [form, setForm] = useState<FormState>(blank(defaultSystem))
@@ -191,9 +191,9 @@ export function ItemDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {SYSTEMS.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {SYSTEM_LABELS[s]}
+                {activeSystems.map((s) => (
+                  <SelectItem key={s.key} value={s.key}>
+                    {s.label}
                   </SelectItem>
                 ))}
               </SelectContent>
