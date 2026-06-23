@@ -17,6 +17,7 @@ import { DashboardCards } from "@/components/DashboardCards"
 import { ItemsTable } from "@/components/ItemsTable"
 import { ItemsCards } from "@/components/ItemsCards"
 import { ItemDialog } from "@/components/ItemDialog"
+import { ItemDetailSheet } from "@/components/ItemDetailSheet"
 import { HistoryDrawer } from "@/components/HistoryDrawer"
 import { ImportDialog } from "@/components/ImportDialog"
 import {
@@ -38,8 +39,14 @@ export default function TrackerPage() {
 
   const [system, setSystem] = useState<System | "ALL">("ALL")
   const [search, setSearch] = useState("")
+
+  // Detail sheet state
+  const [viewItem, setViewItem] = useState<Item | null>(null)
+
+  // Edit dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editItem, setEditItem] = useState<Item | null>(null)
+
   const [historyItem, setHistoryItem] = useState<Item | null>(null)
   const [importOpen, setImportOpen] = useState(false)
   const [deleteItem, setDeleteItem] = useState<Item | null>(null)
@@ -49,7 +56,7 @@ export default function TrackerPage() {
     return items.filter((i) => {
       if (system !== "ALL" && i.system !== system) return false
       if (!q) return true
-      return [i.brand, i.model_no, i.description, i.location, i.supplier]
+      return [i.brand, i.model_no, i.description, i.location, i.supplier, i.unique_id]
         .filter(Boolean)
         .some((v) => (v as string).toLowerCase().includes(q))
     })
@@ -130,7 +137,7 @@ export default function TrackerPage() {
         <div className="relative w-full sm:w-64">
           <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search brand, model, room…"
+            placeholder="Search brand, model, room, UID…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8"
@@ -144,27 +151,32 @@ export default function TrackerPage() {
         </div>
       ) : (
         <>
-          {/* Table on desktop, cards on phones */}
           <div className="hidden md:block">
             <ItemsTable
               items={filtered}
               profiles={profiles}
-              onEdit={openEdit}
-              onHistory={setHistoryItem}
-              onDelete={setDeleteItem}
+              onView={setViewItem}
             />
           </div>
           <div className="md:hidden">
             <ItemsCards
               items={filtered}
               profiles={profiles}
-              onEdit={openEdit}
-              onHistory={setHistoryItem}
-              onDelete={setDeleteItem}
+              onView={setViewItem}
             />
           </div>
         </>
       )}
+
+      {/* Detail sheet — opens first, edit button inside triggers ItemDialog */}
+      <ItemDetailSheet
+        item={viewItem}
+        profiles={profiles}
+        onEdit={(item) => { setViewItem(null); openEdit(item) }}
+        onHistory={(item) => { setViewItem(null); setHistoryItem(item) }}
+        onDelete={(item) => { setViewItem(null); setDeleteItem(item) }}
+        onClose={() => setViewItem(null)}
+      />
 
       <ItemDialog
         open={dialogOpen}

@@ -1,14 +1,7 @@
 import { formatDistanceToNow } from "date-fns"
-import { History, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { StatusBadge } from "@/components/StatusControls"
 import { useSystems } from "@/hooks/useSystems"
 import { SYSTEM_LABELS, type Item, type Profile } from "@/lib/types"
@@ -16,18 +9,10 @@ import { SYSTEM_LABELS, type Item, type Profile } from "@/lib/types"
 interface Props {
   items: Item[]
   profiles: Record<string, Profile>
-  onEdit: (item: Item) => void
-  onHistory: (item: Item) => void
-  onDelete: (item: Item) => void
+  onView: (item: Item) => void
 }
 
-export function ItemsCards({
-  items,
-  profiles,
-  onEdit,
-  onHistory,
-  onDelete,
-}: Props) {
+export function ItemsCards({ items, profiles, onView }: Props) {
   const { labelFor } = useSystems()
 
   function who(id: string | null) {
@@ -45,57 +30,44 @@ export function ItemsCards({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       {items.map((item) => (
-        <div
+        <button
           key={item.id}
-          className="rounded-xl border bg-card p-3"
-          onClick={() => onEdit(item)}
+          type="button"
+          onClick={() => onView(item)}
+          className="group w-full rounded-xl border bg-card p-3.5 text-left transition-colors hover:border-primary/40 hover:bg-accent/30"
         >
           <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="font-medium">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Badge variant="outline" className="font-medium text-xs py-0">
                   {labelFor(item.system) || SYSTEM_LABELS[item.system] || item.system}
                 </Badge>
+                {item.unique_id && (
+                  <span className="font-mono text-xs font-semibold text-primary">
+                    {item.unique_id}
+                  </span>
+                )}
                 {item.location && (
                   <span className="font-mono text-xs text-muted-foreground">
                     {item.location}
                   </span>
                 )}
               </div>
-              <div className="mt-1 font-medium">{item.brand}</div>
-              <div className="font-mono text-xs text-muted-foreground">
-                {item.model_no}
+              <div className="mt-1 font-medium">
+                {item.brand}{item.brand && item.model_no ? " · " : ""}{item.model_no}
               </div>
               {item.description && (
-                <div className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                <div className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
                   {item.description}
                 </div>
               )}
             </div>
-            <div onClick={(e) => e.stopPropagation()}>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-7 shrink-0">
-                    <MoreHorizontal className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEdit(item)}>
-                    <Pencil className="size-4" /> Edit details
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onHistory(item)}>
-                    <History className="size-4" /> View history
-                  </DropdownMenuItem>
-                  <DropdownMenuItem variant="destructive" onClick={() => onDelete(item)}>
-                    <Trash2 className="size-4" /> Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
           </div>
 
+          {/* Qty summary */}
           <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
             {(
               [
@@ -112,17 +84,18 @@ export function ItemsCards({
             ))}
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-1.5">
+          {/* Statuses */}
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
             <StatusBadge status={item.procurement_status} />
             <StatusBadge status={item.delivery_status} />
             <StatusBadge status={item.installation_status} />
           </div>
 
+          {/* Attribution */}
           <div className="mt-2 text-xs text-muted-foreground">
-            Updated by <span className="font-medium text-foreground">{who(item.updated_by)}</span>{" "}
-            {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
+            {who(item.updated_by)} · {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
           </div>
-        </div>
+        </button>
       ))}
     </div>
   )

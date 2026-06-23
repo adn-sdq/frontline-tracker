@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   FolderOpen,
   KeyRound,
   Loader2,
+  Pencil,
   Plus,
   Shield,
   Trash2,
@@ -17,6 +18,7 @@ import {
   useDeleteAccount,
   useSetPassword,
   useUpdateProfile,
+  useUpdateUserDetails,
 } from "@/hooks/useAdmin"
 import {
   useAllProjectMembers,
@@ -26,7 +28,7 @@ import {
   useUnassignProject,
   useUpdateProject,
 } from "@/hooks/useProjects"
-import { useSystems, useUpsertSystem } from "@/hooks/useSystems"
+import { useSystems, useToggleSystem, useUpsertSystem } from "@/hooks/useSystems"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -107,6 +109,7 @@ function AccountsSection() {
   const [createOpen, setCreateOpen] = useState(false)
   const [pwUser, setPwUser] = useState<Profile | null>(null)
   const [delUser, setDelUser] = useState<Profile | null>(null)
+  const [editUser, setEditUser] = useState<Profile | null>(null)
 
   async function toggleProjectMember(p: Profile, projectId: string) {
     const assigned = memberships.some(
@@ -329,6 +332,15 @@ function AccountsSection() {
                           variant="ghost"
                           size="icon"
                           className="size-7"
+                          title="Edit name / username"
+                          onClick={() => setEditUser(p)}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7"
                           title="Reset password"
                           onClick={() => setPwUser(p)}
                         >
@@ -356,6 +368,7 @@ function AccountsSection() {
       </CardContent>
 
       <CreateAccountDialog open={createOpen} onOpenChange={setCreateOpen} />
+      <EditProfileDialog user={editUser} onClose={() => setEditUser(null)} />
       <ResetPasswordDialog
         user={pwUser}
         onClose={() => setPwUser(null)}
@@ -381,6 +394,90 @@ function AccountsSection() {
         busy={deleteAccount.isPending}
       />
     </Card>
+  )
+}
+
+function EditProfileDialog({
+  user,
+  onClose,
+}: {
+  user: Profile | null
+  onClose: () => void
+}) {
+  const update = useUpdateUserDetails()
+  const [fullName, setFullName] = useState("")
+  const [username, setUsername] = useState("")
+
+  // Sync fields when user changes
+  useEffect(() => {
+    if (user) {
+      setFullName(user.full_name ?? "")
+      setUsername(user.username ?? "")
+    }
+  }, [user])
+
+  async function submit() {
+    if (!user) return
+    if (!username.trim()) {
+      toast.error("Username cannot be empty")
+      return
+    }
+    try {
+      await update.mutateAsync({
+        id: user.id,
+        full_name: fullName.trim() || undefined,
+        username: username.trim() !== user.username ? username.trim() : undefined,
+      })
+      toast.success("Profile updated")
+      onClose()
+    } catch (e) {
+      toast.error("Could not update", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      })
+    }
+  }
+
+  return (
+    <Dialog open={!!user} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Edit profile</DialogTitle>
+          <DialogDescription>
+            Change the display name or login username for {user?.full_name ?? user?.username}.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Full name</Label>
+            <Input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="First Last"
+              autoFocus
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Username</Label>
+            <Input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="username"
+              autoCapitalize="none"
+            />
+            <p className="text-xs text-muted-foreground">
+              Changing the username also changes their login credentials.
+            </p>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={update.isPending}>Cancel</Button>
+          <Button onClick={submit} disabled={update.isPending || !username.trim()}>
+            {update.isPending && <Loader2 className="size-4 animate-spin" />}
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -711,6 +808,7 @@ function ProjectsSection() {
 function SystemsSection() {
   const { systems } = useSystems()
   const upsert = useUpsertSystem()
+  const toggleSystem = useToggleSystem()
   const [key, setKey] = useState("")
   const [label, setLabel] = useState("")
 
@@ -739,7 +837,7 @@ function SystemsSection() {
 
   async function toggle(k: string, active: boolean) {
     try {
-      await upsert.mutateAsync({ key: k, active })
+      await toggleSystem.mutateAsync({ key: k, active })
     } catch (e) {
       toast.error("Could not update", {
         description: e instanceof Error ? e.message : "Unknown error",

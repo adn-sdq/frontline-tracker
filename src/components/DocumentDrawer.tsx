@@ -25,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { DocStatusSelect } from "@/components/DocStatus"
+import { DatePicker } from "@/components/DatePicker"
 import {
   getSignedUrl,
   useAddComment,
@@ -251,11 +252,12 @@ export function DocumentDrawer({
                   <span className="text-xs text-muted-foreground">
                     Document date (defaults to today)
                   </span>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={uploadDate}
-                    onChange={(e) => setUploadDate(e.target.value)}
-                    className="h-8"
+                    onChange={setUploadDate}
+                    placeholder="Select date"
+                    clearable={false}
+                    className="h-8 text-xs"
                   />
                 </div>
                 <input
@@ -315,20 +317,20 @@ export function DocumentDrawer({
                           {f.file_size ? ` · ${fmtSize(f.file_size)}` : ""}
                         </div>
                         <div className="mt-1 flex items-center gap-1.5">
-                          <span className="text-xs text-muted-foreground">Dated</span>
-                          <Input
-                            type="date"
-                            aria-label="Document date"
+                          <span className="text-xs text-muted-foreground shrink-0">Dated</span>
+                          <DatePicker
                             value={f.dated ?? ""}
-                            onChange={(e) =>
+                            onChange={(val) =>
                               doc &&
                               updateFileDate.mutate({
                                 id: f.id,
                                 documentId: doc.id,
-                                dated: e.target.value,
+                                dated: val,
                               })
                             }
-                            className="h-7 w-36 px-2 text-xs"
+                            placeholder="Set date"
+                            clearable={false}
+                            className="h-7 text-xs"
                           />
                         </div>
                         {f.note && (

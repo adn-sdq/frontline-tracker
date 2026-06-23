@@ -1,11 +1,11 @@
 import Papa from "papaparse"
 
-import { STATUS_LABELS, type Item } from "@/lib/types"
+import { STATUS_LABELS, type Item, type SystemRow } from "@/lib/types"
 
 const EXPORT_COLUMNS: { key: keyof Item; header: string }[] = [
   { key: "system", header: "System" },
   { key: "location", header: "Location" },
-  { key: "sno", header: "S.No" },
+  { key: "unique_id", header: "Unique ID" },
   { key: "brand", header: "Brand" },
   { key: "model_no", header: "Model No" },
   { key: "description", header: "Description" },
@@ -44,8 +44,8 @@ export function exportItemsCsv(items: Item[], filename = "frontline-tracker.csv"
 }
 
 export const IMPORT_TEMPLATE =
-  "system,location,sno,brand,model_no,description,qty_required,supplier,eta,notes\n" +
-  "AV,L03-005,1,Samsung,LH85QMCEBGCXUE,85\" Smart Signage Display,3,,,\n"
+  "system,location,unique_id,brand,model_no,description,qty_required,supplier,eta,notes\n" +
+  "AV,L03-005,AV-001,Samsung,LH85QMCEBGCXUE,85\" Smart Signage Display,3,,,\n"
 
 const SYSTEM_ALIASES: Record<string, Item["system"]> = {
   av: "AV",
@@ -69,7 +69,7 @@ const num = (v: unknown) => {
   return Number.isNaN(n) ? 0 : n
 }
 
-export function parseImportCsv(text: string): ParsedImport {
+export function parseImportCsv(text: string, knownSystems?: SystemRow[]): ParsedImport {
   const result = Papa.parse<Record<string, string>>(text.trim(), {
     header: true,
     skipEmptyLines: true,
@@ -78,18 +78,31 @@ export function parseImportCsv(text: string): ParsedImport {
   const errors: string[] = []
   const rows: Partial<Item>[] = []
 
+  // Build a lookup: lowercase key/label → canonical key
+  const systemLookup: Record<string, string> = {}
+  if (knownSystems?.length) {
+    for (const s of knownSystems) {
+      systemLookup[s.key.toLowerCase()] = s.key
+      systemLookup[s.label.toLowerCase()] = s.key
+    }
+  }
+  // Always include static aliases as fallback
+  for (const [alias, key] of Object.entries(SYSTEM_ALIASES)) {
+    if (!systemLookup[alias]) systemLookup[alias] = key
+  }
+
   result.data.forEach((raw, idx) => {
-    const line = idx + 2 // account for header row
-    const sysRaw = (raw.system ?? "").trim().toLowerCase()
-    const system = SYSTEM_ALIASES[sysRaw] ?? (["AV", "PAVA", "IPTV", "SCREENS"].includes(sysRaw.toUpperCase()) ? (sysRaw.toUpperCase() as Item["system"]) : null)
+    const line = idx + 2
+    const sysRaw = (raw.system ?? "").trim()
+    const system = systemLookup[sysRaw.toLowerCase()] ?? (sysRaw ? sysRaw.toUpperCase() : null)
     if (!system) {
-      errors.push(`Row ${line}: unknown system "${raw.system ?? ""}" (use AV, PAVA, IPTV or SCREENS)`)
+      errors.push(`Row ${line}: missing system value`)
       return
     }
     rows.push({
       system,
       location: raw.location?.trim() || null,
-      sno: raw.sno ? Number(raw.sno) || null : null,
+      unique_id: (raw.unique_id ?? raw.sno ?? raw["s.no"])?.trim() || null,
       brand: raw.brand?.trim() || null,
       model_no: (raw.model_no ?? raw.model_number ?? raw.model)?.trim() || null,
       description: raw.description?.trim() || null,

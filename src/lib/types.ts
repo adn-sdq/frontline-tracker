@@ -70,7 +70,7 @@ export interface Item {
   project_id: string
   system: System
   location: string | null
-  sno: number | null
+  unique_id: string | null
   brand: string | null
   model_no: string | null
   description: string | null
@@ -96,7 +96,7 @@ export type ItemPatch = Partial<
     Item,
     | "system"
     | "location"
-    | "sno"
+    | "unique_id"
     | "brand"
     | "model_no"
     | "description"

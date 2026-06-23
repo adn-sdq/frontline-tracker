@@ -32,8 +32,19 @@ export function useSystems() {
 export function useUpsertSystem() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (row: Partial<SystemRow> & { key: string }) => {
+    mutationFn: async (row: Partial<SystemRow> & { key: string; label: string; sort: number }) => {
       const { error } = await supabase.from("systems").upsert(row)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  })
+}
+
+export function useToggleSystem() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ key, active }: { key: string; active: boolean }) => {
+      const { error } = await supabase.from("systems").update({ active }).eq("key", key)
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),

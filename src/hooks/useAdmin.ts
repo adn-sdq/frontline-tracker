@@ -88,3 +88,13 @@ export function useUpdateProfile() {
     onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),
   })
 }
+
+// Username / full_name edits — goes through edge function because username also changes auth email.
+export function useUpdateUserDetails() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (args: { id: string; username?: string; full_name?: string }) =>
+      callAdmin({ action: "update_profile", ...args }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),
+  })
+}

@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/contexts/AuthContext"
 import { useBulkInsert } from "@/hooks/useItems"
+import { useSystems } from "@/hooks/useSystems"
 import { IMPORT_TEMPLATE, parseImportCsv } from "@/lib/csv"
 
 export function ImportDialog({
@@ -26,6 +27,7 @@ export function ImportDialog({
 }) {
   const { user } = useAuth()
   const bulk = useBulkInsert()
+  const { systems } = useSystems()
   const [text, setText] = useState("")
   const [errors, setErrors] = useState<string[]>([])
   const [showHelp, setShowHelp] = useState(false)
@@ -39,7 +41,7 @@ export function ImportDialog({
   }
 
   async function doImport() {
-    const { rows, errors } = parseImportCsv(text)
+    const { rows, errors } = parseImportCsv(text, systems)
     setErrors(errors)
     if (rows.length === 0) {
       toast.error("Nothing to import", {
@@ -99,8 +101,8 @@ export function ImportDialog({
                 code (e.g. L03-005)
               </li>
               <li>
-                <code className="text-foreground">sno</code> — line number
-                (optional)
+                <code className="text-foreground">unique_id</code> — identifier /
+                serial number (optional, any string)
               </li>
               <li>
                 <code className="text-foreground">brand</code> — make (e.g.

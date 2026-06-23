@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"
+import { DatePicker } from "@/components/DatePicker"
 
 import {
   Dialog,
@@ -203,7 +204,7 @@ function ItemAttachments({ itemId }: { itemId: string }) {
 type FormState = {
   system: System
   location: string
-  sno: string
+  unique_id: string
   brand: string
   model_no: string
   description: string
@@ -223,7 +224,7 @@ function blank(system: System = "AV"): FormState {
   return {
     system,
     location: "",
-    sno: "",
+    unique_id: "",
     brand: "",
     model_no: "",
     description: "",
@@ -244,7 +245,7 @@ function fromItem(i: Item): FormState {
   return {
     system: i.system,
     location: i.location ?? "",
-    sno: i.sno != null ? String(i.sno) : "",
+    unique_id: i.unique_id ?? "",
     brand: i.brand ?? "",
     model_no: i.model_no ?? "",
     description: i.description ?? "",
@@ -296,7 +297,7 @@ export function ItemDialog({
     const payload = {
       system: form.system,
       location: form.location || null,
-      sno: form.sno ? Number(form.sno) : null,
+      unique_id: form.unique_id || null,
       brand: form.brand || null,
       model_no: form.model_no || null,
       description: form.description || null,
@@ -369,11 +370,11 @@ export function ItemDialog({
           <Field label="Location / Room">
             <Input value={form.location} onChange={(e) => set("location", e.target.value)} />
           </Field>
-          <Field label="S.No">
+          <Field label="Unique ID">
             <Input
-              type="number"
-              value={form.sno}
-              onChange={(e) => set("sno", e.target.value)}
+              value={form.unique_id}
+              onChange={(e) => set("unique_id", e.target.value)}
+              placeholder="e.g. SN-001 or AV-003"
             />
           </Field>
           <Field label="Brand">
@@ -424,7 +425,7 @@ export function ItemDialog({
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="ETA">
-            <Input type="date" value={form.eta} onChange={(e) => set("eta", e.target.value)} />
+            <DatePicker value={form.eta} onChange={(v) => set("eta", v)} placeholder="Select ETA" />
           </Field>
         </div>
 

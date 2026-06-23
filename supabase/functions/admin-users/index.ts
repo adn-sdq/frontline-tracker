@@ -100,6 +100,25 @@ Deno.serve(async (req) => {
       return json({ ok: true })
     }
 
+    if (action === "update_profile") {
+      if (!body.id) return json({ error: "User id required" }, 400)
+      const profilePatch: Record<string, unknown> = {}
+      if (body.full_name !== undefined) profilePatch.full_name = String(body.full_name ?? "").trim() || null
+      if (body.username !== undefined) {
+        const newUsername = String(body.username ?? "").trim().toLowerCase()
+        if (!newUsername) return json({ error: "Username cannot be empty" }, 400)
+        const newEmail = `${newUsername}@${DOMAIN}`
+        const { error: authErr } = await admin.auth.admin.updateUserById(body.id, { email: newEmail })
+        if (authErr) return json({ error: authErr.message }, 400)
+        profilePatch.username = newUsername
+      }
+      if (Object.keys(profilePatch).length > 0) {
+        const { error: profErr } = await admin.from("profiles").update(profilePatch).eq("id", body.id)
+        if (profErr) return json({ error: profErr.message }, 400)
+      }
+      return json({ ok: true })
+    }
+
     return json({ error: "Unknown action" }, 400)
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500)

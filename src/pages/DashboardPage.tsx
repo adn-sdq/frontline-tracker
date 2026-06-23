@@ -1,5 +1,6 @@
 import { useMemo } from "react"
-import { Loader2 } from "lucide-react"
+import { format } from "date-fns"
+import { AlertTriangle, Loader2 } from "lucide-react"
 import * as Progress from "@radix-ui/react-progress"
 
 import { useItems } from "@/hooks/useItems"
@@ -10,12 +11,12 @@ import {
   INSTALLATION_STATUSES,
   STATUS_LABELS,
   STATUS_STYLES,
+  type Item,
 } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
-// Summarise qty fields for an array of items
-function summarise(items: { qty_required: number; qty_ordered: number; qty_delivered: number; qty_installed: number }[]) {
+function summarise(items: Pick<Item, "qty_required" | "qty_ordered" | "qty_delivered" | "qty_installed">[]) {
   return items.reduce(
     (acc, it) => ({
       required: acc.required + (it.qty_required ?? 0),
@@ -46,17 +47,7 @@ function ProgressBar({ value, className }: { value: number; className?: string }
   )
 }
 
-function StatRow({
-  label,
-  value,
-  total,
-  barClass,
-}: {
-  label: string
-  value: number
-  total: number
-  barClass: string
-}) {
+function StatRow({ label, value, total, barClass }: { label: string; value: number; total: number; barClass: string }) {
   const p = pct(value, total)
   return (
     <div className="grid gap-1">
@@ -72,15 +63,7 @@ function StatRow({
   )
 }
 
-function StatusPills({
-  items,
-  field,
-  statuses,
-}: {
-  items: Record<string, string>[]
-  field: string
-  statuses: readonly string[]
-}) {
+function StatusPills({ items, field, statuses }: { items: Record<string, string>[]; field: string; statuses: readonly string[] }) {
   const counts: Record<string, number> = {}
   for (const it of items) {
     const v = it[field] ?? "unknown"
@@ -88,13 +71,30 @@ function StatusPills({
   }
   return (
     <div className="flex flex-wrap gap-1.5">
-      {statuses.map((s) => (
+      {statuses.map((s) =>
         counts[s] ? (
           <Badge key={s} className={cn("font-normal", STATUS_STYLES[s])}>
             {STATUS_LABELS[s] ?? s} · {counts[s]}
           </Badge>
         ) : null
-      ))}
+      )}
+    </div>
+  )
+}
+
+// Count-based bar for item analytics
+function CountBar({ label, count, total, barClass }: { label: string; count: number; total: number; barClass: string }) {
+  const p = pct(count, total)
+  return (
+    <div className="grid gap-1">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="tabular-nums font-medium">
+          {count}
+          <span className="ml-1 text-xs text-muted-foreground"> items ({p}%)</span>
+        </span>
+      </div>
+      <ProgressBar value={p} className={barClass} />
     </div>
   )
 }
@@ -113,6 +113,34 @@ export default function DashboardPage() {
     [allItems, systems]
   )
 
+  // Item-count analytics by status
+  const procurementCounts = useMemo(() => {
+    const c: Record<string, number> = {}
+    for (const it of allItems) c[it.procurement_status] = (c[it.procurement_status] ?? 0) + 1
+    return c
+  }, [allItems])
+
+  const deliveryCounts = useMemo(() => {
+    const c: Record<string, number> = {}
+    for (const it of allItems) c[it.delivery_status] = (c[it.delivery_status] ?? 0) + 1
+    return c
+  }, [allItems])
+
+  const installationCounts = useMemo(() => {
+    const c: Record<string, number> = {}
+    for (const it of allItems) c[it.installation_status] = (c[it.installation_status] ?? 0) + 1
+    return c
+  }, [allItems])
+
+  const overdueItems = useMemo(() =>
+    allItems.filter((it) => {
+      if (!it.eta) return false
+      const eta = new Date(it.eta)
+      return eta < new Date() && it.delivery_status !== "delivered"
+    }),
+    [allItems]
+  )
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-24">
@@ -121,37 +149,24 @@ export default function DashboardPage() {
     )
   }
 
+  const n = allItems.length
+
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-lg font-semibold tracking-tight">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          Procurement progress across all systems — {allItems.length} line items total.
+          Procurement progress across all systems — {n} line items total.
         </p>
       </div>
 
-      {/* Overall summary */}
+      {/* Overall qty summary */}
       <div className="rounded-xl border bg-card p-5">
-        <h2 className="mb-4 text-sm font-semibold">Overall</h2>
+        <h2 className="mb-4 text-sm font-semibold">Overall — Quantities</h2>
         <div className="grid gap-3">
-          <StatRow
-            label="Ordered"
-            value={overall.ordered}
-            total={overall.required}
-            barClass="bg-violet-500"
-          />
-          <StatRow
-            label="Delivered"
-            value={overall.delivered}
-            total={overall.required}
-            barClass="bg-blue-500"
-          />
-          <StatRow
-            label="Installed"
-            value={overall.installed}
-            total={overall.required}
-            barClass="bg-emerald-500"
-          />
+          <StatRow label="Ordered" value={overall.ordered} total={overall.required} barClass="bg-violet-500" />
+          <StatRow label="Delivered" value={overall.delivered} total={overall.required} barClass="bg-blue-500" />
+          <StatRow label="Installed" value={overall.installed} total={overall.required} barClass="bg-emerald-500" />
         </div>
         <div className="mt-4 grid grid-cols-4 gap-2">
           {(
@@ -170,6 +185,93 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Item-count analytics */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-xl border bg-card p-5">
+          <h2 className="mb-4 text-sm font-semibold">Procurement status — {n} items</h2>
+          <div className="grid gap-3">
+            {PROCUREMENT_STATUSES.map((s) => (
+              <CountBar
+                key={s}
+                label={STATUS_LABELS[s] ?? s}
+                count={procurementCounts[s] ?? 0}
+                total={n}
+                barClass={
+                  s === "ordered" ? "bg-violet-500"
+                  : s === "po_issued" ? "bg-blue-500"
+                  : s === "quoted" ? "bg-amber-500"
+                  : "bg-muted-foreground/30"
+                }
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-xl border bg-card p-5">
+          <h2 className="mb-4 text-sm font-semibold">Delivery & installation — {n} items</h2>
+          <div className="mb-3 grid gap-3">
+            {DELIVERY_STATUSES.map((s) => (
+              <CountBar
+                key={s}
+                label={`Delivery: ${STATUS_LABELS[s] ?? s}`}
+                count={deliveryCounts[s] ?? 0}
+                total={n}
+                barClass={s === "delivered" ? "bg-emerald-500" : s === "partial" ? "bg-amber-500" : "bg-muted-foreground/30"}
+              />
+            ))}
+          </div>
+          <div className="grid gap-3 border-t pt-3">
+            {INSTALLATION_STATUSES.map((s) => (
+              <CountBar
+                key={s}
+                label={`Install: ${STATUS_LABELS[s] ?? s}`}
+                count={installationCounts[s] ?? 0}
+                total={n}
+                barClass={
+                  s === "commissioned" ? "bg-emerald-600"
+                  : s === "installed" ? "bg-emerald-500"
+                  : s === "in_progress" ? "bg-blue-500"
+                  : "bg-muted-foreground/30"
+                }
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Overdue ETAs */}
+      {overdueItems.length > 0 && (
+        <div className="rounded-xl border border-amber-300/50 bg-amber-50/50 p-5 dark:border-amber-800/40 dark:bg-amber-950/20">
+          <div className="mb-3 flex items-center gap-2">
+            <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400" />
+            <h2 className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+              Overdue ETAs — {overdueItems.length} item{overdueItems.length !== 1 ? "s" : ""}
+            </h2>
+          </div>
+          <div className="flex flex-col gap-2">
+            {overdueItems.slice(0, 10).map((it) => (
+              <div key={it.id} className="flex items-center gap-2 text-sm">
+                <Badge variant="outline" className="shrink-0 font-mono text-xs">
+                  {labelFor(it.system) || it.system}
+                </Badge>
+                <span className="flex-1 truncate font-medium">
+                  {[it.brand, it.model_no].filter(Boolean).join(" · ") || "—"}
+                </span>
+                {it.unique_id && (
+                  <span className="font-mono text-xs text-primary shrink-0">{it.unique_id}</span>
+                )}
+                <span className="shrink-0 text-xs text-amber-700 dark:text-amber-400">
+                  ETA {format(new Date(it.eta!), "d MMM yyyy")}
+                </span>
+              </div>
+            ))}
+            {overdueItems.length > 10 && (
+              <p className="text-xs text-muted-foreground">…and {overdueItems.length - 10} more.</p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Per-system breakdown */}
       <div className="grid gap-4 md:grid-cols-2">
         {perSystem.map(({ sys, items, totals }) => (
@@ -185,45 +287,18 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div className="grid gap-3">
-                  <StatRow
-                    label="Ordered"
-                    value={totals.ordered}
-                    total={totals.required}
-                    barClass="bg-violet-500"
-                  />
-                  <StatRow
-                    label="Delivered"
-                    value={totals.delivered}
-                    total={totals.required}
-                    barClass="bg-blue-500"
-                  />
-                  <StatRow
-                    label="Installed"
-                    value={totals.installed}
-                    total={totals.required}
-                    barClass="bg-emerald-500"
-                  />
+                  <StatRow label="Ordered" value={totals.ordered} total={totals.required} barClass="bg-violet-500" />
+                  <StatRow label="Delivered" value={totals.delivered} total={totals.required} barClass="bg-blue-500" />
+                  <StatRow label="Installed" value={totals.installed} total={totals.required} barClass="bg-emerald-500" />
                 </div>
 
                 <div className="mt-4 grid gap-2 border-t pt-3">
-                  <div className="text-xs font-medium text-muted-foreground">Procurement status</div>
-                  <StatusPills
-                    items={items as unknown as Record<string, string>[]}
-                    field="procurement_status"
-                    statuses={PROCUREMENT_STATUSES}
-                  />
+                  <div className="text-xs font-medium text-muted-foreground">Procurement</div>
+                  <StatusPills items={items as unknown as Record<string, string>[]} field="procurement_status" statuses={PROCUREMENT_STATUSES} />
                   <div className="text-xs font-medium text-muted-foreground">Delivery</div>
-                  <StatusPills
-                    items={items as unknown as Record<string, string>[]}
-                    field="delivery_status"
-                    statuses={DELIVERY_STATUSES}
-                  />
+                  <StatusPills items={items as unknown as Record<string, string>[]} field="delivery_status" statuses={DELIVERY_STATUSES} />
                   <div className="text-xs font-medium text-muted-foreground">Installation</div>
-                  <StatusPills
-                    items={items as unknown as Record<string, string>[]}
-                    field="installation_status"
-                    statuses={INSTALLATION_STATUSES}
-                  />
+                  <StatusPills items={items as unknown as Record<string, string>[]} field="installation_status" statuses={INSTALLATION_STATUSES} />
                 </div>
               </>
             )}
