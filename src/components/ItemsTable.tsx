@@ -1,7 +1,5 @@
 import { formatDistanceToNow } from "date-fns"
-import { useQueryClient } from "@tanstack/react-query"
 import { History, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
-import { toast } from "sonner"
 
 import {
   Table,
@@ -19,17 +17,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { EditableQty, StatusSelect } from "@/components/StatusControls"
-import { ConflictError, useUpdateItem } from "@/hooks/useItems"
+import { StatusBadge } from "@/components/StatusControls"
 import { useSystems } from "@/hooks/useSystems"
-import {
-  DELIVERY_STATUSES,
-  INSTALLATION_STATUSES,
-  PROCUREMENT_STATUSES,
-  type Item,
-  type ItemPatch,
-  type Profile,
-} from "@/lib/types"
+import { SYSTEM_LABELS, type Item, type Profile } from "@/lib/types"
 
 interface Props {
   items: Item[]
@@ -46,26 +36,7 @@ export function ItemsTable({
   onHistory,
   onDelete,
 }: Props) {
-  const update = useUpdateItem()
-  const qc = useQueryClient()
   const { labelFor } = useSystems()
-
-  async function patch(item: Item, p: ItemPatch) {
-    try {
-      await update.mutateAsync({ id: item.id, version: item.version, patch: p })
-    } catch (e) {
-      if (e instanceof ConflictError) {
-        toast.warning("Someone else just changed this row", {
-          description: "Your edit was not applied. Showing the latest values.",
-        })
-        qc.invalidateQueries({ queryKey: ["items"] })
-      } else {
-        toast.error("Could not save", {
-          description: e instanceof Error ? e.message : "Unknown error",
-        })
-      }
-    }
-  }
 
   function who(id: string | null) {
     if (!id) return "—"
@@ -97,20 +68,24 @@ export function ItemsTable({
             <TableHead className="text-right">Ord</TableHead>
             <TableHead className="text-right">Dlv</TableHead>
             <TableHead className="text-right">Ins</TableHead>
-            <TableHead className="min-w-[130px]">Procurement</TableHead>
-            <TableHead className="min-w-[120px]">Delivery</TableHead>
-            <TableHead className="min-w-[140px]">Installation</TableHead>
+            <TableHead>Procurement</TableHead>
+            <TableHead>Delivery</TableHead>
+            <TableHead>Installation</TableHead>
             <TableHead className="min-w-[140px]">Last update</TableHead>
             <TableHead className="w-10"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items.map((item) => (
-            <TableRow key={item.id} className="align-middle">
+            <TableRow
+              key={item.id}
+              className="cursor-pointer align-middle"
+              onClick={() => onEdit(item)}
+            >
               <TableCell className="text-muted-foreground">{item.sno ?? ""}</TableCell>
               <TableCell>
                 <Badge variant="outline" className="font-medium">
-                  {labelFor(item.system)}
+                  {labelFor(item.system) || SYSTEM_LABELS[item.system] || item.system}
                 </Badge>
               </TableCell>
               <TableCell className="font-mono text-xs">{item.location}</TableCell>
@@ -122,56 +97,24 @@ export function ItemsTable({
               >
                 {item.description}
               </TableCell>
-              <TableCell className="text-right">
-                <EditableQty
-                  value={item.qty_required}
-                  onCommit={(v) => patch(item, { qty_required: v })}
-                />
-              </TableCell>
-              <TableCell className="text-right">
-                <EditableQty
-                  value={item.qty_ordered}
-                  onCommit={(v) => patch(item, { qty_ordered: v })}
-                />
-              </TableCell>
-              <TableCell className="text-right">
-                <EditableQty
-                  value={item.qty_delivered}
-                  onCommit={(v) => patch(item, { qty_delivered: v })}
-                />
-              </TableCell>
-              <TableCell className="text-right">
-                <EditableQty
-                  value={item.qty_installed}
-                  onCommit={(v) => patch(item, { qty_installed: v })}
-                />
+              <TableCell className="text-right tabular-nums">{item.qty_required}</TableCell>
+              <TableCell className="text-right tabular-nums">{item.qty_ordered}</TableCell>
+              <TableCell className="text-right tabular-nums">{item.qty_delivered}</TableCell>
+              <TableCell className="text-right tabular-nums">{item.qty_installed}</TableCell>
+              <TableCell>
+                <StatusBadge status={item.procurement_status} />
               </TableCell>
               <TableCell>
-                <StatusSelect
-                  value={item.procurement_status}
-                  options={PROCUREMENT_STATUSES}
-                  onChange={(v) => patch(item, { procurement_status: v as Item["procurement_status"] })}
-                />
+                <StatusBadge status={item.delivery_status} />
               </TableCell>
               <TableCell>
-                <StatusSelect
-                  value={item.delivery_status}
-                  options={DELIVERY_STATUSES}
-                  onChange={(v) => patch(item, { delivery_status: v as Item["delivery_status"] })}
-                />
-              </TableCell>
-              <TableCell>
-                <StatusSelect
-                  value={item.installation_status}
-                  options={INSTALLATION_STATUSES}
-                  onChange={(v) => patch(item, { installation_status: v as Item["installation_status"] })}
-                />
+                <StatusBadge status={item.installation_status} />
               </TableCell>
               <TableCell className="text-xs text-muted-foreground">
                 <div className="font-medium text-foreground">{who(item.updated_by)}</div>
                 {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="size-7">

@@ -140,6 +140,7 @@ export function useUploadDocumentFile() {
       file: File
       revLabel?: string
       note?: string
+      dated?: string
     }) => {
       const safe = args.file.name.replace(/[^\w.\-]+/g, "_")
       const path = `${args.documentId}/${Date.now()}_${safe}`
@@ -154,6 +155,7 @@ export function useUploadDocumentFile() {
         file_size: args.file.size,
         rev_label: args.revLabel || null,
         note: args.note || null,
+        dated: args.dated || undefined,
       })
       if (error) throw error
     },
@@ -161,6 +163,21 @@ export function useUploadDocumentFile() {
       qc.invalidateQueries({ queryKey: ["document_files", vars.documentId] })
       qc.invalidateQueries({ queryKey: ["document_file_counts"] })
     },
+  })
+}
+
+export function useUpdateFileDate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: { id: string; documentId: string; dated: string }) => {
+      const { error } = await supabase
+        .from("document_files")
+        .update({ dated: args.dated })
+        .eq("id", args.id)
+      if (error) throw error
+    },
+    onSuccess: (_d, vars) =>
+      qc.invalidateQueries({ queryKey: ["document_files", vars.documentId] }),
   })
 }
 

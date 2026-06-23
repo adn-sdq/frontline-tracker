@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import {
   DOC_STATUSES,
-  DOC_STATUS_HINTS,
   DOC_STATUS_LABELS,
   DOC_STATUS_STYLES,
 } from "@/lib/types"
@@ -35,19 +34,18 @@ export function DocStatusSelect({
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
         size="sm"
-        className={cn("h-8 w-full", DOC_STATUS_STYLES[value], className)}
+        className={cn(
+          "h-8 w-full min-w-0 [&>span]:truncate",
+          DOC_STATUS_STYLES[value],
+          className
+        )}
       >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
         {DOC_STATUSES.map((s) => (
           <SelectItem key={s} value={s}>
-            <span className="flex flex-col">
-              <span>{DOC_STATUS_LABELS[s]}</span>
-              <span className="text-xs text-muted-foreground">
-                {DOC_STATUS_HINTS[s]}
-              </span>
-            </span>
+            {DOC_STATUS_LABELS[s]}
           </SelectItem>
         ))}
       </SelectContent>

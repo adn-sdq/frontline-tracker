@@ -29,8 +29,11 @@ import {
   useDocumentComments,
   useDocumentFiles,
   useSetDocStatus,
+  useUpdateFileDate,
   useUploadDocumentFile,
 } from "@/hooks/useDocuments"
+
+const today = () => new Date().toISOString().slice(0, 10)
 import {
   DOC_STATUS_LABELS,
   type DocStatus,
@@ -57,12 +60,14 @@ export function DocumentDrawer({
   const files = useDocumentFiles(doc?.id ?? null)
   const comments = useDocumentComments(doc?.id ?? null)
   const upload = useUploadDocumentFile()
+  const updateFileDate = useUpdateFileDate()
   const addComment = useAddComment()
   const setStatus = useSetDocStatus()
   const fileInput = useRef<HTMLInputElement>(null)
 
   const [revLabel, setRevLabel] = useState("")
   const [note, setNote] = useState("")
+  const [uploadDate, setUploadDate] = useState(today())
   const [comment, setComment] = useState("")
   const [downloading, setDownloading] = useState<string | null>(null)
 
@@ -76,10 +81,17 @@ export function DocumentDrawer({
     const file = e.target.files?.[0]
     if (!file || !doc) return
     try {
-      await upload.mutateAsync({ documentId: doc.id, file, revLabel, note })
+      await upload.mutateAsync({
+        documentId: doc.id,
+        file,
+        revLabel,
+        note,
+        dated: uploadDate || undefined,
+      })
       toast.success("File uploaded")
       setRevLabel("")
       setNote("")
+      setUploadDate(today())
     } catch (err) {
       toast.error("Upload failed", {
         description: err instanceof Error ? err.message : "Unknown error",
@@ -175,9 +187,21 @@ export function DocumentDrawer({
                     className="h-8"
                   />
                 </div>
+                <div className="mt-2 grid gap-1">
+                  <span className="text-xs text-muted-foreground">
+                    Document date (defaults to today)
+                  </span>
+                  <Input
+                    type="date"
+                    value={uploadDate}
+                    onChange={(e) => setUploadDate(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
                 <input
                   ref={fileInput}
                   type="file"
+                  aria-label="Upload file"
                   className="hidden"
                   onChange={onPickFile}
                 />
@@ -231,6 +255,23 @@ export function DocumentDrawer({
                           addSuffix: true,
                         })}
                         {f.file_size ? ` · ${fmtSize(f.file_size)}` : ""}
+                      </div>
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">Dated</span>
+                        <Input
+                          type="date"
+                          aria-label="Document date"
+                          value={f.dated ?? ""}
+                          onChange={(e) =>
+                            doc &&
+                            updateFileDate.mutate({
+                              id: f.id,
+                              documentId: doc.id,
+                              dated: e.target.value,
+                            })
+                          }
+                          className="h-7 w-36 px-2 text-xs"
+                        />
                       </div>
                       {f.note && (
                         <div className="text-xs text-muted-foreground italic">

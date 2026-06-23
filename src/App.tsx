@@ -19,7 +19,9 @@ function FullScreen({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  const { session, loading } = useAuth()
+  const { session, loading, profile } = useAuth()
+  const isFirstfix = profile?.org === "firstfix"
+  const isAdmin = !!profile?.is_admin
 
   if (!hasSupabaseConfig) {
     return (
@@ -52,12 +54,15 @@ export default function App() {
       <Route
         path="/"
         element={
-          session ? (
+          !session ? (
+            <Navigate to="/login" replace />
+          ) : isFirstfix ? (
+            // Contractors only get the Documents area.
+            <Navigate to="/documents" replace />
+          ) : (
             <AppLayout>
               <TrackerPage />
             </AppLayout>
-          ) : (
-            <Navigate to="/login" replace />
           )
         }
       />
@@ -76,16 +81,21 @@ export default function App() {
       <Route
         path="/admin"
         element={
-          session ? (
+          !session ? (
+            <Navigate to="/login" replace />
+          ) : !isAdmin ? (
+            <Navigate to={isFirstfix ? "/documents" : "/"} replace />
+          ) : (
             <AppLayout>
               <AdminPage />
             </AppLayout>
-          ) : (
-            <Navigate to="/login" replace />
           )
         }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route
+        path="*"
+        element={<Navigate to={isFirstfix ? "/documents" : "/"} replace />}
+      />
     </Routes>
   )
 }

@@ -45,6 +45,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { profile, user, signOut } = useAuth()
   const { dark, toggle } = useTheme()
   const name = profile?.full_name ?? profile?.username ?? user?.email ?? "User"
+  const isFirstfix = profile?.org === "firstfix"
 
   return (
     <div className="min-h-svh bg-background">
@@ -61,7 +62,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
 
           <nav className="hidden items-center gap-1 md:flex">
-            <NavItem to="/" icon={PackageCheck} label="Procurement" />
+            {!isFirstfix && (
+              <NavItem to="/" icon={PackageCheck} label="Procurement" />
+            )}
             <NavItem to="/documents" icon={FileText} label="Documents" />
             {profile?.is_admin && (
               <NavItem to="/admin" icon={Shield} label="Admin" />
@@ -107,7 +110,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         {/* Mobile nav */}
         <nav className="flex items-center gap-1 overflow-x-auto border-t px-2 py-1.5 md:hidden">
-          <NavItem to="/" icon={PackageCheck} label="Procurement" />
+          {!isFirstfix && (
+            <NavItem to="/" icon={PackageCheck} label="Procurement" />
+          )}
           <NavItem to="/documents" icon={FileText} label="Documents" />
           {profile?.is_admin && <NavItem to="/admin" icon={Shield} label="Admin" />}
         </nav>

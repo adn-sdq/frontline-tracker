@@ -189,6 +189,7 @@ export interface DocumentFile {
   file_size: number | null
   rev_label: string | null
   note: string | null
+  dated: string
   uploaded_by: string | null
   uploaded_at: string
 }
