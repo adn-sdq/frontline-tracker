@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from "date-fns"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, MapPin } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -17,32 +17,36 @@ interface Props {
   onToggle?: (id: string) => void
 }
 
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+
 export function ItemsTableSkeleton() {
   return (
-    <div className="rounded-xl border bg-card overflow-hidden">
-      <div className="border-b bg-muted/40 px-4 py-2">
-        <Skeleton className="h-4 w-32" />
-      </div>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 border-t px-4 py-3.5">
-          <div className="flex-1 space-y-2">
-            <div className="flex gap-2">
-              <Skeleton className="h-5 w-14 rounded-full" />
-              <Skeleton className="h-5 w-20" />
+    <div className="rounded-xl border bg-card overflow-hidden divide-y">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 px-4 py-3.5">
+          <div className="flex-1 flex items-center gap-3 min-w-0">
+            <div className="space-y-1.5 min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-5 w-12 rounded-full" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-3 w-24 ml-1" />
+              </div>
+              <Skeleton className="h-4 w-52" />
             </div>
-            <Skeleton className="h-4 w-48" />
-            <Skeleton className="h-3 w-28" />
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 shrink-0">
             <Skeleton className="h-5 w-16 rounded-full" />
             <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-5 w-20 rounded-full" />
           </div>
-          <Skeleton className="size-4 rounded" />
+          <Skeleton className="size-4 rounded shrink-0" />
         </div>
       ))}
     </div>
   )
 }
+
+// ── Table ─────────────────────────────────────────────────────────────────────
 
 export function ItemsTable({
   items,
@@ -55,9 +59,9 @@ export function ItemsTable({
   const { labelFor } = useSystems()
 
   function who(id: string | null) {
-    if (!id) return "—"
+    if (!id) return null
     const p = profiles[id]
-    return p?.full_name ?? p?.username ?? "Unknown"
+    return p?.full_name ?? p?.username ?? null
   }
 
   if (items.length === 0) {
@@ -69,66 +73,93 @@ export function ItemsTable({
   }
 
   return (
-    <div className="rounded-xl border bg-card overflow-hidden">
-      {items.map((item, idx) => (
-        <button
-          key={item.id}
-          type="button"
-          onClick={() => (selectable ? onToggle?.(item.id) : onView(item))}
-          className={[
-            "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/40",
-            idx !== 0 ? "border-t" : "",
-            selectable && selectedIds?.has(item.id) ? "bg-primary/5" : "",
-          ].join(" ")}
-        >
-          {selectable && (
-            <Checkbox
-              checked={selectedIds?.has(item.id) ?? false}
-              onCheckedChange={() => onToggle?.(item.id)}
-              onClick={(e) => e.stopPropagation()}
-              aria-label="Select item"
-              className="shrink-0"
-            />
-          )}
+    <div className="rounded-xl border bg-card overflow-hidden divide-y">
+      {items.map((item) => {
+        const selected = selectedIds?.has(item.id) ?? false
+        const title = [item.brand, item.model_no].filter(Boolean).join(" · ")
+        const updatedBy = who(item.updated_by)
 
-          {/* Identity */}
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Badge variant="outline" className="shrink-0 font-medium text-xs py-0">
-                {labelFor(item.system) || SYSTEM_LABELS[item.system] || item.system}
-              </Badge>
-              {item.unique_id && (
-                <span className="font-mono text-xs font-semibold text-primary shrink-0">
-                  {item.unique_id}
-                </span>
-              )}
-              {item.location && (
-                <span className="font-mono text-xs text-muted-foreground truncate">
-                  {item.location}
-                </span>
-              )}
-            </div>
-            <div className="mt-0.5 truncate font-medium text-sm">
-              {item.brand}{item.brand && item.model_no ? " · " : ""}{item.model_no}
-            </div>
-            {item.description && (
-              <div className="truncate text-xs text-muted-foreground">{item.description}</div>
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => (selectable ? onToggle?.(item.id) : onView(item))}
+            className={[
+              "group w-full flex items-center gap-4 px-4 py-3.5 text-left transition-colors",
+              selected ? "bg-primary/5" : "hover:bg-accent/30",
+            ].join(" ")}
+          >
+            {/* Selection checkbox */}
+            {selectable && (
+              <Checkbox
+                checked={selected}
+                onCheckedChange={() => onToggle?.(item.id)}
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Select item"
+                className="shrink-0"
+              />
             )}
-            <div className="mt-1 text-xs text-muted-foreground">
-              {who(item.updated_by)} · {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
+
+            {/* ── Identity (takes remaining space) ── */}
+            <div className="min-w-0 flex-1">
+              {/* Line 1: system badge + uid + location */}
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <Badge
+                  variant="outline"
+                  className="shrink-0 py-0 text-xs font-semibold"
+                >
+                  {labelFor(item.system) || SYSTEM_LABELS[item.system] || item.system}
+                </Badge>
+                {item.unique_id && (
+                  <span className="font-mono text-xs font-bold text-primary shrink-0">
+                    {item.unique_id}
+                  </span>
+                )}
+                {item.location && (
+                  <span className="flex items-center gap-0.5 text-xs text-muted-foreground min-w-0">
+                    <MapPin className="size-3 shrink-0" />
+                    <span className="truncate max-w-45">{item.location}</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Line 2: title */}
+              <p className="mt-1 truncate font-medium text-sm">
+                {title || <span className="text-muted-foreground">—</span>}
+              </p>
+
+              {/* Line 3: description + attribution — only if they exist */}
+              {(item.description || updatedBy) && (
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {item.description ? (
+                    <span className="mr-2">{item.description}</span>
+                  ) : null}
+                  {updatedBy
+                    ? `${updatedBy} · ${formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}`
+                    : formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
+                </p>
+              )}
             </div>
-          </div>
 
-          {/* Statuses — more useful than raw qty numbers */}
-          <div className="hidden shrink-0 flex-col gap-1 sm:flex">
-            <StatusBadge status={item.procurement_status} />
-            <StatusBadge status={item.delivery_status} />
-            <StatusBadge status={item.installation_status} />
-          </div>
+            {/* ── Statuses — horizontal row, fixed layout ── */}
+            <div className="hidden shrink-0 items-center gap-1.5 lg:flex">
+              <StatusBadge status={item.procurement_status} />
+              <span className="text-muted-foreground/40 text-xs">·</span>
+              <StatusBadge status={item.delivery_status} />
+              <span className="text-muted-foreground/40 text-xs">·</span>
+              <StatusBadge status={item.installation_status} />
+            </div>
 
-          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-        </button>
-      ))}
+            {/* Medium screens: just delivery status as the headline indicator */}
+            <div className="shrink-0 lg:hidden">
+              <StatusBadge status={item.delivery_status} />
+            </div>
+
+            {/* Chevron */}
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
+          </button>
+        )
+      })}
     </div>
   )
 }
