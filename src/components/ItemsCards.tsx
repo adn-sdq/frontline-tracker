@@ -145,14 +145,7 @@ function ItemCard({
           {title || <span className="text-muted-foreground">—</span>}
         </p>
 
-        {/* Row 3: description */}
-        {item.description && (
-          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground leading-relaxed">
-            {item.description}
-          </p>
-        )}
-
-        {/* Row 4: location */}
+        {/* Row 3: location */}
         {item.location && (
           <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
             <MapPin className="size-3 shrink-0" />

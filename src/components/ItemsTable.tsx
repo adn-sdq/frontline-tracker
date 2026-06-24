@@ -128,17 +128,12 @@ export function ItemsTable({
                 {title || <span className="text-muted-foreground">—</span>}
               </p>
 
-              {/* Line 3: description + attribution — only if they exist */}
-              {(item.description || updatedBy) && (
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                  {item.description ? (
-                    <span className="mr-2">{item.description}</span>
-                  ) : null}
-                  {updatedBy
-                    ? `${updatedBy} · ${formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}`
-                    : formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
-                </p>
-              )}
+              {/* Line 3: attribution */}
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                {updatedBy
+                  ? `${updatedBy} · ${formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}`
+                  : formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
+              </p>
             </div>
 
             {/* ── Statuses — horizontal row, fixed layout ── */}
