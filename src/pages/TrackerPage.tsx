@@ -13,7 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { DashboardCards } from "@/components/DashboardCards"
 import { ItemsTable } from "@/components/ItemsTable"
 import { ItemsCards } from "@/components/ItemsCards"
 import { ItemDialog } from "@/components/ItemDialog"
@@ -119,8 +118,6 @@ export default function TrackerPage() {
           </Button>
         </div>
       </div>
-
-      <DashboardCards items={filtered} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Tabs value={system} onValueChange={(v) => setSystem(v as System | "ALL")}>
