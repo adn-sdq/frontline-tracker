@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Lightbulb, Loader2, PackageCheck } from "lucide-react"
+import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
 import { useAuth } from "@/contexts/AuthContext"
@@ -195,6 +196,16 @@ export default function LoginPage() {
           <p className="mt-4 text-center text-xs text-muted-foreground">
             Internal tool — contact your project admin for access.
           </p>
+
+          <div className="mt-6 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+            <Link to="/changelog" className="hover:text-foreground transition-colors">
+              Changelog
+            </Link>
+            <span>·</span>
+            <Link to="/docs" className="hover:text-foreground transition-colors">
+              Docs
+            </Link>
+          </div>
         </div>
       </div>
 

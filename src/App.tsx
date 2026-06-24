@@ -13,6 +13,8 @@ import DashboardPage from "@/pages/DashboardPage"
 import ProjectsPage from "@/pages/ProjectsPage"
 import AdminPage from "@/pages/AdminPage"
 import DeliveryNotesPage from "@/pages/DeliveryNotesPage"
+import ChangelogPage from "@/pages/ChangelogPage"
+import DocsPage from "@/pages/DocsPage"
 import { AppLayout } from "@/components/AppLayout"
 
 function FullScreen({ children }: { children: ReactNode }) {
@@ -152,6 +154,8 @@ export default function App() {
           )
         )}
       />
+      <Route path="/changelog" element={<ChangelogPage />} />
+      <Route path="/docs" element={<DocsPage />} />
       <Route path="*" element={<Navigate to={homeRedirect} replace />} />
     </Routes>
   )

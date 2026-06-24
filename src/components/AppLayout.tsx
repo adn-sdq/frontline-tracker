@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react"
-import { NavLink, useNavigate } from "react-router-dom"
+import { Link, NavLink, useNavigate } from "react-router-dom"
 import {
   BarChart3,
   Check,
@@ -182,6 +182,16 @@ function SidebarContent({
           {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
           {dark ? "Light mode" : "Dark mode"}
         </Button>
+
+        <div className="flex items-center gap-3 px-2 py-1">
+          <Link to="/changelog" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            Changelog
+          </Link>
+          <span className="text-muted-foreground/40 text-xs">·</span>
+          <Link to="/docs" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            Docs
+          </Link>
+        </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
