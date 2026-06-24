@@ -2,6 +2,41 @@
 
 ---
 
+## v0.3.0 — 2026-06-24
+
+UI/UX improvements across Procurement and Documents.
+
+### Procurement — Item Cards (mobile)
+- Complete card redesign: clear three-zone layout — identity top, labeled status
+  grid middle, footer attribution
+- Status grid shows three columns (Procurement / Delivery / Installation) each
+  with a category label above the badge — no more ambiguous unlabeled badges
+- Brand · Model is now the headline; description removed from list view
+  (still visible inside the detail sheet)
+- Unique ID displayed as bold primary-colour monospace next to system badge
+- Location on its own row with pin icon
+- Subtle scale animation on tap for mobile feedback
+
+### Procurement — Item Table (desktop)
+- Status badges are now in a horizontal row (`Ordered · Partial · In progress`)
+  instead of stacked vertically — consistent row height across all items
+- On medium screens only the delivery status badge is shown to avoid crowding;
+  all three appear at large breakpoint and above
+- Description removed from list view; attribution line simplified
+
+### Documents
+- New "Document type" field — dropdown with 11 types: Shop Drawing, Schematic,
+  O&M Manual, Training Manual, Method Statement, Commissioning Report,
+  Submittal, As-Built, Inspection Request, RFI, Other
+- Type badge shown on each document card
+- New "All types" filter dropdown on the Documents page
+
+### Delivery Notes
+- Separate Delivery Notes page with search and date range filters
+- Auto-naming: `DN-[PROJECT_INITIALS]-[YYYYMMDD]-[NNN]`
+
+---
+
 ## v0.2.0 — 2026-06-24
 
 Delivery note generation from procurement items.
