@@ -29,7 +29,7 @@ import {
 } from "@/hooks/useDocuments"
 import { useSystems } from "@/hooks/useSystems"
 import { useAuth } from "@/contexts/AuthContext"
-import type { DocStatus, DocumentRow } from "@/lib/types"
+import { DOC_TYPES, DOC_TYPE_LABELS, type DocStatus, type DocType, type DocumentRow } from "@/lib/types"
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -53,6 +53,7 @@ export function DocumentDialog({
   const [title, setTitle] = useState("")
   const [docNumber, setDocNumber] = useState("")
   const [system, setSystem] = useState<string>("")
+  const [docType, setDocType] = useState<DocType | "">("")
   const [revision, setRevision] = useState("")
   const [status, setStatus] = useState<DocStatus>("pending")
   const [description, setDescription] = useState("")
@@ -64,6 +65,7 @@ export function DocumentDialog({
     setTitle(doc?.title ?? "")
     setDocNumber(doc?.doc_number ?? "")
     setSystem(doc?.system ?? "")
+    setDocType(doc?.doc_type ?? "")
     setRevision(doc?.revision ?? "")
     setStatus(doc?.status ?? "pending")
     setDescription(doc?.description ?? "")
@@ -80,6 +82,7 @@ export function DocumentDialog({
       title: title.trim(),
       doc_number: docNumber || null,
       system: system || null,
+      doc_type: docType || null,
       revision: revision || null,
       status,
       description: description || null,
@@ -166,9 +169,25 @@ export function DocumentDialog({
             </Select>
           </div>
           <div className="grid gap-1.5">
-            <Label className="text-xs text-muted-foreground">Status / code</Label>
-            <DocStatusSelect value={status} onChange={(v) => setStatus(v as DocStatus)} />
+            <Label className="text-xs text-muted-foreground">Document type</Label>
+            <Select value={docType} onValueChange={(v) => setDocType(v as DocType)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="—" />
+              </SelectTrigger>
+              <SelectContent>
+                {DOC_TYPES.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {DOC_TYPE_LABELS[t]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label className="text-xs text-muted-foreground">Status / code</Label>
+          <DocStatusSelect value={status} onChange={(v) => setStatus(v as DocStatus)} />
         </div>
 
         <div className="grid gap-1.5">

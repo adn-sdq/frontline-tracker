@@ -52,6 +52,8 @@ import { useSystems } from "@/hooks/useSystems"
 import {
   DOC_STATUSES,
   DOC_STATUS_LABELS,
+  DOC_TYPES,
+  DOC_TYPE_LABELS,
   type DocStatus,
   type DocumentRow,
 } from "@/lib/types"
@@ -68,6 +70,7 @@ export default function DocumentsPage() {
   const [search, setSearch] = useState("")
   const [system, setSystem] = useState("ALL")
   const [status, setStatus] = useState("ALL")
+  const [docType, setDocType] = useState("ALL")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editDoc, setEditDoc] = useState<DocumentRow | null>(null)
   const [openDoc, setOpenDoc] = useState<DocumentRow | null>(null)
@@ -84,12 +87,13 @@ export default function DocumentsPage() {
     return docs.filter((d) => {
       if (system !== "ALL" && d.system !== system) return false
       if (status !== "ALL" && d.status !== status) return false
+      if (docType !== "ALL" && d.doc_type !== docType) return false
       if (!q) return true
       return [d.title, d.doc_number, d.description]
         .filter(Boolean)
         .some((v) => (v as string).toLowerCase().includes(q))
     })
-  }, [docs, search, system, status])
+  }, [docs, search, system, status, docType])
 
   // Keep the drawer's document in sync with refreshed data.
   const liveOpenDoc = openDoc ? docs.find((d) => d.id === openDoc.id) ?? openDoc : null
@@ -247,6 +251,19 @@ export default function DocumentsPage() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={docType} onValueChange={setDocType}>
+          <SelectTrigger className="w-full sm:w-44">
+            <SelectValue placeholder="All types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All types</SelectItem>
+            {DOC_TYPES.map((t) => (
+              <SelectItem key={t} value={t}>
+                {DOC_TYPE_LABELS[t]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="w-full sm:w-40">
             <SelectValue />
@@ -333,6 +350,11 @@ export default function DocumentsPage() {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <DocStatusBadge status={d.status} />
+                  {d.doc_type && (
+                    <Badge variant="secondary" className="text-xs">
+                      {DOC_TYPE_LABELS[d.doc_type]}
+                    </Badge>
+                  )}
                   {d.system && (
                     <Badge variant="outline">{labelFor(d.system)}</Badge>
                   )}

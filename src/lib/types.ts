@@ -158,6 +158,35 @@ export interface Profile {
 }
 
 // ---- Documents ----------------------------------------------------------
+export const DOC_TYPES = [
+  "shop_drawing",
+  "schematic",
+  "om_manual",
+  "training_manual",
+  "method_statement",
+  "commissioning_report",
+  "submittal",
+  "as_built",
+  "inspection_request",
+  "rfi",
+  "other",
+] as const
+export type DocType = (typeof DOC_TYPES)[number]
+
+export const DOC_TYPE_LABELS: Record<string, string> = {
+  shop_drawing: "Shop Drawing",
+  schematic: "Schematic",
+  om_manual: "O&M Manual",
+  training_manual: "Training Manual",
+  method_statement: "Method Statement",
+  commissioning_report: "Commissioning Report",
+  submittal: "Submittal",
+  as_built: "As-Built",
+  inspection_request: "Inspection Request",
+  rfi: "RFI",
+  other: "Other",
+}
+
 export const DOC_STATUSES = [
   "pending",
   "under_review",
@@ -202,6 +231,7 @@ export interface DocumentRow {
   system: string | null
   description: string | null
   status: DocStatus
+  doc_type: DocType | null
   revision: string | null
   created_by: string | null
   created_at: string
