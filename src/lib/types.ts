@@ -232,6 +232,30 @@ export interface DocumentComment {
   created_at: string
 }
 
+// ---- Delivery notes -----------------------------------------------------
+export interface DeliveryNoteItem {
+  description: string
+  qty: number
+  serial: string
+}
+
+export interface DeliveryNote {
+  id: string
+  project_id: string
+  seq: number
+  dn_number: string
+  dn_date: string
+  po: string | null
+  customer_po: string | null
+  deliver_to: string | null
+  location: string | null
+  contact: string | null
+  items: DeliveryNoteItem[]
+  notes: string | null
+  generated_by: string | null
+  generated_at: string
+}
+
 export interface ItemHistory {
   id: number
   item_id: string

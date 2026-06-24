@@ -2,6 +2,7 @@ import { formatDistanceToNow } from "date-fns"
 import { ChevronRight } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { StatusBadge } from "@/components/StatusControls"
 import { useSystems } from "@/hooks/useSystems"
 import { SYSTEM_LABELS, type Item, type Profile } from "@/lib/types"
@@ -10,9 +11,19 @@ interface Props {
   items: Item[]
   profiles: Record<string, Profile>
   onView: (item: Item) => void
+  selectable?: boolean
+  selectedIds?: Set<string>
+  onToggle?: (id: string) => void
 }
 
-export function ItemsTable({ items, profiles, onView }: Props) {
+export function ItemsTable({
+  items,
+  profiles,
+  onView,
+  selectable = false,
+  selectedIds,
+  onToggle,
+}: Props) {
   const { labelFor } = useSystems()
 
   function who(id: string | null) {
@@ -30,9 +41,14 @@ export function ItemsTable({ items, profiles, onView }: Props) {
     )
   }
 
+  const cols = selectable
+    ? "grid-cols-[28px_1fr_auto_auto_24px]"
+    : "grid-cols-[1fr_auto_auto_24px]"
+
   return (
     <div className="rounded-xl border bg-card overflow-hidden">
-      <div className="grid grid-cols-[1fr_auto_auto_24px] text-xs font-medium text-muted-foreground bg-muted/40 px-4 py-2 border-b">
+      <div className={`grid ${cols} text-xs font-medium text-muted-foreground bg-muted/40 px-4 py-2 border-b`}>
+        {selectable && <span />}
         <span>Item</span>
         <span>Status</span>
         <span className="text-right">R/O/D/I</span>
@@ -42,11 +58,19 @@ export function ItemsTable({ items, profiles, onView }: Props) {
         <button
           key={item.id}
           type="button"
-          onClick={() => onView(item)}
-          className={`w-full grid grid-cols-[1fr_auto_auto_24px] items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/40 ${
+          onClick={() => (selectable ? onToggle?.(item.id) : onView(item))}
+          className={`w-full grid ${cols} items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/40 ${
             idx !== 0 ? "border-t" : ""
-          }`}
+          } ${selectable && selectedIds?.has(item.id) ? "bg-primary/5" : ""}`}
         >
+          {selectable && (
+            <Checkbox
+              checked={selectedIds?.has(item.id) ?? false}
+              onCheckedChange={() => onToggle?.(item.id)}
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Select item"
+            />
+          )}
           {/* Identity */}
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">

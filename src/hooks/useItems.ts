@@ -22,7 +22,7 @@ export function useItems() {
         .select("*")
         .eq("project_id", currentProjectId)
         .order("system", { ascending: true })
-        .order("sno", { ascending: true, nullsFirst: false })
+        .order("unique_id", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true })
       if (error) throw error
       return (data ?? []) as Item[]

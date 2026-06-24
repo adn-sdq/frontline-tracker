@@ -1,5 +1,13 @@
 import { useMemo, useState } from "react"
-import { Download, Loader2, Plus, Search, Upload } from "lucide-react"
+import {
+  Download,
+  FileText,
+  Loader2,
+  Plus,
+  Search,
+  Upload,
+  X,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -17,6 +25,7 @@ import { ItemsTable } from "@/components/ItemsTable"
 import { ItemsCards } from "@/components/ItemsCards"
 import { ItemDialog } from "@/components/ItemDialog"
 import { ItemDetailSheet } from "@/components/ItemDetailSheet"
+import { DeliveryNoteDialog } from "@/components/DeliveryNoteDialog"
 import { HistoryDrawer } from "@/components/HistoryDrawer"
 import { ImportDialog } from "@/components/ImportDialog"
 import {
@@ -50,6 +59,25 @@ export default function TrackerPage() {
   const [importOpen, setImportOpen] = useState(false)
   const [deleteItem, setDeleteItem] = useState<Item | null>(null)
 
+  // Delivery-note selection mode
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [dnOpen, setDnOpen] = useState(false)
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function exitSelect() {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return items.filter((i) => {
@@ -67,6 +95,11 @@ export default function TrackerPage() {
     for (const i of items) c[i.system] = (c[i.system] ?? 0) + 1
     return c
   }, [items, activeSystems])
+
+  const selectedItems = useMemo(
+    () => items.filter((i) => selectedIds.has(i.id)),
+    [items, selectedIds]
+  )
 
   function openAdd() {
     setEditItem(null)
@@ -102,6 +135,13 @@ export default function TrackerPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant={selectMode ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => (selectMode ? exitSelect() : setSelectMode(true))}
+          >
+            <FileText className="size-4" /> Delivery note
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
             <Upload className="size-4" /> Import CSV
           </Button>
@@ -118,6 +158,27 @@ export default function TrackerPage() {
           </Button>
         </div>
       </div>
+
+      {selectMode && (
+        <div className="sticky top-2 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-primary/5 px-4 py-2.5 shadow-sm">
+          <div className="text-sm">
+            <strong>{selectedIds.size}</strong> selected · pick the items going
+            on this delivery note
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={exitSelect}>
+              <X className="size-4" /> Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={selectedIds.size === 0}
+              onClick={() => setDnOpen(true)}
+            >
+              <FileText className="size-4" /> Generate ({selectedIds.size})
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Tabs value={system} onValueChange={(v) => setSystem(v as System | "ALL")}>
@@ -153,6 +214,9 @@ export default function TrackerPage() {
               items={filtered}
               profiles={profiles}
               onView={setViewItem}
+              selectable={selectMode}
+              selectedIds={selectedIds}
+              onToggle={toggleSelect}
             />
           </div>
           <div className="md:hidden">
@@ -160,6 +224,9 @@ export default function TrackerPage() {
               items={filtered}
               profiles={profiles}
               onView={setViewItem}
+              selectable={selectMode}
+              selectedIds={selectedIds}
+              onToggle={toggleSelect}
             />
           </div>
         </>
@@ -184,6 +251,14 @@ export default function TrackerPage() {
         }
       />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
+      <DeliveryNoteDialog
+        open={dnOpen}
+        onOpenChange={(o) => {
+          setDnOpen(o)
+          if (!o) exitSelect()
+        }}
+        items={selectedItems}
+      />
       <HistoryDrawer
         item={historyItem}
         profiles={profiles}

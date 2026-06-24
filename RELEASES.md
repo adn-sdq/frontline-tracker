@@ -2,6 +2,28 @@
 
 ---
 
+## v0.2.0 — 2026-06-24
+
+Delivery note generation from procurement items.
+
+### Delivery Notes
+- New "Delivery note" button on the Procurement page enters a selection mode —
+  tick the items being delivered, then "Generate"
+- Pre-fills a form from the selected items (description from brand/model,
+  quantity, serial from Unique ID); all fields editable, lines can be added/removed
+- Generates a print-perfect PDF matching the Frontline Solutions template
+  (orange/navy branding, logo, T&C, signature blocks) via the browser's
+  Save-as-PDF — no extra libraries
+- Auto-incrementing per-project delivery number (atomic, conflict-safe)
+- Each generated note is saved to the database with a snapshot of its items
+- "Preview / Print only" option to generate without saving
+
+### Fixes
+- Fixed item ordering query still referencing the old `sno` column (renamed to
+  `unique_id` in v0.1) — Procurement list now sorts correctly again
+
+---
+
 ## v0.1.0 — 2026-06-24
 
 **Initial production release.**

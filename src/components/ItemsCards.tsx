@@ -2,6 +2,7 @@ import { formatDistanceToNow } from "date-fns"
 import { ChevronRight } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { StatusBadge } from "@/components/StatusControls"
 import { useSystems } from "@/hooks/useSystems"
 import { SYSTEM_LABELS, type Item, type Profile } from "@/lib/types"
@@ -10,9 +11,19 @@ interface Props {
   items: Item[]
   profiles: Record<string, Profile>
   onView: (item: Item) => void
+  selectable?: boolean
+  selectedIds?: Set<string>
+  onToggle?: (id: string) => void
 }
 
-export function ItemsCards({ items, profiles, onView }: Props) {
+export function ItemsCards({
+  items,
+  profiles,
+  onView,
+  selectable = false,
+  selectedIds,
+  onToggle,
+}: Props) {
   const { labelFor } = useSystems()
 
   function who(id: string | null) {
@@ -35,10 +46,23 @@ export function ItemsCards({ items, profiles, onView }: Props) {
         <button
           key={item.id}
           type="button"
-          onClick={() => onView(item)}
-          className="group w-full rounded-xl border bg-card p-3.5 text-left transition-colors hover:border-primary/40 hover:bg-accent/30"
+          onClick={() => (selectable ? onToggle?.(item.id) : onView(item))}
+          className={`group w-full rounded-xl border bg-card p-3.5 text-left transition-colors hover:border-primary/40 hover:bg-accent/30 ${
+            selectable && selectedIds?.has(item.id)
+              ? "border-primary/60 bg-primary/5"
+              : ""
+          }`}
         >
           <div className="flex items-start justify-between gap-2">
+            {selectable && (
+              <Checkbox
+                checked={selectedIds?.has(item.id) ?? false}
+                onCheckedChange={() => onToggle?.(item.id)}
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Select item"
+                className="mt-1"
+              />
+            )}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5">
                 <Badge variant="outline" className="font-medium text-xs py-0">
