@@ -2,6 +2,63 @@
 
 ---
 
+## v0.3.0 — 2026-06-24
+
+UI/UX improvements across Procurement and Documents.
+
+### Procurement — Item Cards (mobile)
+- Complete card redesign: clear three-zone layout — identity top, labeled status
+  grid middle, footer attribution
+- Status grid shows three columns (Procurement / Delivery / Installation) each
+  with a category label above the badge — no more ambiguous unlabeled badges
+- Brand · Model is now the headline; description removed from list view
+  (still visible inside the detail sheet)
+- Unique ID displayed as bold primary-colour monospace next to system badge
+- Location on its own row with pin icon
+- Subtle scale animation on tap for mobile feedback
+
+### Procurement — Item Table (desktop)
+- Status badges are now in a horizontal row (`Ordered · Partial · In progress`)
+  instead of stacked vertically — consistent row height across all items
+- On medium screens only the delivery status badge is shown to avoid crowding;
+  all three appear at large breakpoint and above
+- Description removed from list view; attribution line simplified
+
+### Documents
+- New "Document type" field — dropdown with 11 types: Shop Drawing, Schematic,
+  O&M Manual, Training Manual, Method Statement, Commissioning Report,
+  Submittal, As-Built, Inspection Request, RFI, Other
+- Type badge shown on each document card
+- New "All types" filter dropdown on the Documents page
+
+### Delivery Notes
+- Separate Delivery Notes page with search and date range filters
+- Auto-naming: `DN-[PROJECT_INITIALS]-[YYYYMMDD]-[NNN]`
+
+---
+
+## v0.2.0 — 2026-06-24
+
+Delivery note generation from procurement items.
+
+### Delivery Notes
+- New "Delivery note" button on the Procurement page enters a selection mode —
+  tick the items being delivered, then "Generate"
+- Pre-fills a form from the selected items (description from brand/model,
+  quantity, serial from Unique ID); all fields editable, lines can be added/removed
+- Generates a print-perfect PDF matching the Frontline Solutions template
+  (orange/navy branding, logo, T&C, signature blocks) via the browser's
+  Save-as-PDF — no extra libraries
+- Auto-incrementing per-project delivery number (atomic, conflict-safe)
+- Each generated note is saved to the database with a snapshot of its items
+- "Preview / Print only" option to generate without saving
+
+### Fixes
+- Fixed item ordering query still referencing the old `sno` column (renamed to
+  `unique_id` in v0.1) — Procurement list now sorts correctly again
+
+---
+
 ## v0.1.0 — 2026-06-24
 
 **Initial production release.**
