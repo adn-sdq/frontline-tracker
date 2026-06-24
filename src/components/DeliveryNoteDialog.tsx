@@ -21,6 +21,19 @@ import { useCreateDeliveryNote, useNextDnNumber } from "@/hooks/useDeliveryNotes
 import { printDeliveryNote } from "@/lib/deliveryNotePdf"
 import type { DeliveryNoteItem, Item } from "@/lib/types"
 
+// Auto-name: DN-[PROJECT_CODE]-[YYYYMMDD]-[NNN]
+// e.g. DN-ILMI-20260624-001
+function buildDnNumber(projectName: string | undefined, seq: number): string {
+  const code = (projectName ?? "")
+    .split(/\s+/)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("")
+    .slice(0, 6) || "PRJ"
+  const date = format(new Date(), "yyyyMMdd")
+  const num = String(seq).padStart(3, "0")
+  return `DN-${code}-${date}-${num}`
+}
+
 // Build a sensible default delivery-note line from a tracker item:
 // first line = brand + model, second line = description; serial = unique_id.
 function itemToLine(i: Item): DeliveryNoteItem {
@@ -74,7 +87,7 @@ export function DeliveryNoteDialog({
   // Re-seed the form each time the dialog opens with a fresh selection.
   useEffect(() => {
     if (!open) return
-    setDnNumber(nextNum ? String(nextNum) : "")
+    setDnNumber(nextNum ? buildDnNumber(currentProject?.name, nextNum) : "")
     setDate(format(new Date(), "yyyy-MM-dd"))
     setPo("")
     setCustomerPo("")

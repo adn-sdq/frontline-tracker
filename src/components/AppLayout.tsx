@@ -4,6 +4,7 @@ import {
   BarChart3,
   Check,
   ChevronsUpDown,
+  ClipboardList,
   FileText,
   FolderOpen,
   KeyRound,
@@ -153,6 +154,9 @@ function SidebarContent({
       <nav className="flex flex-col gap-0.5 p-2 flex-1">
         {allowedPages.has("tracker") && (
           <NavItem to="/" icon={PackageCheck} label="Procurement" onClick={onNavigate} />
+        )}
+        {allowedPages.has("tracker") && (
+          <NavItem to="/delivery-notes" icon={ClipboardList} label="Delivery notes" onClick={onNavigate} indent />
         )}
         {allowedPages.has("documents") && (
           <NavItem to="/documents" icon={FileText} label="Documents" onClick={onNavigate} />
@@ -314,11 +318,13 @@ function NavItem({
   icon: Icon,
   label,
   onClick,
+  indent = false,
 }: {
   to: string
   icon: typeof PackageCheck
   label: string
   onClick?: () => void
+  indent?: boolean
 }) {
   return (
     <NavLink
@@ -327,7 +333,8 @@ function NavItem({
       onClick={onClick}
       className={({ isActive }) =>
         cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+          "flex items-center gap-3 rounded-md py-1.5 text-sm transition-colors",
+          indent ? "pl-9 pr-3 font-normal" : "px-3 font-medium",
           isActive
             ? "bg-primary/10 text-primary"
             : "text-muted-foreground hover:bg-accent hover:text-foreground"

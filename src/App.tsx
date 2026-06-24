@@ -12,6 +12,7 @@ import DocumentsPage from "@/pages/DocumentsPage"
 import DashboardPage from "@/pages/DashboardPage"
 import ProjectsPage from "@/pages/ProjectsPage"
 import AdminPage from "@/pages/AdminPage"
+import DeliveryNotesPage from "@/pages/DeliveryNotesPage"
 import { AppLayout } from "@/components/AppLayout"
 
 function FullScreen({ children }: { children: ReactNode }) {
@@ -138,6 +139,18 @@ export default function App() {
             </AppLayout>
           )
         }
+      />
+      <Route
+        path="/delivery-notes"
+        element={withProject(
+          !canAccess("tracker") ? (
+            <Navigate to={pageRedirect} replace />
+          ) : (
+            <AppLayout>
+              <DeliveryNotesPage />
+            </AppLayout>
+          )
+        )}
       />
       <Route path="*" element={<Navigate to={homeRedirect} replace />} />
     </Routes>
