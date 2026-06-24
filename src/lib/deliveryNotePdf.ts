@@ -107,14 +107,8 @@ function buildHtml(d: DeliveryNotePrintData): string {
     border: 1px solid #2b2b2b;
     border-bottom: none;
   }
-  .brandrow { display: flex; align-items: center; justify-content: space-between;
-    border: 1px solid #2b2b2b; border-bottom: none; padding: 6px 10px; }
-  .brandrow img { height: 60px; width: auto; }
-  .brandrow .tagline {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 18px; line-height: 1.15; color: #1a1a1a; text-align: right;
-    border-left: 2px solid #999; padding-left: 14px;
-  }
+  .brandrow { border: 1px solid #2b2b2b; border-bottom: none; line-height: 0; }
+  .brandrow img { width: 100%; height: auto; display: block; }
 
   .band {
     background: ${NAVY}; color: #fff; font-weight: 700; font-size: 12px;
@@ -154,8 +148,7 @@ function buildHtml(d: DeliveryNotePrintData): string {
   <div class="sheet">
     <div class="topbar">FRONTLINE SOLUTIONS</div>
     <div class="brandrow">
-      <img src="${FRONTLINE_LOGO_DATA_URL}" alt="Frontline" />
-      <div class="tagline">Bespoke<br>Solutions,<br>Exceptional<br>Results</div>
+      <img src="${FRONTLINE_LOGO_DATA_URL}" alt="Frontline Solutions" />
     </div>
 
     <div class="band">DELIVERY NOTE</div>
