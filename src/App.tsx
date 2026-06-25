@@ -15,6 +15,7 @@ import AdminPage from "@/pages/AdminPage"
 import DeliveryNotesPage from "@/pages/DeliveryNotesPage"
 import ChangelogPage from "@/pages/ChangelogPage"
 import DocsPage from "@/pages/DocsPage"
+import TicketsPage from "@/pages/TicketsPage"
 import { AppLayout } from "@/components/AppLayout"
 
 function FullScreen({ children }: { children: ReactNode }) {
@@ -153,6 +154,18 @@ export default function App() {
             </AppLayout>
           )
         )}
+      />
+      <Route
+        path="/tickets"
+        element={
+          !session ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <AppLayout>
+              <TicketsPage />
+            </AppLayout>
+          )
+        }
       />
       <Route path="/changelog" element={<ChangelogPage />} />
       <Route path="/docs" element={<DocsPage />} />

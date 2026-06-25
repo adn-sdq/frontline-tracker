@@ -153,12 +153,106 @@ export interface ItemSerial {
 
 // Pages that can be individually granted/revoked per frontline user.
 // Admins see all pages; firstfix users only see "documents" regardless.
-export const APP_PAGES = ["tracker", "documents", "dashboard"] as const
+export const APP_PAGES = ["tracker", "documents", "dashboard", "tickets"] as const
 export type AppPage = (typeof APP_PAGES)[number]
 export const APP_PAGE_LABELS: Record<AppPage, string> = {
   tracker: "Procurement",
   documents: "Documents",
   dashboard: "Dashboard",
+  tickets: "Support Tickets",
+}
+
+// ---- Support Tickets -------------------------------------------------------
+export const TICKET_PRIORITIES = ["low", "medium", "high", "critical"] as const
+export type TicketPriority = (typeof TICKET_PRIORITIES)[number]
+
+export const TICKET_PRIORITY_LABELS: Record<TicketPriority, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+  critical: "Critical",
+}
+
+export const TICKET_PRIORITY_STYLES: Record<TicketPriority, string> = {
+  low: "bg-muted text-muted-foreground border-transparent",
+  medium: "bg-blue-100 text-blue-800 border-transparent dark:bg-blue-950 dark:text-blue-300",
+  high: "bg-amber-100 text-amber-800 border-transparent dark:bg-amber-950 dark:text-amber-300",
+  critical: "bg-red-100 text-red-800 border-transparent dark:bg-red-950 dark:text-red-300",
+}
+
+export const TICKET_STATUSES = ["open", "in_progress", "pending", "resolved", "closed"] as const
+export type TicketStatus = (typeof TICKET_STATUSES)[number]
+
+export const TICKET_STATUS_LABELS: Record<TicketStatus, string> = {
+  open: "Open",
+  in_progress: "In Progress",
+  pending: "Pending",
+  resolved: "Resolved",
+  closed: "Closed",
+}
+
+export const TICKET_STATUS_STYLES: Record<TicketStatus, string> = {
+  open: "bg-blue-100 text-blue-800 border-transparent dark:bg-blue-950 dark:text-blue-300",
+  in_progress: "bg-amber-100 text-amber-800 border-transparent dark:bg-amber-950 dark:text-amber-300",
+  pending: "bg-violet-100 text-violet-800 border-transparent dark:bg-violet-950 dark:text-violet-300",
+  resolved: "bg-emerald-100 text-emerald-800 border-transparent dark:bg-emerald-950 dark:text-emerald-300",
+  closed: "bg-muted text-muted-foreground border-transparent",
+}
+
+export const TICKET_CATEGORIES = [
+  "av",
+  "pava",
+  "iptv",
+  "screens",
+  "network",
+  "power",
+  "access_control",
+  "general",
+  "other",
+] as const
+export type TicketCategory = (typeof TICKET_CATEGORIES)[number]
+
+export const TICKET_CATEGORY_LABELS: Record<TicketCategory, string> = {
+  av: "AV System",
+  pava: "PAVA / PA",
+  iptv: "IPTV",
+  screens: "Screens / LED",
+  network: "Network / IT",
+  power: "Power / Electrical",
+  access_control: "Access Control",
+  general: "General",
+  other: "Other",
+}
+
+export interface Ticket {
+  id: string
+  ticket_prefix: string
+  ticket_year: number
+  seq: number
+  ticket_number: string
+  title: string
+  description: string | null
+  project_id: string | null
+  project_name: string
+  category: TicketCategory
+  priority: TicketPriority
+  status: TicketStatus
+  site_contact: string | null
+  site_phone: string | null
+  site_location: string | null
+  assigned_to: string | null
+  created_by: string | null
+  created_at: string
+  updated_by: string | null
+  updated_at: string
+}
+
+export interface TicketComment {
+  id: number
+  ticket_id: string
+  body: string
+  author: string | null
+  created_at: string
 }
 
 export interface Profile {

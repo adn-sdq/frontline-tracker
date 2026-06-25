@@ -9,6 +9,7 @@ import {
   FolderOpen,
   KeyRound,
   LayoutGrid,
+  LifeBuoy,
   LogOut,
   Menu,
   Moon,
@@ -69,10 +70,10 @@ function initials(name?: string | null) {
 
 function useAllowedPages(profile: ReturnType<typeof useAuth>["profile"]) {
   if (!profile) return new Set<AppPage>()
-  if (profile.is_admin) return new Set<AppPage>(["tracker", "documents", "dashboard"])
+  if (profile.is_admin) return new Set<AppPage>(["tracker", "documents", "dashboard", "tickets"])
   if (profile.org === "firstfix") return new Set<AppPage>(["documents"])
   if (!profile.allowed_pages || profile.allowed_pages.length === 0) {
-    return new Set<AppPage>(["tracker", "documents", "dashboard"])
+    return new Set<AppPage>(["tracker", "documents", "dashboard", "tickets"])
   }
   return new Set<AppPage>(profile.allowed_pages as AppPage[])
 }
@@ -303,6 +304,22 @@ function TopNav() {
               Dashboard
             </NavLink>
           )}
+          {allowedPages.has("tickets") && (
+            <NavLink
+              to="/tickets"
+              className={({ isActive }) =>
+                cn(
+                  "flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                )
+              }
+            >
+              <LifeBuoy className="size-4" />
+              Tickets
+            </NavLink>
+          )}
           {profile?.is_admin && (
             <NavLink
               to="/admin"
@@ -445,6 +462,9 @@ function MobileNav() {
               )}
               {allowedPages.has("dashboard") && (
                 <NavItem to="/dashboard" icon={BarChart3} label="Dashboard" onClick={() => setOpen(false)} />
+              )}
+              {allowedPages.has("tickets") && (
+                <NavItem to="/tickets" icon={LifeBuoy} label="Tickets" onClick={() => setOpen(false)} />
               )}
               {profile?.is_admin && (
                 <NavItem to="/admin" icon={Shield} label="Admin" onClick={() => setOpen(false)} />

@@ -2,6 +2,22 @@
 
 ---
 
+## v1.1.0 — 2026-06-25
+
+Internal support ticket tracking for the team.
+
+### Support Tickets (new page)
+- New Tickets page accessible to all non-firstfix team members
+- Create tickets with title, description, category (AV / PAVA / IPTV / Screens / Network / Power / Access Control / General / Other), and priority (Low / Medium / High / Critical)
+- Ticket ID auto-generated from project name initials: `[PREFIX]-TKT-[YEAR]-[NNN]` — e.g. `MIC-TKT-2026-001`, per-project sequence, collision-safe via advisory lock
+- Project field accepts a registered project (pre-fills site contact and location) **or** any free-text name for old/unregistered projects
+- Site contact, phone, and location fields per ticket
+- Assign tickets to any team member
+- Status flow: Open → In Progress → Pending → Resolved → Closed; quick-change pills in the detail view
+- Comment thread on each ticket with bubble-style chat UI (Cmd+Enter to send)
+- Delete with confirmation dialog
+- List view with search + status / priority / category filters
+
 ## v1.0.0 — 2026-06-25
 
 First stable release. Full procurement coordination platform for MiSK Ilmi Campus AV/IT systems.
