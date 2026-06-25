@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ConflictError, useCreateItem, useUpdateItem } from "@/hooks/useItems"
+import { useItemSerials, useUpsertSerial } from "@/hooks/useItemSerials"
 import {
   getItemFileSignedUrl,
   useDeleteItemFile,
@@ -446,6 +447,8 @@ export function ItemDialog({
         {editing && item && (
           <>
             <Separator />
+            <SerialsSection itemId={item.id} qty={Number(form.qty_required) || 0} />
+            <Separator />
             <ItemAttachments itemId={item.id} />
           </>
         )}
@@ -463,6 +466,80 @@ export function ItemDialog({
     </Dialog>
   )
 }
+
+// ---------------------------------------------------------------------------
+// Serial Numbers Section
+
+function SerialsSection({ itemId, qty }: { itemId: string; qty: number }) {
+  const { data: serials = [] } = useItemSerials(itemId)
+  const upsert = useUpsertSerial()
+  const filled = serials.filter((s) => s.serial_number).length
+
+  if (qty === 0) return null
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold">Serial Numbers</span>
+        <Badge variant={filled === qty ? "default" : "secondary"}>
+          {filled} / {qty}
+        </Badge>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        {Array.from({ length: qty }, (_, i) => {
+          const unitIndex = i + 1
+          const row = serials.find((s) => s.unit_index === unitIndex)
+          return (
+            <SerialRow
+              key={unitIndex}
+              itemId={itemId}
+              unitIndex={unitIndex}
+              initialValue={row?.serial_number ?? ""}
+              onSave={(val) =>
+                upsert.mutate({ itemId, unitIndex, serialNumber: val })
+              }
+            />
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function SerialRow({
+  itemId: _itemId,
+  unitIndex,
+  initialValue,
+  onSave,
+}: {
+  itemId: string
+  unitIndex: number
+  initialValue: string
+  onSave: (val: string) => void
+}) {
+  const [value, setValue] = useState(initialValue)
+
+  // Sync when DB data changes (e.g. another tab saved)
+  useEffect(() => { setValue(initialValue) }, [initialValue])
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-14 shrink-0 text-right text-xs text-muted-foreground">
+        Unit {unitIndex}
+      </span>
+      <Input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={() => onSave(value)}
+        placeholder="Serial number"
+        className="h-8 font-mono text-sm"
+      />
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

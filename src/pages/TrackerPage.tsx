@@ -14,6 +14,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   Dialog,
@@ -87,6 +94,8 @@ export default function TrackerPage() {
   const [system, setSystem] = useState<System | "ALL">("ALL")
   const [search, setSearch] = useState("")
   const [statusFilters, setStatusFilters] = useState<StatusFilters>(emptyFilters())
+  const [brandFilter, setBrandFilter] = useState("ALL")
+  const [modelFilter, setModelFilter] = useState("ALL")
 
   const [viewItem, setViewItem] = useState<Item | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -127,13 +136,29 @@ export default function TrackerPage() {
 
   function clearFilters() {
     setStatusFilters(emptyFilters())
+    setBrandFilter("ALL")
+    setModelFilter("ALL")
   }
+
+  const brands = useMemo(() => {
+    const seen = new Set<string>()
+    for (const i of items) if (i.brand) seen.add(i.brand)
+    return [...seen].sort()
+  }, [items])
+
+  const models = useMemo(() => {
+    const seen = new Set<string>()
+    for (const i of items) if (i.model_no) seen.add(i.model_no)
+    return [...seen].sort()
+  }, [items])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     const fc = activeFilterCount(statusFilters)
     return items.filter((i) => {
       if (system !== "ALL" && i.system !== system) return false
+      if (brandFilter !== "ALL" && i.brand !== brandFilter) return false
+      if (modelFilter !== "ALL" && i.model_no !== modelFilter) return false
       if (q && ![i.brand, i.model_no, i.description, i.location, i.supplier, i.unique_id]
         .filter(Boolean).some((v) => (v as string).toLowerCase().includes(q))) return false
       if (fc > 0) {
@@ -146,7 +171,7 @@ export default function TrackerPage() {
       }
       return true
     })
-  }, [items, system, search, statusFilters])
+  }, [items, system, search, statusFilters, brandFilter, modelFilter])
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { ALL: items.length }
@@ -184,7 +209,7 @@ export default function TrackerPage() {
     }
   }
 
-  const filterCount = activeFilterCount(statusFilters)
+  const filterCount = activeFilterCount(statusFilters) + (brandFilter !== "ALL" ? 1 : 0) + (modelFilter !== "ALL" ? 1 : 0)
   // CSV label: show count so users know what they're exporting
   const exportLabel = items.length === filtered.length
     ? `Export (${filtered.length})`
@@ -287,6 +312,36 @@ export default function TrackerPage() {
               className="pl-8"
             />
           </div>
+
+          {/* Brand filter */}
+          {brands.length > 0 && (
+            <Select value={brandFilter} onValueChange={setBrandFilter}>
+              <SelectTrigger className="hidden w-36 sm:flex">
+                <SelectValue placeholder="Brand" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All brands</SelectItem>
+                {brands.map((b) => (
+                  <SelectItem key={b} value={b}>{b}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Model filter */}
+          {models.length > 0 && (
+            <Select value={modelFilter} onValueChange={setModelFilter}>
+              <SelectTrigger className="hidden w-40 sm:flex">
+                <SelectValue placeholder="Model" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All models</SelectItem>
+                {models.map((m) => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           {/* Status filter dropdown */}
           <DropdownMenu>

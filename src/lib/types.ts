@@ -142,6 +142,15 @@ export interface ProjectMember {
   created_at: string
 }
 
+export interface ItemSerial {
+  id: string
+  item_id: string
+  unit_index: number
+  serial_number: string | null
+  notes: string | null
+  created_at: string
+}
+
 // Pages that can be individually granted/revoked per frontline user.
 // Admins see all pages; firstfix users only see "documents" regardless.
 export const APP_PAGES = ["tracker", "documents", "dashboard"] as const
