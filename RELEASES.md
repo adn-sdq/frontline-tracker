@@ -2,6 +2,19 @@
 
 ---
 
+## v1.4.0 — 2026-06-25
+
+Carried the sign-in page's editorial design language across the whole app.
+
+### Design System
+- New shared `PageHeader` — Fraunces display-serif title with an orange eyebrow label, used on every page (Procurement, Documents, Delivery Notes, Admin, Dashboard, Tickets)
+- App content now sits on a subtly tinted, dot-textured "canvas" so white cards feel elevated
+- Consistent brand-orange/navy palette throughout
+
+### Projects (landing)
+- Redesigned post-login project picker into a hero: time-aware greeting ("Good morning/afternoon/evening"), large serif welcome, ambient brand glows
+- Elevated project cards with hover lift, reveal-on-hover accent bar, animated arrow, and branded icon tiles
+
 ## v1.3.0 — 2026-06-25
 
 Editorial redesign of the sign-in page with a brand-colored geometric art panel.

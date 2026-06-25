@@ -596,7 +596,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {/* Mobile header + sheet */}
       <MobileNav />
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-6">
+      <main className="app-canvas flex-1 overflow-y-auto p-4 md:p-6">
         <div className="mx-auto max-w-350">{children}</div>
       </main>
     </div>

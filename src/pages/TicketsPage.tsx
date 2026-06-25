@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+import { PageHeader } from "@/components/PageHeader"
 import { useTickets } from "@/hooks/useTickets"
 import { useAllProfiles } from "@/hooks/useAdmin"
 import { TicketDialog } from "@/components/TicketDialog"
@@ -92,20 +93,25 @@ export default function TicketsPage() {
   return (
     <div className="p-4 md:p-6 space-y-5 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Support Tickets</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {openCount > 0 && <span>{openCount} open</span>}
-            {openCount > 0 && inProgressCount > 0 && <span> · </span>}
-            {inProgressCount > 0 && <span>{inProgressCount} in progress</span>}
-            {openCount === 0 && inProgressCount === 0 && <span>Internal issue tracking across all projects</span>}
-          </p>
-        </div>
+      <PageHeader
+        eyebrow="Support"
+        title="Support Tickets"
+        subtitle={
+          openCount > 0 || inProgressCount > 0 ? (
+            <>
+              {openCount > 0 && <span>{openCount} open</span>}
+              {openCount > 0 && inProgressCount > 0 && <span> · </span>}
+              {inProgressCount > 0 && <span>{inProgressCount} in progress</span>}
+            </>
+          ) : (
+            "Internal issue tracking across all projects"
+          )
+        }
+      >
         <Button onClick={openNew} className="shrink-0">
           <Plus className="h-4 w-4 mr-1" /> New ticket
         </Button>
-      </div>
+      </PageHeader>
 
       {/* Filters */}
       <div className="flex flex-col gap-2">

@@ -58,6 +58,7 @@ import {
   type DocStatus,
   type DocumentRow,
 } from "@/lib/types"
+import { PageHeader } from "@/components/PageHeader"
 
 export default function DocumentsPage() {
   useDocumentsRealtime()
@@ -163,13 +164,11 @@ export default function DocumentsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight">Documents</h1>
-          <p className="text-sm text-muted-foreground">
-            Submittals & reviews between Frontline and First Fix.
-          </p>
-        </div>
+      <PageHeader
+        eyebrow="Register"
+        title="Documents"
+        subtitle="Submittals & reviews between Frontline and First Fix."
+      >
         <div className="flex items-center gap-2">
           <Button
             size="sm"
@@ -191,7 +190,7 @@ export default function DocumentsPage() {
             </Button>
           )}
         </div>
-      </div>
+      </PageHeader>
 
       {/* Bulk action bar */}
       {selectMode && (

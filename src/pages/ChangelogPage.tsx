@@ -17,6 +17,29 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v1.4.0",
+    date: "2026-06-25",
+    type: "minor",
+    summary: "Carried the sign-in page's editorial design language across the whole app.",
+    sections: [
+      {
+        title: "Design System",
+        items: [
+          "Shared PageHeader with Fraunces display-serif titles and an orange eyebrow label on every page",
+          "App content sits on a subtly tinted, dot-textured canvas so white cards feel elevated",
+          "Consistent brand orange/navy palette throughout",
+        ],
+      },
+      {
+        title: "Projects (landing)",
+        items: [
+          "Redesigned post-login project picker into a hero — time-aware greeting and a large serif welcome",
+          "Elevated project cards: hover lift, reveal-on-hover accent bar, animated arrow, branded icon tiles",
+        ],
+      },
+    ],
+  },
+  {
     version: "v1.3.0",
     date: "2026-06-25",
     type: "minor",

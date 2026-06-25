@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DatePicker } from "@/components/DatePicker"
+import { PageHeader } from "@/components/PageHeader"
 import {
   Dialog,
   DialogContent,
@@ -109,17 +110,11 @@ export default function DeliveryNotesPage() {
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight">
-            Delivery notes
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {notes.length} note{notes.length !== 1 ? "s" : ""} generated for{" "}
-            {currentProject?.name ?? "this project"}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Logistics"
+        title="Delivery Notes"
+        subtitle={`${notes.length} note${notes.length !== 1 ? "s" : ""} generated for ${currentProject?.name ?? "this project"}`}
+      />
 
       {/* Filters */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

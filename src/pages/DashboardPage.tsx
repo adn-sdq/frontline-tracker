@@ -14,6 +14,7 @@ import {
   type Item,
 } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
+import { PageHeader } from "@/components/PageHeader"
 import { cn } from "@/lib/utils"
 
 function summarise(items: Pick<Item, "qty_required" | "qty_ordered" | "qty_delivered" | "qty_installed">[]) {
@@ -153,12 +154,11 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-lg font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Procurement progress across all systems — {n} line items total.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Overview"
+        title="Dashboard"
+        subtitle={`Procurement progress across all systems — ${n} line items total.`}
+      />
 
       {/* Overall qty summary */}
       <div className="rounded-xl border bg-card p-5">
