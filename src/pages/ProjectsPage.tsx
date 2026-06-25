@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom"
-import { ChevronRight, FolderOpen, Loader2, LogOut, PackageCheck } from "lucide-react"
+import { ChevronRight, FolderOpen, Loader2, LogOut } from "lucide-react"
+import { FitLogo } from "@/components/FitLogo"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { useProject } from "@/contexts/ProjectContext"
@@ -21,11 +22,9 @@ export default function ProjectsPage() {
       <header className="border-b">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-4 px-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <PackageCheck className="size-5" />
-            </div>
+            <FitLogo size={32} />
             <div className="leading-tight">
-              <div className="text-sm font-semibold">Frontline Tracker</div>
+              <div className="text-sm font-semibold">FIT</div>
               <div className="text-xs text-muted-foreground">MiSK Ilmi</div>
             </div>
           </div>
