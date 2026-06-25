@@ -141,33 +141,33 @@ export default function LoginPage() {
           {/* Glow blobs */}
           <div className="absolute -top-24 -left-24 size-72 rounded-full bg-[#E37C30] opacity-10 blur-3xl" />
           <div className="absolute -bottom-24 -right-24 size-96 rounded-full bg-[#E37C30] opacity-[0.07] blur-3xl" />
-          {/* Watermark logo */}
-          <div className="absolute -right-16 top-1/2 hidden -translate-y-1/2 opacity-[0.045] lg:block">
-            <FitLogo size={380} orangeColor="white" navyColor="white" />
+          {/* Watermark logo — big, centered, faint */}
+          <div className="absolute inset-0 hidden items-center justify-center opacity-[0.07] -rotate-6 lg:flex">
+            <FitLogo size={620} orangeColor="white" navyColor="white" />
           </div>
           {/* Right edge accent line (desktop) */}
           <div className="login-accent-v absolute right-0 top-0 bottom-0 hidden w-px lg:block" />
           {/* Bottom edge accent line (mobile) */}
           <div className="login-accent-h absolute bottom-0 left-0 right-0 h-px lg:hidden" />
 
-          {/* Main content */}
-          <div className="relative z-10 flex flex-col items-start gap-0 text-left max-w-xs w-full">
+          {/* Main content — centered */}
+          <div className="relative z-10 flex flex-col items-center gap-0 text-center">
             {/* Logo + name — hero unit */}
-            <FitLogo size={44} navyColor="rgba(255,255,255,0.55)" />
+            <FitLogo size={48} navyColor="rgba(255,255,255,0.55)" />
             <h1 className="mt-5 text-5xl font-bold tracking-tight text-white">FIT</h1>
             <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#E37C30]">
               Frontline Internal Tools
             </p>
 
             {/* Divider */}
-            <div className="my-6 h-px w-12 bg-white/15" />
+            <div className="my-6 h-px w-10 bg-white/20" />
 
             {/* Description + features — secondary */}
-            <p className="hidden text-sm leading-relaxed text-white/50 lg:block">
+            <p className="hidden max-w-[26ch] text-sm leading-relaxed text-white/50 lg:block">
               Procurement & installation coordination for AV, PAVA, IPTV & Screens.
             </p>
 
-            <ul className="mt-5 hidden flex-col gap-3 lg:flex">
+            <ul className="mt-5 hidden flex-col items-start gap-3 lg:flex">
               {FEATURES.map((f) => (
                 <li key={f} className="flex items-center gap-3 text-sm text-white/55">
                   <span className="size-1.5 shrink-0 rounded-full bg-[#E37C30]" />
@@ -245,23 +245,22 @@ export default function LoginPage() {
                   ? <><Loader2 className="size-4 animate-spin" /> Signing in…</>
                   : "Sign in"}
               </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2 text-muted-foreground"
+                onClick={() => setFeatureOpen(true)}
+              >
+                <Lightbulb className="size-4" />
+                Request a feature
+              </Button>
             </form>
 
             {/* Footer */}
-            <div className="mt-8 flex items-center justify-between border-t pt-5 text-xs text-muted-foreground">
-              <span className="font-mono">
-                {APP_VERSION} · {APP_VERSION_DATE}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto gap-1.5 p-0 text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => setFeatureOpen(true)}
-              >
-                <Lightbulb className="size-3" />
-                Feature request
-              </Button>
-            </div>
+            <p className="mt-6 text-center text-xs text-muted-foreground/60 font-mono">
+              {APP_VERSION} · {APP_VERSION_DATE}
+            </p>
 
           </div>
         </div>
