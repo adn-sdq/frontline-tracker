@@ -965,54 +965,59 @@ function ProjectsSection() {
             {projects.map((p) => (
               <div
                 key={p.id}
-                className="flex items-start justify-between gap-2 rounded-lg border p-3"
+                className="rounded-lg border p-3 space-y-2"
               >
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <div className="flex items-center gap-2">
+                {/* Header row: name + actions */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="font-medium">{p.name}</span>
-                    {!p.active && <Badge variant="secondary">Inactive</Badge>}
+                    <span className="font-medium truncate">{p.name}</span>
+                    {!p.active && <Badge variant="secondary" className="shrink-0">Inactive</Badge>}
                   </div>
-                  {/* Show project details inline */}
-                  <div className="ml-6 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
-                    {p.client_name && <span>Client: <strong className="text-foreground">{p.client_name}</strong></span>}
-                    {p.our_po && <span>Our PO: <strong className="text-foreground">{p.our_po}</strong></span>}
-                    {p.client_po && <span>Client PO: <strong className="text-foreground">{p.client_po}</strong></span>}
-                    {p.site_location && <span>Location: <strong className="text-foreground">{p.site_location}</strong></span>}
-                    {p.site_contact && <span>Contact: <strong className="text-foreground">{p.site_contact}</strong></span>}
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7"
+                          onClick={() => setEditProject({
+                            id: p.id,
+                            name: p.name,
+                            description: p.description,
+                            client_name: p.client_name,
+                            client_po: p.client_po,
+                            our_po: p.our_po,
+                            site_location: p.site_location,
+                            site_contact: p.site_contact,
+                          })}
+                        >
+                          <Pencil className="size-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit project details</TooltipContent>
+                    </Tooltip>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-7 px-2"
+                      onClick={() => toggleActive(p.id, !p.active)}
+                    >
+                      {p.active ? "Deactivate" : "Activate"}
+                    </Button>
                   </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7"
-                        onClick={() => setEditProject({
-                          id: p.id,
-                          name: p.name,
-                          description: p.description,
-                          client_name: p.client_name,
-                          client_po: p.client_po,
-                          our_po: p.our_po,
-                          site_location: p.site_location,
-                          site_contact: p.site_contact,
-                        })}
-                      >
-                        <Pencil className="size-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Edit project details</TooltipContent>
-                  </Tooltip>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleActive(p.id, !p.active)}
-                  >
-                  {p.active ? "Deactivate" : "Activate"}
-                  </Button>
-                </div>
+
+                {/* Details: each on its own line so nothing wraps mid-word */}
+                {(p.client_name || p.our_po || p.client_po || p.site_location || p.site_contact) && (
+                  <div className="grid grid-cols-1 gap-0.5 pl-6 text-xs text-muted-foreground sm:grid-cols-2">
+                    {p.client_name && <span className="truncate">Client: <strong className="text-foreground">{p.client_name}</strong></span>}
+                    {p.site_contact && <span className="truncate">Contact: <strong className="text-foreground">{p.site_contact}</strong></span>}
+                    {p.our_po && <span className="truncate">Our PO: <strong className="text-foreground">{p.our_po}</strong></span>}
+                    {p.client_po && <span className="truncate">Client PO: <strong className="text-foreground">{p.client_po}</strong></span>}
+                    {p.site_location && <span className="truncate sm:col-span-2">Location: <strong className="text-foreground">{p.site_location}</strong></span>}
+                  </div>
+                )}
               </div>
             ))}
           </div>
