@@ -126,8 +126,37 @@ function PdfViewer({ url, fileName }: { url: string; fileName: string }) {
     return () => window.removeEventListener("keydown", onKey)
   }, [total])
 
+  // TEMP: native iframe toggle — remove this state + the toggle button to revert
+  const [useNative, setUseNative] = useState(false)
+
   if (loading) return <ViewerSpinner label="Loading PDF…" />
   if (error)   return <ViewerError  message={error} />
+
+  // TEMP: native iframe mode
+  if (useNative) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="shrink-0 flex items-center gap-2 border-b px-4 py-2 bg-muted/30">
+          <span className="text-xs text-muted-foreground">Native browser renderer — text selectable, scroll &amp; zoom built-in</span>
+          <div className="ml-auto flex items-center gap-2">
+            <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => setUseNative(false)}>
+              ← Canvas mode
+            </Button>
+            <Button type="button" variant="outline" size="sm" className="h-7 text-xs" asChild>
+              <a href={url} download={fileName} target="_blank" rel="noopener noreferrer">
+                <Download className="size-3.5 mr-1" /> Download
+              </a>
+            </Button>
+          </div>
+        </div>
+        <iframe
+          src={url}
+          title={fileName}
+          className="flex-1 w-full border-0"
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -163,7 +192,11 @@ function PdfViewer({ url, fileName }: { url: string; fileName: string }) {
 
         {rendering && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
 
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          {/* TEMP: toggle to try native renderer */}
+          <Button type="button" variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => setUseNative(true)}>
+            Try native →
+          </Button>
           <Button type="button" variant="outline" size="sm" className="h-7 text-xs" asChild>
             <a href={url} download={fileName} target="_blank" rel="noopener noreferrer">
               <Download className="size-3.5 mr-1" /> Download
