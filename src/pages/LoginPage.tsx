@@ -151,26 +151,26 @@ export default function LoginPage() {
           <div className="login-accent-h absolute bottom-0 left-0 right-0 h-px lg:hidden" />
 
           {/* Main content */}
-          <div className="relative z-10 flex flex-col items-center gap-6 text-center">
-            <div className="login-logo-card rounded-2xl p-4">
-              <FitLogo size={56} navyColor="rgba(255,255,255,0.65)" />
-            </div>
+          <div className="relative z-10 flex flex-col items-start gap-0 text-left max-w-xs w-full">
+            {/* Logo + name — hero unit */}
+            <FitLogo size={44} navyColor="rgba(255,255,255,0.55)" />
+            <h1 className="mt-5 text-5xl font-bold tracking-tight text-white">FIT</h1>
+            <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#E37C30]">
+              Frontline Internal Tools
+            </p>
 
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight text-white">FIT</h1>
-              <p className="mt-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#E37C30]">
-                Frontline Internal Tools
-              </p>
-            </div>
+            {/* Divider */}
+            <div className="my-6 h-px w-12 bg-white/15" />
 
-            <p className="hidden max-w-[22ch] text-sm leading-relaxed text-white/40 lg:block">
+            {/* Description + features — secondary */}
+            <p className="hidden text-sm leading-relaxed text-white/50 lg:block">
               Procurement & installation coordination for AV, PAVA, IPTV & Screens.
             </p>
 
-            <ul className="mt-1 hidden flex-col gap-2.5 lg:flex">
+            <ul className="mt-5 hidden flex-col gap-3 lg:flex">
               {FEATURES.map((f) => (
-                <li key={f} className="flex items-center gap-2.5 text-xs text-white/35">
-                  <span className="size-1.5 shrink-0 rounded-full bg-[#E37C30]/70" />
+                <li key={f} className="flex items-center gap-3 text-sm text-white/55">
+                  <span className="size-1.5 shrink-0 rounded-full bg-[#E37C30]" />
                   {f}
                 </li>
               ))}
@@ -183,10 +183,10 @@ export default function LoginPage() {
           <div className="w-full max-w-sm">
 
             {/* Heading */}
-            <div className="mb-8">
+            <div className="mb-7">
               <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                Sign in with your team credentials to continue
+              <p className="mt-1 text-sm text-muted-foreground">
+                Sign in with your team credentials
               </p>
             </div>
 
