@@ -2,6 +2,21 @@
 
 ---
 
+## v1.3.0 — 2026-06-25
+
+Editorial redesign of the sign-in page with a brand-colored geometric art panel.
+
+### Login Page
+- Split-card layout: crystalline geometric artwork (blue / orange / navy / maroon brand palette) on the left, sign-in form on the right
+- New Fraunces display serif for the headline ("Where Every Part Finds Its Place")
+- Hand-built SVG art panel (`LoginArt`) — no image assets, scales crisply at any size
+- Soft, minimal input fields; show/hide password toggle
+- FIT logo + branding and version pinned to the footer; "Request a feature" lives inside the card
+- Mobile: art renders as a top banner that fades into the form
+
+### Theme
+- Registered Fraunces as the `--font-display` / `font-display` family
+
 ## v1.2.0 — 2026-06-25
 
 In-browser file viewer for Documents — no download needed to review files.
