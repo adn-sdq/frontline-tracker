@@ -168,7 +168,7 @@ export default function DashboardPage() {
           <StatRow label="Delivered" value={overall.delivered} total={overall.required} barClass="bg-blue-500" />
           <StatRow label="Installed" value={overall.installed} total={overall.required} barClass="bg-emerald-500" />
         </div>
-        <div className="mt-4 grid grid-cols-4 gap-2">
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {(
             [
               ["Required", overall.required, "text-foreground"],
@@ -178,7 +178,7 @@ export default function DashboardPage() {
             ] as const
           ).map(([label, val, cls]) => (
             <div key={label} className="rounded-lg border bg-muted/30 p-3 text-center">
-              <div className={cn("text-2xl font-bold tabular-nums", cls)}>{val}</div>
+              <div className={cn("text-xl font-bold tabular-nums sm:text-2xl", cls)}>{val}</div>
               <div className="text-xs text-muted-foreground">{label}</div>
             </div>
           ))}

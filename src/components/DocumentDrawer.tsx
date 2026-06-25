@@ -169,7 +169,7 @@ export function DocumentDrawer({
         </SheetHeader>
 
         {doc && (
-          <div className="flex flex-col gap-5 px-6 pb-8">
+          <div className="flex flex-col gap-5 px-4 pb-6 sm:px-6 sm:pb-8">
             {doc.description && (
               <p className="text-sm text-muted-foreground">{doc.description}</p>
             )}
