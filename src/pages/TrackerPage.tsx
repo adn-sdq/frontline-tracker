@@ -39,6 +39,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Loader2 } from "lucide-react"
+import { PageHeader } from "@/components/PageHeader"
 import { ItemsTable, ItemsTableSkeleton } from "@/components/ItemsTable"
 import { ItemsCards, ItemsCardsSkeleton } from "@/components/ItemsCards"
 import { ItemDialog } from "@/components/ItemDialog"
@@ -218,15 +219,11 @@ export default function TrackerPage() {
   return (
     <div className="flex flex-col gap-4">
       {/* ── Header ── */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight">
-            Procurement tracker
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Line-by-line delivery &amp; installation status.
-          </p>
-        </div>
+      <PageHeader
+        eyebrow="Procurement"
+        title="Procurement Tracker"
+        subtitle="Line-by-line delivery & installation status."
+      >
         {/* Desktop actions */}
         <div className="hidden flex-wrap items-center gap-2 sm:flex">
           <Button
@@ -260,7 +257,7 @@ export default function TrackerPage() {
             <Plus className="size-4" /> Add
           </Button>
         </div>
-      </div>
+      </PageHeader>
 
       {/* ── Selection mode banner ── */}
       {selectMode && (

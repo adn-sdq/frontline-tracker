@@ -66,6 +66,7 @@ import {
 } from "@/components/ui/table"
 import { APP_PAGES, APP_PAGE_LABELS, ORGS, ORG_LABELS, type AppPage, type Org, type Profile } from "@/lib/types"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { PageHeader } from "@/components/PageHeader"
 
 export default function AdminPage() {
   const { profile } = useAuth()
@@ -84,12 +85,11 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-lg font-semibold tracking-tight">Admin</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage team accounts and the system list.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Control"
+        title="Admin"
+        subtitle="Manage team accounts, projects and the system list."
+      />
       <ProjectsSection />
       <AccountsSection />
       <SystemsSection />
