@@ -2,6 +2,36 @@
 
 ---
 
+## v0.4.0 — 2026-06-25
+
+Project details hub with pre-fill across all forms. Navigation moved to top bar. Docs page expanded with visual content.
+
+### Project details
+- Projects now store client name, our PO, client PO, site location, and site contact
+- Admin → Projects section has a full create/edit dialog for all project fields
+- Project detail values shown inline under each project row in the admin panel
+
+### Pre-fill
+- Delivery Note dialog auto-fills PO numbers, deliver-to, location, and contact from the current project
+- Add item dialog pre-fills location from the project's site location
+
+### Navigation
+- Sidebar replaced with a sticky top navigation bar (desktop)
+- Mobile keeps a slide-in sheet; logo and project switcher on the left
+- Theme toggle and user menu on the right with Changelog/Docs in the dropdown
+
+### Docs page
+- Navigation moved to two sticky rows at the top (section tabs + sub-page tabs)
+- Added sections: Quick Reference, Control Systems, DSP & Audio, Wireless Mics, Video Conferencing, Electrical & Power, Vendors & Brands, Project Documentation
+- Visual elements: stat grids, progress bars, formula blocks, Accordion vendor breakdowns, tabbed system comparisons
+- Callout components for notes, warnings, and tips
+
+### Accessibility & feedback
+- Tooltips added to all icon-only buttons (Tracker, Documents, Document Drawer, Admin, Delivery Notes)
+- Sonner toast notifications throughout — project switch, sign out, create/update/delete confirmations
+
+---
+
 ## v0.3.0 — 2026-06-24
 
 UI/UX improvements across Procurement and Documents.
