@@ -251,63 +251,30 @@ export function DocumentDrawer({
               )}
               <div className="flex flex-col gap-2">
                 {files.data?.map((f, idx) => (
-                  <div key={f.id} className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2 rounded-lg border p-2">
-                      <FileText className="size-4 shrink-0 text-muted-foreground" />
+                  <div key={f.id} className="rounded-lg border p-2.5 space-y-1.5">
+                    {/* Row 1: icon + name + badges + actions */}
+                    <div className="flex items-start gap-2">
+                      <FileText className="size-4 shrink-0 text-muted-foreground mt-0.5" />
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="truncate text-sm font-medium">
-                            {f.file_name}
-                          </span>
-                          {idx === 0 && (
-                            <Badge variant="secondary" className="shrink-0">
-                              Latest
-                            </Badge>
-                          )}
-                          {f.rev_label && (
-                            <Badge variant="outline" className="shrink-0">
-                              {f.rev_label}
-                            </Badge>
-                          )}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="truncate text-sm font-medium">{f.file_name}</span>
+                          {idx === 0 && <Badge variant="secondary" className="text-xs shrink-0">Latest</Badge>}
+                          {f.rev_label && <Badge variant="outline" className="text-xs shrink-0">{f.rev_label}</Badge>}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           {who(f.uploaded_by)} ·{" "}
-                          {formatDistanceToNow(new Date(f.uploaded_at), {
-                            addSuffix: true,
-                          })}
+                          {formatDistanceToNow(new Date(f.uploaded_at), { addSuffix: true })}
                           {f.file_size ? ` · ${fmtSize(f.file_size)}` : ""}
-                        </div>
-                        <div className="mt-1 flex items-center gap-1.5">
-                          <span className="text-xs text-muted-foreground shrink-0">Dated</span>
-                          <DatePicker
-                            value={f.dated ?? ""}
-                            onChange={(val) =>
-                              doc &&
-                              updateFileDate.mutate({
-                                id: f.id,
-                                documentId: doc.id,
-                                dated: val,
-                              })
-                            }
-                            placeholder="Set date"
-                            clearable={false}
-                            className="h-7 text-xs"
-                          />
-                        </div>
-                        {f.note && (
-                          <div className="text-xs text-muted-foreground italic">
-                            {f.note}
-                          </div>
-                        )}
+                        </p>
                       </div>
-                      <div className="flex shrink-0 gap-1">
+                      <div className="flex shrink-0 gap-0.5 -mt-0.5">
                         {isViewable(f.file_name) && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="size-8"
+                                className="size-7"
                                 disabled={openingViewer === f.id}
                                 onClick={async () => {
                                   setOpeningViewer(f.id)
@@ -322,8 +289,8 @@ export function DocumentDrawer({
                                 }}
                               >
                                 {openingViewer === f.id
-                                  ? <Loader2 className="size-4 animate-spin" />
-                                  : <Eye className="size-4" />}
+                                  ? <Loader2 className="size-3.5 animate-spin" />
+                                  : <Eye className="size-3.5" />}
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>View file</TooltipContent>
@@ -334,20 +301,39 @@ export function DocumentDrawer({
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="size-8"
+                              className="size-7"
                               onClick={() => download(f.storage_path)}
                               disabled={downloading === f.storage_path}
                             >
                               {downloading === f.storage_path ? (
-                                <Loader2 className="size-4 animate-spin" />
+                                <Loader2 className="size-3.5 animate-spin" />
                               ) : (
-                                <Download className="size-4" />
+                                <Download className="size-3.5" />
                               )}
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Download file</TooltipContent>
+                          <TooltipContent>Download</TooltipContent>
                         </Tooltip>
                       </div>
+                    </div>
+
+                    {/* Row 2: dated + note */}
+                    <div className="flex items-center gap-3 pl-6">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground shrink-0">Dated</span>
+                        <DatePicker
+                          value={f.dated ?? ""}
+                          onChange={(val) =>
+                            doc && updateFileDate.mutate({ id: f.id, documentId: doc.id, dated: val })
+                          }
+                          placeholder="—"
+                          clearable={false}
+                          className="h-6 text-xs w-32"
+                        />
+                      </div>
+                      {f.note && (
+                        <span className="text-xs text-muted-foreground italic truncate">{f.note}</span>
+                      )}
                     </div>
                   </div>
                 ))}
