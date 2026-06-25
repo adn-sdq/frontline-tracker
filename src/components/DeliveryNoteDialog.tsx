@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/DatePicker"
 import { useProject } from "@/contexts/ProjectContext"
 import { useCreateDeliveryNote, useNextDnNumber } from "@/hooks/useDeliveryNotes"
+import { useItemSerialsForItems } from "@/hooks/useItemSerials"
 import { printDeliveryNote } from "@/lib/deliveryNotePdf"
 import type { DeliveryNoteItem, Item } from "@/lib/types"
 
@@ -74,6 +75,8 @@ export function DeliveryNoteDialog({
   const { currentProject } = useProject()
   const create = useCreateDeliveryNote()
   const { data: nextNum } = useNextDnNumber()
+  const itemIds = items.map((i) => i.id)
+  const { data: allSerials = [] } = useItemSerialsForItems(itemIds)
 
   const [dnNumber, setDnNumber] = useState("")
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"))
@@ -84,7 +87,7 @@ export function DeliveryNoteDialog({
   const [contact, setContact] = useState("")
   const [lines, setLines] = useState<DeliveryNoteItem[]>([])
 
-  // Re-seed the form each time the dialog opens with a fresh selection.
+  // Re-seed the form each time the dialog opens.
   useEffect(() => {
     if (!open) return
     setDnNumber(nextNum ? buildDnNumber(currentProject?.name, nextNum) : "")
@@ -96,6 +99,23 @@ export function DeliveryNoteDialog({
     setContact(currentProject?.site_contact ?? "")
     setLines(items.map(itemToLine))
   }, [open, items, nextNum, currentProject])
+
+  // Once serials load, fill the serial field on each line.
+  useEffect(() => {
+    if (!open || !allSerials.length) return
+    setLines((prev) =>
+      prev.map((line, i) => {
+        const item = items[i]
+        if (!item) return line
+        const serials = allSerials
+          .filter((s) => s.item_id === item.id && s.serial_number)
+          .sort((a, b) => a.unit_index - b.unit_index)
+          .map((s) => s.serial_number!)
+        if (!serials.length) return line
+        return { ...line, serial: serials.join(" / ") }
+      })
+    )
+  }, [open, allSerials, items])
 
   function setLine(idx: number, patch: Partial<DeliveryNoteItem>) {
     setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, ...patch } : l)))

@@ -1,11 +1,14 @@
+import { useState } from "react"
 import { formatDistanceToNow } from "date-fns"
-import { ChevronRight, MapPin, PackagePlus } from "lucide-react"
+import { ChevronDown, ChevronRight, Hash, MapPin, PackagePlus } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StatusBadge } from "@/components/StatusControls"
+import { SerialSubPanel } from "@/components/SerialSubPanel"
+import { useItemSerials } from "@/hooks/useItemSerials"
 import { useSystems } from "@/hooks/useSystems"
 import { SYSTEM_LABELS, type Item, type Profile } from "@/lib/types"
 
@@ -91,6 +94,11 @@ function ItemCard({
   onToggle?: (id: string) => void
   onView: (item: Item) => void
 }) {
+  const [expanded, setExpanded] = useState(false)
+  const { data: serials = [] } = useItemSerials(expanded || false ? item.id : null)
+  const filledSerials = serials.filter((s) => s.serial_number).length
+  const hasSerials = Number(item.qty_required) > 0
+
   function who(id: string | null) {
     if (!id) return null
     const p = profiles[id]
@@ -101,80 +109,117 @@ function ItemCard({
   const updatedBy = who(item.updated_by)
 
   return (
-    <button
-      type="button"
-      onClick={() => (selectable ? onToggle?.(item.id) : onView(item))}
+    <div
       className={[
-        "group w-full rounded-2xl border bg-card text-left transition-all active:scale-[0.99]",
+        "group w-full overflow-hidden rounded-2xl border bg-card transition-all",
         selected
           ? "border-primary/60 bg-primary/5 shadow-sm"
           : "hover:border-border/80 hover:shadow-sm",
       ].join(" ")}
     >
-      {/* ── Top section ── */}
-      <div className="p-4 pb-3">
-        {/* Row 1: system badge + optional UID + chevron */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-            {selectable && (
-              <Checkbox
-                checked={selected}
-                onCheckedChange={() => onToggle?.(item.id)}
-                onClick={(e) => e.stopPropagation()}
-                aria-label="Select item"
-                className="shrink-0"
-              />
-            )}
-            <Badge
-              variant="outline"
-              className="shrink-0 font-semibold text-xs"
-            >
-              {systemLabel}
-            </Badge>
-            {item.unique_id && (
-              <span className="font-mono text-xs font-bold text-primary">
-                {item.unique_id}
-              </span>
-            )}
+      {/* ── Main tappable area ── */}
+      <button
+        type="button"
+        onClick={() => (selectable ? onToggle?.(item.id) : onView(item))}
+        className="w-full text-left active:scale-[0.99] transition-transform"
+      >
+        {/* Top section */}
+        <div className="p-4 pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+              {selectable && (
+                <Checkbox
+                  checked={selected}
+                  onCheckedChange={() => onToggle?.(item.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label="Select item"
+                  className="shrink-0"
+                />
+              )}
+              <Badge variant="outline" className="shrink-0 text-xs font-semibold">
+                {systemLabel}
+              </Badge>
+              {item.unique_id && (
+                <span className="font-mono text-xs font-bold text-primary">
+                  {item.unique_id}
+                </span>
+              )}
+            </div>
+            <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5" />
           </div>
-          <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5" />
+
+          <p className="mt-2.5 text-base font-semibold leading-snug">
+            {title || <span className="text-muted-foreground">—</span>}
+          </p>
+
+          {item.location && (
+            <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPin className="size-3 shrink-0" />
+              <span className="truncate">{item.location}</span>
+            </div>
+          )}
         </div>
 
-        {/* Row 2: title */}
-        <p className="mt-2.5 text-base font-semibold leading-snug">
-          {title || <span className="text-muted-foreground">—</span>}
-        </p>
+        {/* Status grid */}
+        <div className="grid grid-cols-3 gap-px border-t bg-border">
+          <StatusCell label="Procurement" status={item.procurement_status} />
+          <StatusCell label="Delivery" status={item.delivery_status} />
+          <StatusCell label="Installation" status={item.installation_status} />
+        </div>
 
-        {/* Row 3: location */}
-        {item.location && (
-          <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-            <MapPin className="size-3 shrink-0" />
-            <span className="truncate">{item.location}</span>
-          </div>
-        )}
-      </div>
+        {/* Footer */}
+        <div className="px-4 py-2.5">
+          <p className="text-xs text-muted-foreground">
+            {updatedBy ? (
+              <>
+                Updated by{" "}
+                <span className="font-medium text-foreground/80">{updatedBy}</span>
+                {" · "}
+              </>
+            ) : null}
+            {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
+          </p>
+        </div>
+      </button>
 
-      {/* ── Status grid ── */}
-      <div className="grid grid-cols-3 gap-px border-t bg-border">
-        <StatusCell label="Procurement" status={item.procurement_status} />
-        <StatusCell label="Delivery" status={item.delivery_status} />
-        <StatusCell label="Installation" status={item.installation_status} />
-      </div>
+      {/* ── Serial expand toggle ── */}
+      {hasSerials && (
+        <>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className={[
+              "flex w-full items-center gap-2 border-t px-4 py-2 text-xs transition-colors",
+              expanded
+                ? "bg-primary/5 text-primary"
+                : "text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+            ].join(" ")}
+          >
+            <Hash className="size-3 shrink-0" />
+            <span className="font-medium">Serial Numbers</span>
+            {filledSerials > 0 || expanded ? (
+              <Badge variant={expanded ? "default" : "secondary"} className="text-xs">
+                {filledSerials} / {item.qty_required}
+              </Badge>
+            ) : (
+              <span className="text-muted-foreground/60">
+                {item.qty_required} slot{Number(item.qty_required) !== 1 ? "s" : ""}
+              </span>
+            )}
+            <ChevronDown
+              className={[
+                "ml-auto size-3.5 transition-transform",
+                expanded ? "rotate-180" : "",
+              ].join(" ")}
+            />
+          </button>
 
-      {/* ── Footer ── */}
-      <div className="px-4 py-2.5">
-        <p className="text-xs text-muted-foreground">
-          {updatedBy ? (
-            <>
-              Updated by{" "}
-              <span className="font-medium text-foreground/80">{updatedBy}</span>
-              {" · "}
-            </>
-          ) : null}
-          {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
-        </p>
-      </div>
-    </button>
+          {expanded && (
+            <SerialSubPanel itemId={item.id} qty={Number(item.qty_required)} />
+          )}
+        </>
+      )}
+    </div>
   )
 }
 

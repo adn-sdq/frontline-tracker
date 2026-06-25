@@ -1,5 +1,5 @@
 import { format } from "date-fns"
-import { CalendarDays, History, MapPin, Package, Pencil, Trash2 } from "lucide-react"
+import { CalendarDays, Hash, History, MapPin, Package, Pencil, Trash2 } from "lucide-react"
 
 import {
   Sheet,
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { StatusBadge } from "@/components/StatusControls"
 import { useSystems } from "@/hooks/useSystems"
+import { useItemSerials } from "@/hooks/useItemSerials"
 import { SYSTEM_LABELS, type Item, type Profile } from "@/lib/types"
 
 interface Props {
@@ -32,6 +33,8 @@ export function ItemDetailSheet({
   onClose,
 }: Props) {
   const { labelFor } = useSystems()
+  const { data: serials = [] } = useItemSerials(item?.id ?? null)
+  const filledSerials = serials.filter((s) => s.serial_number).length
 
   function who(id: string | null) {
     if (!id) return "—"
@@ -134,6 +137,45 @@ export function ItemDetailSheet({
                       Notes
                     </span>
                     <p className="text-sm">{item.notes}</p>
+                  </div>
+                </>
+              )}
+
+              {/* Serial numbers */}
+              {item.qty_required > 0 && (
+                <>
+                  <Separator />
+                  <div className="grid gap-2">
+                    <div className="flex items-center gap-2">
+                      <Hash className="size-3.5 text-muted-foreground" />
+                      <span className="text-sm font-semibold">Serial Numbers</span>
+                      <Badge
+                        variant={filledSerials === item.qty_required ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {filledSerials} / {item.qty_required}
+                      </Badge>
+                    </div>
+                    {serials.filter((s) => s.serial_number).length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No serials recorded yet.</p>
+                    ) : (
+                      <div className="flex flex-col gap-1">
+                        {Array.from({ length: Number(item.qty_required) }, (_, i) => {
+                          const unitIndex = i + 1
+                          const serial = serials.find((s) => s.unit_index === unitIndex)?.serial_number ?? null
+                          return (
+                            <div key={unitIndex} className="flex items-center gap-3 text-sm">
+                              <span className="w-10 shrink-0 text-right font-mono text-xs text-muted-foreground">
+                                Unit {unitIndex}
+                              </span>
+                              <span className={serial ? "font-mono text-sm" : "text-muted-foreground/40"}>
+                                {serial ?? "—"}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 </>
               )}
