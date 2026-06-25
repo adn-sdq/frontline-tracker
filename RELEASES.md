@@ -2,6 +2,30 @@
 
 ---
 
+## v1.0.0 — 2026-06-25
+
+First stable release. Full procurement coordination platform for MiSK Ilmi Campus AV/IT systems.
+
+### Per-unit serial number tracking
+- Each item tracks one serial number per physical unit, driven by qty_required
+- Serial inputs appear in the item edit dialog (Unit 1, Unit 2…), auto-save on blur
+- Detail sheet (read-only preview) shows all serial slots with filled/total badge
+- Tracker table: expandable serial sub-row toggled by a Hash button on each row, shows N/M count
+- Cards (mobile): full-width "Serial Numbers" toggle at the bottom of each card
+- Delivery Note dialog auto-populates serial fields from recorded serials when opened
+
+### Brand and model filters
+- Separate Brand and Model dropdowns in the Tracker toolbar (desktop)
+- Both included in the clear-all action
+
+### Comprehensive seed data
+- 22 realistic items across AV, PAVA, IPTV and SCREENS systems
+- 38 serial number rows for delivered units
+- 8 documents with varied types and review codes
+- 3 delivery notes with pre-filled serials
+
+---
+
 ## v0.4.0 — 2026-06-25
 
 Project details hub with pre-fill across all forms. Navigation moved to top bar. Docs page expanded with visual content.
