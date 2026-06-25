@@ -2,6 +2,16 @@
 
 ---
 
+## v1.2.0 — 2026-06-25
+
+In-browser file viewer for Documents — no download needed to review files.
+
+### File Viewer
+- PDF: full PDF.js viewer with page navigation (← →), zoom (50%–300%), page counter, keyboard arrow navigation, and a Download button
+- CSV / XLSX / XLS: spreadsheet viewer with a scrollable table, row numbers, sheet tabs for multi-sheet Excel files, row/column count footer, and a 1,000-row cap with a notice for large files
+- Eye icon on each file in the Documents drawer opens the viewer in a full-screen modal (95vw × 92vh)
+- Loading spinner while the signed URL is being fetched; error state if the file fails to load
+
 ## v1.1.0 — 2026-06-25
 
 Internal support ticket tracking for the team.

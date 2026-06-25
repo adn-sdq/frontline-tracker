@@ -3,7 +3,6 @@ import { format, formatDistanceToNow } from "date-fns"
 import {
   Download,
   Eye,
-  EyeOff,
   FileText,
   Loader2,
   MessageSquare,
@@ -27,6 +26,7 @@ import { Separator } from "@/components/ui/separator"
 import { DocStatusSelect } from "@/components/DocStatus"
 import { DatePicker } from "@/components/DatePicker"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { FileViewerModal } from "@/components/FileViewerModal"
 import {
   getSignedUrl,
   useAddComment,
@@ -52,55 +52,9 @@ function fmtSize(bytes: number | null) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
-function isPdf(name: string) {
-  return name.toLowerCase().endsWith(".pdf")
-}
-
-function PdfPreview({ path }: { path: string }) {
-  const [url, setUrl] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  async function load() {
-    setLoading(true)
-    setError(null)
-    try {
-      const signed = await getSignedUrl(path)
-      setUrl(signed)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load preview")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (!url && !loading && !error) {
-    void load()
-  }
-
-  if (loading) {
-    return (
-      <div className="flex h-32 items-center justify-center rounded-lg border bg-muted/30">
-        <Loader2 className="size-5 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
-  if (error) {
-    return (
-      <div className="flex h-20 items-center justify-center rounded-lg border bg-muted/30 text-sm text-destructive">
-        {error}
-      </div>
-    )
-  }
-  if (!url) return null
-
-  return (
-    <iframe
-      src={url}
-      title="PDF preview"
-      className="h-[60vh] w-full rounded-lg border bg-muted/10"
-    />
-  )
+function isViewable(name: string) {
+  const ext = name.split(".").pop()?.toLowerCase() ?? ""
+  return ["pdf", "csv", "xlsx", "xls"].includes(ext)
 }
 
 export function DocumentDrawer({
@@ -125,7 +79,8 @@ export function DocumentDrawer({
   const [uploadDate, setUploadDate] = useState(today())
   const [comment, setComment] = useState("")
   const [downloading, setDownloading] = useState<string | null>(null)
-  const [previewId, setPreviewId] = useState<string | null>(null)
+  const [viewerFile, setViewerFile] = useState<{ url: string; fileName: string } | null>(null)
+  const [openingViewer, setOpeningViewer] = useState<string | null>(null)
 
   function who(id: string | null) {
     if (!id) return "—"
@@ -202,6 +157,7 @@ export function DocumentDrawer({
   }
 
   return (
+    <>
     <Sheet open={!!doc} onOpenChange={(o) => !o && onClose()}>
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader>
@@ -341,25 +297,32 @@ export function DocumentDrawer({
                         )}
                       </div>
                       <div className="flex shrink-0 gap-1">
-                        {isPdf(f.file_name) && (
+                        {isViewable(f.file_name) && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="size-8"
-                                onClick={() =>
-                                  setPreviewId((cur) => (cur === f.id ? null : f.id))
-                                }
+                                disabled={openingViewer === f.id}
+                                onClick={async () => {
+                                  setOpeningViewer(f.id)
+                                  try {
+                                    const url = await getSignedUrl(f.storage_path)
+                                    setViewerFile({ url, fileName: f.file_name })
+                                  } catch {
+                                    toast.error("Could not open file")
+                                  } finally {
+                                    setOpeningViewer(null)
+                                  }
+                                }}
                               >
-                                {previewId === f.id ? (
-                                  <EyeOff className="size-4" />
-                                ) : (
-                                  <Eye className="size-4" />
-                                )}
+                                {openingViewer === f.id
+                                  ? <Loader2 className="size-4 animate-spin" />
+                                  : <Eye className="size-4" />}
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>{previewId === f.id ? "Hide preview" : "Preview PDF"}</TooltipContent>
+                            <TooltipContent>View file</TooltipContent>
                           </Tooltip>
                         )}
                         <Tooltip>
@@ -382,11 +345,6 @@ export function DocumentDrawer({
                         </Tooltip>
                       </div>
                     </div>
-
-                    {/* Inline PDF preview */}
-                    {isPdf(f.file_name) && previewId === f.id && (
-                      <PdfPreview path={f.storage_path} />
-                    )}
                   </div>
                 ))}
               </div>
@@ -444,5 +402,13 @@ export function DocumentDrawer({
         )}
       </SheetContent>
     </Sheet>
+
+    <FileViewerModal
+      open={!!viewerFile}
+      onClose={() => setViewerFile(null)}
+      url={viewerFile?.url ?? null}
+      fileName={viewerFile?.fileName ?? ""}
+    />
+    </>
   )
 }
