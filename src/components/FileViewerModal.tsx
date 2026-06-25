@@ -181,7 +181,7 @@ export function FileViewerModal({ open, onClose, url, fileName }: Props) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent
-        className="max-w-[96vw] w-[96vw] p-0 gap-0 overflow-hidden [&>button]:top-3 [&>button]:right-3"
+        className="max-w-[96vw] w-[96vw] p-0 gap-0 overflow-hidden flex flex-col [&>button]:top-3 [&>button]:right-3"
         style={{ height: "93vh", maxHeight: "93vh" }}
       >
         <DialogTitle className="sr-only">{fileName}</DialogTitle>
