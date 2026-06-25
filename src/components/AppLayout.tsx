@@ -13,11 +13,11 @@ import {
   LogOut,
   Menu,
   Moon,
-  PackageCheck,
   Shield,
   Sun,
   X,
 } from "lucide-react"
+import { FitLogo } from "@/components/FitLogo"
 import { toast } from "sonner"
 
 import { useAuth } from "@/contexts/AuthContext"
@@ -186,7 +186,7 @@ function NavItem({
   indent = false,
 }: {
   to: string
-  icon: typeof PackageCheck
+  icon: typeof LayoutGrid
   label: string
   onClick?: () => void
   indent?: boolean
@@ -226,11 +226,9 @@ function TopNav() {
       <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur">
         {/* Logo + project */}
         <div className="flex items-center gap-2.5 shrink-0">
-          <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <PackageCheck className="size-4" />
-          </div>
+          <FitLogo size={28} />
           <div className="leading-tight">
-            <div className="text-sm font-semibold">Frontline Tracker</div>
+            <div className="text-sm font-semibold">FIT</div>
             <ProjectSwitcher />
           </div>
         </div>
@@ -252,7 +250,7 @@ function TopNav() {
                 )
               }
             >
-              <PackageCheck className="size-4" />
+              <LayoutGrid className="size-4" />
               Procurement
             </NavLink>
           )}
@@ -423,10 +421,8 @@ function MobileNav() {
           <Menu className="size-5" />
         </Button>
         <div className="flex items-center gap-2">
-          <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <PackageCheck className="size-4" />
-          </div>
-          <span className="text-sm font-semibold">Frontline Tracker</span>
+          <FitLogo size={28} />
+          <span className="text-sm font-semibold">FIT</span>
         </div>
       </header>
 
@@ -435,11 +431,9 @@ function MobileNav() {
           <div className="flex h-full flex-col">
             <div className="flex h-14 shrink-0 items-center justify-between px-4">
               <div className="flex items-center gap-2.5">
-                <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                  <PackageCheck className="size-4" />
-                </div>
+                <FitLogo size={28} />
                 <div className="leading-tight">
-                  <div className="text-sm font-semibold">Frontline Tracker</div>
+                  <div className="text-sm font-semibold">FIT</div>
                   <ProjectSwitcher />
                 </div>
               </div>
@@ -452,7 +446,7 @@ function MobileNav() {
 
             <nav className="flex flex-col gap-0.5 p-2 flex-1">
               {allowedPages.has("tracker") && (
-                <NavItem to="/" icon={PackageCheck} label="Procurement" onClick={() => setOpen(false)} />
+                <NavItem to="/" icon={LayoutGrid} label="Procurement" onClick={() => setOpen(false)} />
               )}
               {allowedPages.has("tracker") && (
                 <NavItem to="/delivery-notes" icon={ClipboardList} label="Delivery notes" onClick={() => setOpen(false)} indent />

@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { Lightbulb, Loader2, PackageCheck } from "lucide-react"
+import { Lightbulb, Loader2 } from "lucide-react"
+import { FitLogo } from "@/components/FitLogo"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
@@ -62,7 +63,7 @@ function FeatureRequestDialog({
         <DialogHeader>
           <DialogTitle>Request a feature</DialogTitle>
           <DialogDescription>
-            Describe what you'd like to see in Frontline Tracker.
+            Describe what you'd like to see in FIT.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
@@ -146,15 +147,11 @@ export default function LoginPage() {
       <div className="flex flex-1 items-center justify-center p-4">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex flex-col items-center gap-3 text-center">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-              <PackageCheck className="size-6" />
-            </div>
+            <FitLogo size={52} />
             <div>
-              <h1 className="text-xl font-semibold tracking-tight">
-                Frontline Tracker
-              </h1>
+              <h1 className="text-xl font-semibold tracking-tight">FIT</h1>
               <p className="text-sm text-muted-foreground">
-                MiSK Ilmi · Procurement & installation
+                Frontline Internal Tools · MiSK Ilmi
               </p>
             </div>
           </div>
