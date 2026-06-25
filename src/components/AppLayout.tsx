@@ -10,6 +10,7 @@ import {
   KeyRound,
   LayoutGrid,
   LifeBuoy,
+  Lightbulb,
   LogOut,
   Menu,
   Moon,
@@ -30,6 +31,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { ORG_LABELS, type AppPage } from "@/lib/types"
@@ -50,6 +52,55 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Loader2 } from "lucide-react"
+
+function FeatureRequestDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [busy, setBusy] = useState(false)
+
+  async function submit() {
+    if (!title.trim()) { toast.error("Please enter a title"); return }
+    setBusy(true)
+    try {
+      const { error } = await supabase.from("feature_requests").insert({
+        title: title.trim(),
+        description: description.trim() || null,
+      })
+      if (error) throw error
+      toast.success("Request submitted — thanks!")
+      setTitle(""); setDescription(""); onClose()
+    } catch (err) {
+      toast.error("Could not submit", { description: err instanceof Error ? err.message : "Unknown error" })
+    } finally { setBusy(false) }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Request a feature</DialogTitle>
+          <DialogDescription>Describe what you'd like to see in FIT.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Short summary of the feature" autoFocus />
+          </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Details (optional)</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the problem it solves or how it should work…" rows={3} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button onClick={submit} disabled={busy || !title.trim()}>
+            {busy && <Loader2 className="size-4 animate-spin" />}Submit
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 function useTheme() {
   const [dark, setDark] = useState(
@@ -218,6 +269,7 @@ function TopNav() {
   const { profile, user, signOut } = useAuth()
   const { dark, toggle } = useTheme()
   const [changePwOpen, setChangePwOpen] = useState(false)
+  const [featureOpen, setFeatureOpen] = useState(false)
   const name = profile?.full_name ?? profile?.username ?? user?.email ?? "User"
   const allowedPages = useAllowedPages(profile)
 
@@ -380,6 +432,9 @@ function TopNav() {
               <DropdownMenuItem asChild>
                 <Link to="/docs">Docs</Link>
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFeatureOpen(true)}>
+                <Lightbulb className="size-4" /> Request a feature
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setChangePwOpen(true)}>
                 <KeyRound className="size-4" /> Change password
@@ -400,6 +455,7 @@ function TopNav() {
       </header>
 
       <ChangePasswordDialog open={changePwOpen} onClose={() => setChangePwOpen(false)} />
+      <FeatureRequestDialog open={featureOpen} onClose={() => setFeatureOpen(false)} />
     </>
   )
 }
@@ -411,6 +467,7 @@ function MobileNav() {
   const { dark, toggle } = useTheme()
   const [open, setOpen] = useState(false)
   const [changePwOpen, setChangePwOpen] = useState(false)
+  const [featureOpen, setFeatureOpen] = useState(false)
   const name = profile?.full_name ?? profile?.username ?? user?.email ?? "User"
   const allowedPages = useAllowedPages(profile)
 
@@ -477,6 +534,15 @@ function MobileNav() {
                 <span className="text-muted-foreground/40 text-xs">·</span>
                 <Link to="/docs" onClick={() => setOpen(false)} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Docs</Link>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 text-muted-foreground"
+                onClick={() => { setOpen(false); setFeatureOpen(true) }}
+              >
+                <Lightbulb className="size-4" />
+                Request a feature
+              </Button>
               <div className="flex items-center gap-2 px-2 py-1">
                 <Avatar className="size-6">
                   <AvatarFallback className="bg-primary/10 text-primary text-xs uppercase">
@@ -512,6 +578,7 @@ function MobileNav() {
       </Sheet>
 
       <ChangePasswordDialog open={changePwOpen} onClose={() => setChangePwOpen(false)} />
+      <FeatureRequestDialog open={featureOpen} onClose={() => setFeatureOpen(false)} />
     </>
   )
 }
