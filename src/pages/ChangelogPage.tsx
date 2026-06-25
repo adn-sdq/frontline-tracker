@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom"
-import { ArrowLeft, PackageCheck } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { FitLogo } from "@/components/FitLogo"
 
 // ── Release data ──────────────────────────────────────────────────────────────
 // Add new releases at the top. type: "major" | "minor" | "patch"
@@ -15,6 +16,51 @@ interface ReleaseEntry {
 }
 
 const RELEASES: ReleaseEntry[] = [
+  {
+    version: "v1.2.0",
+    date: "2026-06-25",
+    type: "minor",
+    summary: "Full rebrand to FIT (Frontline Internal Tools). New login page, orange+navy theme throughout.",
+    sections: [
+      {
+        title: "Branding",
+        items: [
+          "App renamed to FIT — Frontline Internal Tools",
+          "Custom SVG logo (orange + navy) replaces generic icon everywhere",
+          "Primary color updated to brand orange (#E37C30); dark mode surfaces shift to navy-tinted",
+          "New split-screen login page with brand panel, watermark logo, dot-grid texture",
+          "Favicon and page title updated",
+        ],
+      },
+      {
+        title: "Mobile UX",
+        items: [
+          "Admin projects card: details no longer wrap word-by-word — grid layout with truncate",
+          "Admin accounts: separate mobile card view alongside desktop table",
+          "Tickets filter row: stacked search + wrapping select row for mobile",
+          "Dashboard stat grid: 2-column on mobile, 4-column on larger screens",
+          "Serial number list: 'Unit N' label now stays on a single line (whitespace-nowrap)",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v1.1.0",
+    date: "2026-06-25",
+    type: "minor",
+    summary: "Native PDF viewer, spreadsheet previewer, and file viewer modal improvements.",
+    sections: [
+      {
+        title: "File Viewer",
+        items: [
+          "PDF viewer switched to native browser iframe — real text selection, Ctrl+F, zero maintenance",
+          "SheetJS spreadsheet viewer for .xlsx and .xls — table preview with sheet tabs",
+          "Fixed large blank space at top of viewer modal (DialogContent flex layout fix)",
+          "Date picker in file item cards now compact (h-6, w-32)",
+        ],
+      },
+    ],
+  },
   {
     version: "v1.0.0",
     date: "2026-06-25",
@@ -140,7 +186,7 @@ const RELEASES: ReleaseEntry[] = [
         items: [
           "New 'Delivery note' button on the Procurement page — select items, then Generate",
           "Pre-fills form from selected items (description, quantity, serial); all fields editable",
-          "Generates a print-perfect PDF matching the Frontline Solutions template via browser Save-as-PDF — no extra libraries",
+          "Generates a print-perfect PDF matching the Frontline Solutions template via browser Save-as-PDF",
           "Auto-incrementing per-project delivery number (atomic, conflict-safe via Postgres advisory lock)",
           "Each generated note saved to the database with a snapshot of its items",
           "'Preview / Print only' option to generate without saving",
@@ -234,12 +280,12 @@ const RELEASES: ReleaseEntry[] = [
   },
 ]
 
-// ── Badge colours ─────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-const TYPE_STYLES: Record<ReleaseEntry["type"], string> = {
-  major: "bg-primary text-primary-foreground",
-  minor: "bg-blue-600 text-white dark:bg-blue-500",
-  patch: "bg-muted text-muted-foreground",
+const TYPE_BADGE: Record<ReleaseEntry["type"], string> = {
+  major: "bg-primary/15 text-primary border-primary/25",
+  minor: "bg-blue-500/10 text-blue-600 border-blue-500/25 dark:text-blue-400",
+  patch: "bg-muted text-muted-foreground border-border",
 }
 
 const TYPE_LABELS: Record<ReleaseEntry["type"], string> = {
@@ -248,14 +294,23 @@ const TYPE_LABELS: Record<ReleaseEntry["type"], string> = {
   patch: "Patch",
 }
 
+const TYPE_BORDER: Record<ReleaseEntry["type"], string> = {
+  major: "border-l-primary",
+  minor: "border-l-blue-500/60",
+  patch: "border-l-border",
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ChangelogPage() {
+  const latest = RELEASES[0]
+
   return (
     <div className="min-h-svh bg-background">
-      {/* Top bar */}
-      <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 px-4">
+
+      {/* ── Top bar ── */}
+      <header className="sticky top-0 z-10 border-b bg-background/90 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-3 px-4">
           <Link
             to="/login"
             className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -263,68 +318,88 @@ export default function ChangelogPage() {
             <ArrowLeft className="size-4" />
             Back
           </Link>
-          <div className="flex items-center gap-2 ml-auto">
-            <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <PackageCheck className="size-4" />
-            </div>
-            <span className="text-sm font-semibold">Frontline Tracker</span>
+          <div className="flex items-center gap-2">
+            <FitLogo size={28} />
+            <span className="text-sm font-semibold">FIT</span>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 py-12">
-        {/* Hero */}
-        <div className="mb-12">
+      <main className="mx-auto max-w-3xl px-4 py-10 pb-20">
+
+        {/* ── Hero ── */}
+        <div className="mb-10 flex flex-col gap-1">
           <h1 className="text-3xl font-bold tracking-tight">Changelog</h1>
-          <p className="mt-2 text-muted-foreground">
-            All notable changes to Frontline Tracker, newest first.
+          <p className="text-muted-foreground">
+            All notable changes to FIT, newest first.
+            <span className="ml-2 font-mono text-xs text-muted-foreground/60">
+              Latest: {latest.version}
+            </span>
           </p>
         </div>
 
-        {/* Timeline */}
-        <div className="relative">
-          {/* Vertical line */}
-          <div className="absolute top-0 bottom-0 left-[7px] w-px bg-border" />
-
-          <div className="flex flex-col gap-12">
-            {RELEASES.map((release) => (
-              <div key={release.version} className="relative pl-8">
-                {/* Dot */}
-                <div className="absolute left-0 top-1.5 size-3.5 rounded-full border-2 border-primary bg-background" />
-
-                {/* Header */}
-                <div className="flex flex-wrap items-center gap-2.5 mb-1">
-                  <span className="text-xl font-bold">{release.version}</span>
-                  <Badge className={TYPE_STYLES[release.type]}>
-                    {TYPE_LABELS[release.type]}
+        {/* ── Release cards ── */}
+        <div className="flex flex-col gap-5">
+          {RELEASES.map((release, idx) => (
+            <div
+              key={release.version}
+              id={release.version}
+              className={[
+                "rounded-xl border border-l-4 bg-card p-5 transition-colors",
+                TYPE_BORDER[release.type],
+                idx === 0 ? "shadow-sm" : "",
+              ].join(" ")}
+            >
+              {/* ── Release header ── */}
+              <div className="mb-1 flex flex-wrap items-center gap-2.5">
+                <span className="text-xl font-bold tracking-tight">
+                  {release.version}
+                </span>
+                <Badge
+                  variant="outline"
+                  className={["text-xs font-medium", TYPE_BADGE[release.type]].join(" ")}
+                >
+                  {TYPE_LABELS[release.type]}
+                </Badge>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {release.date}
+                </span>
+                {idx === 0 && (
+                  <Badge className="ml-auto bg-primary/10 text-primary border-primary/20 text-[10px] font-semibold">
+                    Latest
                   </Badge>
-                  <span className="text-sm text-muted-foreground">{release.date}</span>
-                </div>
-
-                <p className="text-muted-foreground mb-5">{release.summary}</p>
-
-                {/* Sections */}
-                <div className="flex flex-col gap-5">
-                  {release.sections.map((section) => (
-                    <div key={section.title}>
-                      <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                        {section.title}
-                      </h3>
-                      <ul className="space-y-1.5">
-                        {section.items.map((item, i) => (
-                          <li key={i} className="flex gap-2 text-sm">
-                            <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/60" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
+                )}
               </div>
-            ))}
-          </div>
+
+              {/* Summary */}
+              <p className="mb-5 text-sm text-muted-foreground leading-relaxed">
+                {release.summary}
+              </p>
+
+              {/* ── Sections ── */}
+              <div className="flex flex-col gap-5">
+                {release.sections.map((section) => (
+                  <div key={section.title}>
+                    <div className="mb-2.5 flex items-center gap-2">
+                      <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {section.title}
+                      </span>
+                    </div>
+                    <ul className="space-y-1.5 pl-1">
+                      {section.items.map((item, i) => (
+                        <li key={i} className="flex gap-2.5 text-sm">
+                          <span className="mt-1.75 size-1.5 shrink-0 rounded-full bg-primary/50" />
+                          <span className="leading-relaxed">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
+
       </main>
     </div>
   )
