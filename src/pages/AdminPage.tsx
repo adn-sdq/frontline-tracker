@@ -182,7 +182,121 @@ function AccountsSection() {
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="rounded-lg border">
+          <>
+          {/* ── Mobile cards (< md) ──────────────────────────────── */}
+          <div className="flex flex-col gap-2 md:hidden">
+            {profiles.map((p) => {
+              const mine = projects.filter((pr) =>
+                memberships.some((m) => m.user_id === p.id && m.project_id === pr.id)
+              )
+              return (
+                <div key={p.id} className="rounded-lg border p-3 space-y-2.5">
+                  {/* Name + actions */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-medium">{p.full_name ?? "—"}</span>
+                        {p.id === user?.id && <Badge variant="secondary" className="text-xs">You</Badge>}
+                      </div>
+                      <span className="font-mono text-xs text-muted-foreground">{p.username}</span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      <Button variant="ghost" size="icon" className="size-8" onClick={() => setEditUser(p)}>
+                        <Pencil className="size-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="size-8" onClick={() => setPwUser(p)}>
+                        <KeyRound className="size-3.5" />
+                      </Button>
+                      {p.id !== user?.id && (
+                        <Button variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => setDelUser(p)}>
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Team + Role */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select value={p.org ?? ""} onValueChange={(v) => changeOrg(p, v)}>
+                      <SelectTrigger size="sm" className="h-8 w-full"><SelectValue placeholder="Team" /></SelectTrigger>
+                      <SelectContent>
+                        {ORGS.map((o) => <SelectItem key={o} value={o}>{ORG_LABELS[o]}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Select value={p.is_admin ? "admin" : "member"} onValueChange={(v) => changeAdmin(p, v)} disabled={p.id === user?.id}>
+                      <SelectTrigger size="sm" className="h-8 w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="member">Member</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Pages + Projects */}
+                  <div className="flex gap-2">
+                    {p.org === "firstfix" || p.is_admin ? (
+                      <span className="text-xs text-muted-foreground bg-muted/40 px-2 py-1 rounded flex-1 text-center">
+                        Pages: {p.is_admin ? "All" : "Docs only"}
+                      </span>
+                    ) : (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-7 text-xs flex-1 truncate">
+                            Pages: {!p.allowed_pages || p.allowed_pages.length === 0 ? "All" : p.allowed_pages.map((pg) => APP_PAGE_LABELS[pg as AppPage] ?? pg).join(", ")}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="p-2">
+                          <p className="mb-2 px-1 text-xs text-muted-foreground">Toggle page access</p>
+                          {APP_PAGES.map((pg) => {
+                            const enabled = !p.allowed_pages || p.allowed_pages.includes(pg)
+                            return (
+                              <button key={pg} type="button" className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-accent" onClick={() => togglePage(p, pg)}>
+                                <span className={`size-3.5 rounded-sm border flex items-center justify-center shrink-0 ${enabled ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground"}`}>
+                                  {enabled && <span className="text-[10px] leading-none">✓</span>}
+                                </span>
+                                {APP_PAGE_LABELS[pg]}
+                              </button>
+                            )
+                          })}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+
+                    {p.is_admin ? (
+                      <span className="text-xs text-muted-foreground bg-muted/40 px-2 py-1 rounded flex-1 text-center">Projects: All</span>
+                    ) : projects.length === 0 ? (
+                      <span className="text-xs text-muted-foreground bg-muted/40 px-2 py-1 rounded flex-1 text-center">Projects: —</span>
+                    ) : (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-7 text-xs flex-1 truncate">
+                            {mine.length === 0 ? "No projects" : mine.map((pr) => pr.name).join(", ")}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="p-2">
+                          <p className="mb-2 px-1 text-xs text-muted-foreground">Assign projects</p>
+                          {projects.map((pr) => {
+                            const on = memberships.some((m) => m.user_id === p.id && m.project_id === pr.id)
+                            return (
+                              <button key={pr.id} type="button" className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-accent" onClick={() => toggleProjectMember(p, pr.id)}>
+                                <span className={`size-3.5 rounded-sm border flex items-center justify-center shrink-0 ${on ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground"}`}>
+                                  {on && <span className="text-[10px] leading-none">✓</span>}
+                                </span>
+                                <span className="truncate">{pr.name}</span>
+                              </button>
+                            )
+                          })}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* ── Desktop table (≥ md) ─────────────────────────────── */}
+          <div className="hidden md:block rounded-lg border">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40 hover:bg-muted/40">
@@ -293,7 +407,7 @@ function AccountsSection() {
                           return (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-7 max-w-[180px] text-xs">
+                                <Button variant="outline" size="sm" className="h-7 max-w-45 text-xs">
                                   <span className="truncate">
                                     {mine.length === 0
                                       ? "None"
@@ -364,6 +478,7 @@ function AccountsSection() {
               </TableBody>
             </Table>
           </div>
+          </>
         )}
       </CardContent>
 
@@ -554,7 +669,7 @@ function CreateAccountDialog({
               placeholder="at least 6 characters"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label className="text-xs text-muted-foreground">Team</Label>
               <Select value={org} onValueChange={(v) => setOrg(v as Org)}>
@@ -739,7 +854,7 @@ function ProjectDialog({
           <Separator />
 
           {/* Row 2 — client */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label className="text-xs text-muted-foreground">Client / deliver to</Label>
               <Input value={form.client_name ?? ""} onChange={(e) => set("client_name", e.target.value)} placeholder="e.g. First Fix Team" />
@@ -751,7 +866,7 @@ function ProjectDialog({
           </div>
 
           {/* Row 3 — POs */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label className="text-xs text-muted-foreground">Our PO number</Label>
               <Input value={form.our_po ?? ""} onChange={(e) => set("our_po", e.target.value)} placeholder="e.g. PO-2025-001" />

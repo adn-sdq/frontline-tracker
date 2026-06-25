@@ -108,8 +108,9 @@ export default function TicketsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
+      <div className="flex flex-col gap-2">
+        {/* Search — full width */}
+        <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="Search tickets…"
@@ -118,44 +119,47 @@ export default function TicketsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as TicketStatus | "ALL")}>
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All statuses</SelectItem>
-            {TICKET_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>{TICKET_STATUS_LABELS[s]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={priorityFilter} onValueChange={(v) => setPriorityFilter(v as TicketPriority | "ALL")}>
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Priority" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All priorities</SelectItem>
-            {TICKET_PRIORITIES.map((p) => (
-              <SelectItem key={p} value={p}>{TICKET_PRIORITY_LABELS[p]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as TicketCategory | "ALL")}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All categories</SelectItem>
-            {TICKET_CATEGORIES.map((c) => (
-              <SelectItem key={c} value={c}>{TICKET_CATEGORY_LABELS[c]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {activeFilters > 0 && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 text-muted-foreground">
-            <X className="h-3.5 w-3.5" /> Clear ({activeFilters})
-          </Button>
-        )}
+        {/* Selects row — equal-width on mobile, natural on desktop */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as TicketStatus | "ALL")}>
+            <SelectTrigger className="flex-1 min-w-27.5 sm:w-36 sm:flex-none">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All statuses</SelectItem>
+              {TICKET_STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>{TICKET_STATUS_LABELS[s]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={priorityFilter} onValueChange={(v) => setPriorityFilter(v as TicketPriority | "ALL")}>
+            <SelectTrigger className="flex-1 min-w-27.5 sm:w-36 sm:flex-none">
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All priorities</SelectItem>
+              {TICKET_PRIORITIES.map((p) => (
+                <SelectItem key={p} value={p}>{TICKET_PRIORITY_LABELS[p]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as TicketCategory | "ALL")}>
+            <SelectTrigger className="flex-1 min-w-30 sm:w-40 sm:flex-none">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All categories</SelectItem>
+              {TICKET_CATEGORIES.map((c) => (
+                <SelectItem key={c} value={c}>{TICKET_CATEGORY_LABELS[c]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {activeFilters > 0 && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 text-muted-foreground shrink-0">
+              <X className="h-3.5 w-3.5" /> Clear ({activeFilters})
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Ticket list */}
@@ -184,6 +188,7 @@ export default function TicketsPage() {
           {filtered.map((t) => (
             <button
               key={t.id}
+              type="button"
               onClick={() => setSelectedTicket(t)}
               className="w-full text-left rounded-lg border bg-card hover:bg-accent/40 transition-colors p-4 space-y-2"
             >
