@@ -165,7 +165,7 @@ export function ItemDetailSheet({
                           const serial = serials.find((s) => s.unit_index === unitIndex)?.serial_number ?? null
                           return (
                             <div key={unitIndex} className="flex items-center gap-3 text-sm">
-                              <span className="w-10 shrink-0 text-right font-mono text-xs text-muted-foreground">
+                              <span className="shrink-0 whitespace-nowrap text-right font-mono text-xs text-muted-foreground">
                                 Unit {unitIndex}
                               </span>
                               <span className={serial ? "font-mono text-sm" : "text-muted-foreground/40"}>
