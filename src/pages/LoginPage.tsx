@@ -1,105 +1,13 @@
 import { useState } from "react"
-import { Eye, EyeOff, Lightbulb, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { useAuth } from "@/contexts/AuthContext"
-import { supabase } from "@/lib/supabase"
 import { APP_VERSION, APP_VERSION_DATE } from "@/lib/version"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { FitLogo } from "@/components/FitLogo"
 import { LoginArt } from "@/components/LoginArt"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-
-function FeatureRequestDialog({
-  open,
-  onClose,
-}: {
-  open: boolean
-  onClose: () => void
-}) {
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [busy, setBusy] = useState(false)
-
-  async function submit() {
-    if (!title.trim()) {
-      toast.error("Please enter a title")
-      return
-    }
-    setBusy(true)
-    try {
-      const { error } = await supabase.from("feature_requests").insert({
-        title: title.trim(),
-        description: description.trim() || null,
-      })
-      if (error) throw error
-      toast.success("Request submitted — thanks!")
-      setTitle("")
-      setDescription("")
-      onClose()
-    } catch (err) {
-      toast.error("Could not submit", {
-        description: err instanceof Error ? err.message : "Unknown error",
-      })
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Request a feature</DialogTitle>
-          <DialogDescription>
-            Describe what you'd like to see in FIT.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-3">
-          <div className="grid gap-1.5">
-            <Label className="text-xs text-muted-foreground">Title</Label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Short summary of the feature"
-              autoFocus
-            />
-          </div>
-          <div className="grid gap-1.5">
-            <Label className="text-xs text-muted-foreground">
-              Details (optional)
-            </Label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the problem it solves or how it should work…"
-              rows={3}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
-          </Button>
-          <Button onClick={submit} disabled={busy || !title.trim()}>
-            {busy && <Loader2 className="size-4 animate-spin" />}
-            Submit
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 export default function LoginPage() {
   const { signIn } = useAuth()
@@ -107,7 +15,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [featureOpen, setFeatureOpen] = useState(false)
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -135,7 +42,6 @@ export default function LoginPage() {
         {/* Art fills top ~42% of screen */}
         <div className="relative h-[42svh] shrink-0 overflow-hidden">
           <LoginArt className="h-full w-full" />
-          {/* Fade to card bg at the bottom edge */}
           <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-card to-transparent" />
           {/* Logo pinned top-left */}
           <div className="absolute left-5 top-5 flex items-center gap-2">
@@ -152,7 +58,6 @@ export default function LoginPage() {
         {/* Form fills remaining height */}
         <div className="flex flex-1 flex-col justify-between px-6 pb-8 pt-5">
           <div>
-            {/* Heading */}
             <div className="mb-7">
               <p className="text-xs font-medium text-muted-foreground">Sign in to</p>
               <h1 className="mt-1 font-display text-[2.1rem] leading-[1.1] tracking-tight text-foreground">
@@ -163,7 +68,6 @@ export default function LoginPage() {
               </h1>
             </div>
 
-            {/* Form */}
             <form onSubmit={onSubmit} className="space-y-3">
               <Input
                 id="username-m"
@@ -207,15 +111,6 @@ export default function LoginPage() {
                   ? <><Loader2 className="size-4 animate-spin" /> Signing in…</>
                   : "Sign in"}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-11 w-full rounded-xl gap-2 text-muted-foreground"
-                onClick={() => setFeatureOpen(true)}
-              >
-                <Lightbulb className="size-4" />
-                Request a feature
-              </Button>
             </form>
 
             <p className="mt-4 text-xs text-muted-foreground">
@@ -224,7 +119,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Footer */}
           <div className="mt-6 border-t pt-4">
             <span className="font-mono text-[10px] text-muted-foreground/60">
               {APP_VERSION} · {APP_VERSION_DATE}
@@ -270,9 +164,6 @@ export default function LoginPage() {
 
               <form onSubmit={onSubmit} className="space-y-3.5">
                 <div className="space-y-1.5">
-                  <Label htmlFor="username" className="text-xs text-muted-foreground">
-                    Username
-                  </Label>
                   <Input
                     id="username"
                     placeholder="Username"
@@ -286,14 +177,11 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="password" className="text-xs text-muted-foreground">
-                    Password
-                  </Label>
                   <div className="relative">
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
+                      placeholder="Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       autoComplete="current-password"
@@ -322,15 +210,6 @@ export default function LoginPage() {
                     ? <><Loader2 className="size-4 animate-spin" /> Signing in…</>
                     : "Sign in"}
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-11 w-full rounded-xl gap-2 text-muted-foreground"
-                  onClick={() => setFeatureOpen(true)}
-                >
-                  <Lightbulb className="size-4" />
-                  Request a feature
-                </Button>
               </form>
 
               <p className="mt-5 text-xs text-muted-foreground">
@@ -354,8 +233,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-
-      <FeatureRequestDialog open={featureOpen} onClose={() => setFeatureOpen(false)} />
     </>
   )
 }
