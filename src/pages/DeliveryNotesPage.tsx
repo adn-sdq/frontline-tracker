@@ -25,6 +25,7 @@ import {
 import { useProfiles } from "@/hooks/useItems"
 import { printDeliveryNote } from "@/lib/deliveryNotePdf"
 import type { DeliveryNote } from "@/lib/types"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
@@ -243,26 +244,34 @@ export default function DeliveryNotesPage() {
 
               {/* Actions */}
               <div className="flex shrink-0 gap-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  title="Reprint"
-                  onClick={() => reprint(note)}
-                >
-                  <Printer className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 text-destructive opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
-                  title="Delete"
-                  onClick={() => setDeleteTarget(note)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                      onClick={() => reprint(note)}
+                    >
+                      <Printer className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Reprint / preview PDF</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 text-destructive opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                      onClick={() => setDeleteTarget(note)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Delete note</TooltipContent>
+                </Tooltip>
               </div>
             </div>
           ))}

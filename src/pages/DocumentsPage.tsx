@@ -38,6 +38,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { DocStatusBadge, DocStatusSelect } from "@/components/DocStatus"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { DocumentDialog } from "@/components/DocumentDialog"
 import { DocumentDrawer } from "@/components/DocumentDrawer"
 import {
@@ -320,11 +321,16 @@ export default function DocumentsPage() {
                   </div>
                   {!selectMode && (
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="size-7 shrink-0">
-                          <MoreHorizontal className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="size-7 shrink-0">
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent>Document options</TooltipContent>
+                      </Tooltip>
                       <DropdownMenuContent
                         align="end"
                         onClick={(e) => e.stopPropagation()}

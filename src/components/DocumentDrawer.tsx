@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { DocStatusSelect } from "@/components/DocStatus"
 import { DatePicker } from "@/components/DatePicker"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   getSignedUrl,
   useAddComment,
@@ -341,35 +342,44 @@ export function DocumentDrawer({
                       </div>
                       <div className="flex shrink-0 gap-1">
                         {isPdf(f.file_name) && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8"
-                            title={previewId === f.id ? "Hide preview" : "Preview PDF"}
-                            onClick={() =>
-                              setPreviewId((cur) => (cur === f.id ? null : f.id))
-                            }
-                          >
-                            {previewId === f.id ? (
-                              <EyeOff className="size-4" />
-                            ) : (
-                              <Eye className="size-4" />
-                            )}
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8"
+                                onClick={() =>
+                                  setPreviewId((cur) => (cur === f.id ? null : f.id))
+                                }
+                              >
+                                {previewId === f.id ? (
+                                  <EyeOff className="size-4" />
+                                ) : (
+                                  <Eye className="size-4" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{previewId === f.id ? "Hide preview" : "Preview PDF"}</TooltipContent>
+                          </Tooltip>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8"
-                          onClick={() => download(f.storage_path)}
-                          disabled={downloading === f.storage_path}
-                        >
-                          {downloading === f.storage_path ? (
-                            <Loader2 className="size-4 animate-spin" />
-                          ) : (
-                            <Download className="size-4" />
-                          )}
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              onClick={() => download(f.storage_path)}
+                              disabled={downloading === f.storage_path}
+                            >
+                              {downloading === f.storage_path ? (
+                                <Loader2 className="size-4 animate-spin" />
+                              ) : (
+                                <Download className="size-4" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Download file</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
 

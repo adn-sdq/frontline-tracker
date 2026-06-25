@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   Dialog,
   DialogContent,
@@ -289,19 +290,20 @@ export default function TrackerPage() {
 
           {/* Status filter dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant={filterCount > 0 ? "default" : "outline"}
-                size="icon"
-                className="shrink-0"
-                title="Filter by status"
-              >
-                <Filter className="size-4" />
-                {filterCount > 0 && (
-                  <span className="sr-only">{filterCount} active</span>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant={filterCount > 0 ? "default" : "outline"}
+                    size="icon"
+                    className="shrink-0"
+                  >
+                    <Filter className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>{filterCount > 0 ? `${filterCount} filter${filterCount > 1 ? "s" : ""} active` : "Filter by status"}</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent align="end" className="w-52">
               <DropdownMenuLabel className="flex items-center justify-between">
                 Filter by status
@@ -361,11 +363,16 @@ export default function TrackerPage() {
 
           {/* Mobile-only extra actions */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="shrink-0 sm:hidden">
-                <FileText className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="shrink-0 sm:hidden">
+                    <FileText className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>More actions</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
