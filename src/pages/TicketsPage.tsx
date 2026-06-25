@@ -203,41 +203,53 @@ export default function TicketsPage() {
               key={t.id}
               type="button"
               onClick={() => setSelectedTicket(t)}
-              className="w-full text-left rounded-xl border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-sm active:scale-[0.995] space-y-2.5"
+              className="w-full text-left rounded-xl border bg-card transition-all hover:border-primary/30 hover:shadow-sm active:scale-[0.995]"
             >
-              {/* Badges + ticket number */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="font-mono text-[11px] text-muted-foreground/70 shrink-0">{t.ticket_number}</span>
-                <Badge className={`${TICKET_PRIORITY_STYLES[t.priority]} text-[11px] px-1.5 py-0`}>
-                  {TICKET_PRIORITY_LABELS[t.priority]}
-                </Badge>
-                <Badge className={`${TICKET_STATUS_STYLES[t.status]} text-[11px] px-1.5 py-0`}>
-                  {TICKET_STATUS_LABELS[t.status]}
-                </Badge>
-                <Badge variant="outline" className="text-[11px] px-1.5 py-0">{TICKET_CATEGORY_LABELS[t.category]}</Badge>
-              </div>
+              {/* Desktop: horizontal split. Mobile: stacked. */}
+              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
 
-              {/* Title */}
-              <p className="font-medium text-sm leading-snug">{t.title}</p>
+                {/* LEFT — ticket number + title + meta */}
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <span className="font-mono text-[11px] text-muted-foreground/60">{t.ticket_number}</span>
+                  <p className="truncate font-medium leading-snug">{t.title}</p>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground/70">{t.project_name}</span>
+                    {t.site_location && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        <span className="truncate max-w-40">{t.site_location}</span>
+                      </span>
+                    )}
+                    {t.assigned_to && (
+                      <span className="flex items-center gap-1">
+                        <User className="h-3 w-3 shrink-0" />
+                        {nameFor(t.assigned_to) ?? "Assigned"}
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-              {/* Meta row — wraps gracefully on mobile */}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground/70 shrink-0">{t.project_name}</span>
-                {t.site_location && (
-                  <span className="flex items-center gap-1 shrink-0">
-                    <MapPin className="h-3 w-3 shrink-0" />
-                    <span className="truncate max-w-32">{t.site_location}</span>
-                  </span>
-                )}
-                {t.assigned_to && (
-                  <span className="flex items-center gap-1 shrink-0">
-                    <User className="h-3 w-3 shrink-0" /> {nameFor(t.assigned_to) ?? "Assigned"}
-                  </span>
-                )}
-                <span className="flex items-center gap-1 shrink-0 sm:ml-auto">
-                  <Clock className="h-3 w-3 shrink-0" />
-                  {formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}
-                </span>
+                {/* RIGHT — badges + age */}
+                <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:gap-2">
+                  {/* Status + priority on one row */}
+                  <div className="flex items-center gap-1.5">
+                    <Badge className={`${TICKET_PRIORITY_STYLES[t.priority]} text-[11px] px-1.5 py-0`}>
+                      {TICKET_PRIORITY_LABELS[t.priority]}
+                    </Badge>
+                    <Badge className={`${TICKET_STATUS_STYLES[t.status]} text-[11px] px-1.5 py-0`}>
+                      {TICKET_STATUS_LABELS[t.status]}
+                    </Badge>
+                  </div>
+                  {/* Category + age on second row */}
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-[11px] px-1.5 py-0">{TICKET_CATEGORY_LABELS[t.category]}</Badge>
+                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <Clock className="h-3 w-3 shrink-0" />
+                      {formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}
+                    </span>
+                  </div>
+                </div>
+
               </div>
             </button>
           ))}
