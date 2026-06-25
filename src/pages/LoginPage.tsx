@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { FitLogo } from "@/components/FitLogo"
+import { LoginArt } from "@/components/LoginArt"
 import {
   Dialog,
   DialogContent,
@@ -100,12 +101,6 @@ function FeatureRequestDialog({
   )
 }
 
-const FEATURES = [
-  "Real-time collaboration",
-  "Full audit trail",
-  "Multi-project support",
-]
-
 export default function LoginPage() {
   const { signIn } = useAuth()
   const [username, setUsername] = useState("")
@@ -130,138 +125,152 @@ export default function LoginPage() {
     }
   }
 
+  const fieldClass =
+    "h-12 rounded-xl border-transparent bg-muted/60 px-4 text-sm shadow-none focus-visible:border-primary focus-visible:bg-background focus-visible:ring-primary/15"
+
   return (
     <>
-      <div className="flex min-h-svh flex-col lg:flex-row">
+      {/* Ambient backdrop */}
+      <div className="relative flex min-h-svh items-center justify-center overflow-hidden bg-muted/40 p-4 sm:p-6">
+        <div className="absolute -top-40 -left-40 size-96 rounded-full bg-[#1B354F]/10 blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 size-96 rounded-full bg-[#E37C30]/10 blur-3xl" />
 
-        {/* ── Brand panel ─────────────────────────────────────── */}
-        <div className="relative flex items-center justify-center overflow-hidden bg-[#1B354F] px-8 py-10 lg:w-[44%] lg:py-0">
-          {/* Dot grid texture */}
-          <div className="login-dot-grid absolute inset-0 opacity-[0.055]" />
-          {/* Glow blobs */}
-          <div className="absolute -top-24 -left-24 size-72 rounded-full bg-[#E37C30] opacity-10 blur-3xl" />
-          <div className="absolute -bottom-24 -right-24 size-96 rounded-full bg-[#E37C30] opacity-[0.07] blur-3xl" />
-          {/* Watermark logo — big, centered, faint */}
-          <div className="absolute inset-0 hidden items-center justify-center opacity-[0.07] -rotate-6 lg:flex">
-            <FitLogo size={620} orangeColor="white" navyColor="white" />
+        {/* Card */}
+        <div className="relative grid w-full max-w-5xl overflow-hidden rounded-3xl border bg-card shadow-2xl lg:grid-cols-[1.04fr_1fr]">
+
+          {/* ── Art panel (desktop) ── */}
+          <div className="relative hidden p-3 lg:block">
+            <div className="relative h-full w-full overflow-hidden rounded-2xl">
+              <LoginArt className="h-full w-full" />
+              {/* Quote overlay */}
+              <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/45 via-transparent to-transparent p-7">
+                <p className="font-display text-lg italic leading-snug text-white/90">
+                  "Every part, in its place — on time, on record."
+                </p>
+                <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-white/55">
+                  Frontline Internal Tools
+                </p>
+              </div>
+            </div>
           </div>
-          {/* Right edge accent line (desktop) */}
-          <div className="login-accent-v absolute right-0 top-0 bottom-0 hidden w-px lg:block" />
-          {/* Bottom edge accent line (mobile) */}
-          <div className="login-accent-h absolute bottom-0 left-0 right-0 h-px lg:hidden" />
 
-          {/* Main content — centered */}
-          <div className="relative z-10 flex flex-col items-center gap-0 text-center">
-            {/* Logo + name — hero unit */}
-            <FitLogo size={48} navyColor="rgba(255,255,255,0.55)" />
-            <h1 className="mt-5 text-5xl font-bold tracking-tight text-white">FIT</h1>
-            <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#E37C30]">
-              Frontline Internal Tools
-            </p>
-
-            {/* Divider */}
-            <div className="my-6 h-px w-10 bg-white/20" />
-
-            {/* Description + features — secondary */}
-            <p className="hidden max-w-[26ch] text-sm leading-relaxed text-white/50 lg:block">
-              Procurement & installation coordination for AV, PAVA, IPTV & Screens.
-            </p>
-
-            <ul className="mt-5 hidden flex-col items-start gap-3 lg:flex">
-              {FEATURES.map((f) => (
-                <li key={f} className="flex items-center gap-3 text-sm text-white/55">
-                  <span className="size-1.5 shrink-0 rounded-full bg-[#E37C30]" />
-                  {f}
-                </li>
-              ))}
-            </ul>
+          {/* ── Art banner (mobile) ── */}
+          <div className="relative h-32 overflow-hidden sm:h-40 lg:hidden">
+            <LoginArt className="h-full w-full" />
+            <div className="absolute inset-0 bg-linear-to-t from-card via-transparent to-transparent" />
           </div>
-        </div>
 
-        {/* ── Form panel ──────────────────────────────────────── */}
-        <div className="flex flex-1 flex-col items-center justify-center bg-background px-8 py-12 lg:py-0">
-          <div className="w-full max-w-sm">
+          {/* ── Form panel ── */}
+          <div className="flex flex-col p-7 sm:p-10 lg:p-12">
 
-            {/* Heading */}
-            <div className="mb-7">
-              <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Sign in with your team credentials
+            <div className="flex flex-1 flex-col justify-center">
+              {/* Heading */}
+              <div className="mb-8">
+                <p className="text-sm font-medium text-muted-foreground">Sign in to</p>
+                <h1 className="mt-1.5 font-display text-4xl leading-[1.08] tracking-tight text-foreground sm:text-5xl">
+                  Where Every Part
+                  <br />
+                  Finds Its{" "}
+                  <span className="italic text-primary">Place</span>
+                </h1>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={onSubmit} className="space-y-3.5">
+                <div className="space-y-1.5">
+                  <Label htmlFor="username" className="text-xs text-muted-foreground">
+                    Username
+                  </Label>
+                  <Input
+                    id="username"
+                    placeholder="your.name"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    autoComplete="username"
+                    autoFocus
+                    required
+                    disabled={busy}
+                    className={fieldClass}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="password" className="text-xs text-muted-foreground">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                      required
+                      disabled={busy}
+                      className={`${fieldClass} pr-12`}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      tabIndex={-1}
+                      className="absolute right-1 top-1 size-10 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowPassword((v) => !v)}
+                    >
+                      {showPassword
+                        ? <EyeOff className="size-4" />
+                        : <Eye className="size-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="mt-2 h-12 w-full rounded-xl text-sm font-semibold"
+                  disabled={busy || !username.trim() || !password}
+                >
+                  {busy
+                    ? <><Loader2 className="size-4 animate-spin" /> Signing in…</>
+                    : "Sign in"}
+                </Button>
+              </form>
+
+              <p className="mt-5 text-xs text-muted-foreground">
+                Need access?{" "}
+                <span className="font-medium text-foreground">
+                  Contact your project admin.
+                </span>
               </p>
             </div>
 
-            {/* Form */}
-            <form onSubmit={onSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  placeholder="your.name"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  autoFocus
-                  required
-                  disabled={busy}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    required
-                    disabled={busy}
-                    className="pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    tabIndex={-1}
-                    className="absolute right-0 top-0 h-full w-10 text-muted-foreground hover:text-foreground"
-                    onClick={() => setShowPassword((v) => !v)}
-                  >
-                    {showPassword
-                      ? <EyeOff className="size-4" />
-                      : <Eye className="size-4" />}
-                  </Button>
+            {/* ── Footer / branding ── */}
+            <div className="mt-10 flex items-center justify-between border-t pt-5">
+              <div className="flex items-center gap-2.5">
+                <FitLogo size={26} />
+                <div className="leading-tight">
+                  <div className="text-sm font-semibold">FIT</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    Frontline Internal Tools
+                  </div>
                 </div>
               </div>
-
-              <Button
-                type="submit"
-                className="mt-1 w-full"
-                size="lg"
-                disabled={busy || !username.trim() || !password}
-              >
-                {busy
-                  ? <><Loader2 className="size-4 animate-spin" /> Signing in…</>
-                  : "Sign in"}
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full gap-2 text-muted-foreground"
-                onClick={() => setFeatureOpen(true)}
-              >
-                <Lightbulb className="size-4" />
-                Request a feature
-              </Button>
-            </form>
-
-            {/* Footer */}
-            <p className="mt-6 text-center text-xs text-muted-foreground/60 font-mono">
-              {APP_VERSION} · {APP_VERSION_DATE}
-            </p>
-
+              <div className="flex flex-col items-end gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto gap-1.5 p-0 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setFeatureOpen(true)}
+                >
+                  <Lightbulb className="size-3" />
+                  Request a feature
+                </Button>
+                <span className="font-mono text-[10px] text-muted-foreground/60">
+                  {APP_VERSION} · {APP_VERSION_DATE}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

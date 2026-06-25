@@ -17,6 +17,25 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v1.3.0",
+    date: "2026-06-25",
+    type: "minor",
+    summary: "Editorial redesign of the sign-in page with a brand-colored geometric art panel.",
+    sections: [
+      {
+        title: "Login Page",
+        items: [
+          "Split-card layout: crystalline geometric artwork on the left, sign-in form on the right",
+          "New Fraunces display serif headline — 'Where Every Part Finds Its Place'",
+          "Hand-built SVG art panel in the brand palette (blue / orange / navy / maroon) — no image assets",
+          "Soft minimal input fields, show/hide password toggle",
+          "FIT branding + version in the footer; Request a feature lives inside the card",
+          "Mobile: art renders as a top banner fading into the form",
+        ],
+      },
+    ],
+  },
+  {
     version: "v1.2.0",
     date: "2026-06-25",
     type: "minor",
