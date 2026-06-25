@@ -27,12 +27,14 @@ import {
   useCreateProject,
   useUnassignProject,
   useUpdateProject,
+  type ProjectInput,
 } from "@/hooks/useProjects"
 import { useSystems, useToggleSystem, useUpsertSystem } from "@/hooks/useSystems"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Select,
@@ -63,6 +65,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { APP_PAGES, APP_PAGE_LABELS, ORGS, ORG_LABELS, type AppPage, type Org, type Profile } from "@/lib/types"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 export default function AdminPage() {
   const { profile } = useAuth()
@@ -328,34 +331,31 @@ function AccountsSection() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7"
-                          title="Edit name / username"
-                          onClick={() => setEditUser(p)}
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7"
-                          title="Reset password"
-                          onClick={() => setPwUser(p)}
-                        >
-                          <KeyRound className="size-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-7" onClick={() => setEditUser(p)}>
+                              <Pencil className="size-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Edit name / username</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-7" onClick={() => setPwUser(p)}>
+                              <KeyRound className="size-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Reset password</TooltipContent>
+                        </Tooltip>
                         {p.id !== user?.id && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-7 text-destructive"
-                            title="Delete"
-                            onClick={() => setDelUser(p)}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="size-7 text-destructive" onClick={() => setDelUser(p)}>
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete user</TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                     </TableCell>
@@ -690,31 +690,130 @@ function DeleteAccountDialog({
 }
 
 // ---------------------------------------------------------------------------
+function blankProjectInput(): ProjectInput {
+  return {
+    name: "", description: "",
+    client_name: "", client_po: "", our_po: "", site_location: "", site_contact: "",
+  }
+}
+
+function ProjectDialog({
+  open,
+  onClose,
+  initial,
+  onSave,
+  busy,
+}: {
+  open: boolean
+  onClose: () => void
+  initial: ProjectInput
+  onSave: (v: ProjectInput) => void
+  busy: boolean
+}) {
+  const [form, setForm] = useState<ProjectInput>(initial)
+  useEffect(() => { if (open) setForm(initial) }, [open, initial])
+  const set = (k: keyof ProjectInput, v: string) => setForm((f) => ({ ...f, [k]: v }))
+  const isNew = !("id" in initial)
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{isNew ? "New project" : "Edit project"}</DialogTitle>
+          <DialogDescription>
+            These details pre-fill Delivery Notes and new item forms for this project.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4">
+          {/* Row 1 */}
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Project name *</Label>
+            <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. MiSK Ilmi Phase 2" autoFocus />
+          </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Description</Label>
+            <Input value={form.description ?? ""} onChange={(e) => set("description", e.target.value)} placeholder="Short note" />
+          </div>
+
+          <Separator />
+
+          {/* Row 2 — client */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label className="text-xs text-muted-foreground">Client / deliver to</Label>
+              <Input value={form.client_name ?? ""} onChange={(e) => set("client_name", e.target.value)} placeholder="e.g. First Fix Team" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label className="text-xs text-muted-foreground">Site contact</Label>
+              <Input value={form.site_contact ?? ""} onChange={(e) => set("site_contact", e.target.value)} placeholder="e.g. Ahmed Al-Rashid" />
+            </div>
+          </div>
+
+          {/* Row 3 — POs */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label className="text-xs text-muted-foreground">Our PO number</Label>
+              <Input value={form.our_po ?? ""} onChange={(e) => set("our_po", e.target.value)} placeholder="e.g. PO-2025-001" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label className="text-xs text-muted-foreground">Client PO number</Label>
+              <Input value={form.client_po ?? ""} onChange={(e) => set("client_po", e.target.value)} placeholder="e.g. CPO-8821" />
+            </div>
+          </div>
+
+          {/* Row 4 — location */}
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Site location</Label>
+            <Input value={form.site_location ?? ""} onChange={(e) => set("site_location", e.target.value)} placeholder="e.g. MiSK Ilmi Campus, Riyadh" />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button onClick={() => onSave(form)} disabled={busy || !form.name.trim()}>
+            {busy && <Loader2 className="size-4 animate-spin" />}
+            {isNew ? "Create project" : "Save changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function ProjectsSection() {
   const { data: projects = [], isLoading } = useAllProjects()
   const create = useCreateProject()
   const update = useUpdateProject()
-  const [name, setName] = useState("")
-  const [description, setDescription] = useState("")
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editProject, setEditProject] = useState<(ProjectInput & { id: string }) | null>(null)
 
-  async function add() {
-    if (!name.trim()) {
-      toast.error("Project name is required")
-      return
-    }
+  async function handleCreate(form: ProjectInput) {
     try {
-      await create.mutateAsync({
-        name: name.trim(),
-        description: description.trim() || null,
-        sort: projects.length + 1,
-      })
-      toast.success(`Project "${name.trim()}" created`)
-      setName("")
-      setDescription("")
+      await create.mutateAsync({ ...form, sort: projects.length + 1 })
+      toast.success(`Project "${form.name.trim()}" created`)
+      setCreateOpen(false)
     } catch (e) {
-      toast.error("Could not create project", {
-        description: e instanceof Error ? e.message : "Unknown error",
-      })
+      toast.error("Could not create project", { description: e instanceof Error ? e.message : "Unknown error" })
+    }
+  }
+
+  async function handleEdit(form: ProjectInput) {
+    if (!editProject) return
+    try {
+      await update.mutateAsync({ id: editProject.id, patch: {
+        name: form.name.trim(),
+        description: form.description?.trim() || null,
+        client_name: form.client_name?.trim() || null,
+        client_po: form.client_po?.trim() || null,
+        our_po: form.our_po?.trim() || null,
+        site_location: form.site_location?.trim() || null,
+        site_contact: form.site_contact?.trim() || null,
+      }})
+      toast.success("Project updated")
+      setEditProject(null)
+    } catch (e) {
+      toast.error("Could not update project", { description: e instanceof Error ? e.message : "Unknown error" })
     }
   }
 
@@ -722,22 +821,24 @@ function ProjectsSection() {
     try {
       await update.mutateAsync({ id, patch: { active } })
     } catch (e) {
-      toast.error("Could not update", {
-        description: e instanceof Error ? e.message : "Unknown error",
-      })
+      toast.error("Could not update", { description: e instanceof Error ? e.message : "Unknown error" })
     }
   }
 
   return (
+    <>
     <Card>
-      <CardHeader>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>Projects</CardTitle>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Plus className="size-4" /> New project
+        </Button>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">
-          Each project has its own items and documents. Assign people to a
-          project in the Accounts table below — they'll only see projects they're
-          assigned to. Admins see every project.
+          Each project has its own items, documents and delivery notes. Fill in
+          the project details (PO numbers, client, location) once — they'll
+          pre-fill Delivery Notes and new item forms automatically.
         </p>
 
         {isLoading ? (
@@ -749,58 +850,76 @@ function ProjectsSection() {
             {projects.map((p) => (
               <div
                 key={p.id}
-                className="flex items-center justify-between gap-2 rounded-lg border p-2.5"
+                className="flex items-start justify-between gap-2 rounded-lg border p-3"
               >
-                <div className="flex min-w-0 items-center gap-2">
-                  <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
-                  <span className="truncate font-medium">{p.name}</span>
-                  {p.description && (
-                    <span className="hidden truncate text-sm text-muted-foreground sm:inline">
-                      — {p.description}
-                    </span>
-                  )}
-                  {!p.active && <Badge variant="secondary">Inactive</Badge>}
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+                    <span className="font-medium">{p.name}</span>
+                    {!p.active && <Badge variant="secondary">Inactive</Badge>}
+                  </div>
+                  {/* Show project details inline */}
+                  <div className="ml-6 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                    {p.client_name && <span>Client: <strong className="text-foreground">{p.client_name}</strong></span>}
+                    {p.our_po && <span>Our PO: <strong className="text-foreground">{p.our_po}</strong></span>}
+                    {p.client_po && <span>Client PO: <strong className="text-foreground">{p.client_po}</strong></span>}
+                    {p.site_location && <span>Location: <strong className="text-foreground">{p.site_location}</strong></span>}
+                    {p.site_contact && <span>Contact: <strong className="text-foreground">{p.site_contact}</strong></span>}
+                  </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => toggleActive(p.id, !p.active)}
-                >
+                <div className="flex shrink-0 items-center gap-1">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7"
+                        onClick={() => setEditProject({
+                          id: p.id,
+                          name: p.name,
+                          description: p.description,
+                          client_name: p.client_name,
+                          client_po: p.client_po,
+                          our_po: p.our_po,
+                          site_location: p.site_location,
+                          site_contact: p.site_contact,
+                        })}
+                      >
+                        <Pencil className="size-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Edit project details</TooltipContent>
+                  </Tooltip>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleActive(p.id, !p.active)}
+                  >
                   {p.active ? "Deactivate" : "Activate"}
-                </Button>
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
         )}
-
-        <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3 sm:flex-row sm:items-end">
-          <div className="grid flex-1 gap-1.5">
-            <Label className="text-xs text-muted-foreground">Project name</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. NEOM Phase 2"
-            />
-          </div>
-          <div className="grid flex-1 gap-1.5">
-            <Label className="text-xs text-muted-foreground">Description (optional)</Label>
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Short note"
-            />
-          </div>
-          <Button onClick={add} disabled={create.isPending}>
-            {create.isPending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Plus className="size-4" />
-            )}
-            Add
-          </Button>
-        </div>
       </CardContent>
     </Card>
+
+    <ProjectDialog
+      open={createOpen}
+      onClose={() => setCreateOpen(false)}
+      initial={blankProjectInput()}
+      onSave={handleCreate}
+      busy={create.isPending}
+    />
+    <ProjectDialog
+      open={!!editProject}
+      onClose={() => setEditProject(null)}
+      initial={editProject ?? blankProjectInput()}
+      onSave={handleEdit}
+      busy={update.isPending}
+    />
+    </>
   )
 }
 

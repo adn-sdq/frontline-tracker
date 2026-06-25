@@ -128,6 +128,12 @@ export interface Project {
   active: boolean
   created_by: string | null
   created_at: string
+  // Project-level details — pre-fill DN and Item forms
+  client_name:   string | null
+  client_po:     string | null
+  our_po:        string | null
+  site_location: string | null
+  site_contact:  string | null
 }
 
 export interface ProjectMember {
