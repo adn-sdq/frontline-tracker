@@ -190,33 +190,9 @@ export function DocumentDrawer({
                 <Badge variant="secondary">{files.data?.length ?? 0}</Badge>
               </div>
 
-              <div className="rounded-lg border bg-muted/30 p-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    placeholder="Rev label (optional)"
-                    value={revLabel}
-                    onChange={(e) => setRevLabel(e.target.value)}
-                    className="h-8"
-                  />
-                  <Input
-                    placeholder="Note (optional)"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    className="h-8"
-                  />
-                </div>
-                <div className="mt-2 grid gap-1">
-                  <span className="text-xs text-muted-foreground">
-                    Document date (defaults to today)
-                  </span>
-                  <DatePicker
-                    value={uploadDate}
-                    onChange={setUploadDate}
-                    placeholder="Select date"
-                    clearable={false}
-                    className="h-8 text-xs"
-                  />
-                </div>
+              {/* Upload zone */}
+              <div className="rounded-xl border-2 border-dashed border-muted-foreground/25 bg-muted/20 overflow-hidden">
+                {/* Click target */}
                 <input
                   ref={fileInput}
                   type="file"
@@ -224,22 +200,50 @@ export function DocumentDrawer({
                   className="hidden"
                   onChange={onPickFile}
                 />
-                <Button
-                  size="sm"
-                  className="mt-2 w-full"
+                <button
+                  type="button"
+                  className="w-full flex flex-col items-center gap-1.5 py-5 px-4 hover:bg-muted/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => fileInput.current?.click()}
                   disabled={upload.isPending}
                 >
                   {upload.isPending ? (
-                    <Loader2 className="size-4 animate-spin" />
+                    <Loader2 className="size-6 text-muted-foreground animate-spin" />
                   ) : (
-                    <Upload className="size-4" />
+                    <Upload className="size-6 text-muted-foreground" />
                   )}
-                  Upload file
-                </Button>
-                <p className="mt-1.5 text-center text-xs text-muted-foreground">
-                  New uploads stack on top — older files are kept.
-                </p>
+                  <span className="text-sm font-medium">
+                    {upload.isPending ? "Uploading…" : "Click to upload a file"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    New revisions stack on top — all versions kept
+                  </span>
+                </button>
+
+                {/* Metadata fields */}
+                <div className="border-t bg-background/60 px-3 py-2.5 grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Rev label"
+                    value={revLabel}
+                    onChange={(e) => setRevLabel(e.target.value)}
+                    className="h-7 text-xs"
+                  />
+                  <Input
+                    placeholder="Note"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    className="h-7 text-xs"
+                  />
+                  <div className="col-span-2 flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground shrink-0">Date</span>
+                    <DatePicker
+                      value={uploadDate}
+                      onChange={setUploadDate}
+                      placeholder="Document date"
+                      clearable={false}
+                      className="h-7 text-xs flex-1"
+                    />
+                  </div>
+                </div>
               </div>
 
               {files.data?.length === 0 && (
