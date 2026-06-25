@@ -16,6 +16,78 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v1.0.0",
+    date: "2026-06-25",
+    type: "major",
+    summary: "First stable release. Full procurement coordination platform for MiSK Ilmi Campus AV/IT systems.",
+    sections: [
+      {
+        title: "Serial Numbers",
+        items: [
+          "Per-unit serial tracking — one slot per unit driven by qty_required",
+          "Serial inputs in the item edit dialog (Unit 1, Unit 2…), auto-save on blur, filled/total badge",
+          "Detail sheet (read-only preview) now shows all serial slots with status badge",
+          "Table rows: Hash button on each row expands a full-width serial grid below — shows N/M count",
+          "Cards (mobile): full-width Serial Numbers toggle at the bottom of each card",
+          "Delivery Note dialog auto-populates serial fields from recorded serials when opened",
+        ],
+      },
+      {
+        title: "Filters",
+        items: [
+          "Separate Brand and Model filter dropdowns in the Tracker toolbar (desktop)",
+          "Both included in the clear-all action alongside status filters",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v0.4.0",
+    date: "2026-06-25",
+    type: "minor",
+    summary: "Project details hub with pre-fill across all forms. Navigation moved to top bar. Docs page expanded.",
+    sections: [
+      {
+        title: "Project Details",
+        items: [
+          "Projects now store client name, our PO, client PO, site location and site contact",
+          "Admin → Projects section has a full create/edit dialog for all project fields",
+          "Project detail values shown inline under each project row in the admin panel",
+        ],
+      },
+      {
+        title: "Pre-fill",
+        items: [
+          "Delivery Note dialog auto-fills PO numbers, deliver-to, location and contact from the current project",
+          "Add item dialog pre-fills location from the project's site location",
+        ],
+      },
+      {
+        title: "Navigation",
+        items: [
+          "Sidebar replaced with a sticky top navigation bar (desktop)",
+          "Mobile keeps a slide-in sheet; logo and project switcher on the left",
+          "Theme toggle and user menu on the right; Changelog and Docs moved into the user dropdown",
+        ],
+      },
+      {
+        title: "Docs Page",
+        items: [
+          "Navigation moved to two sticky rows at the top (section tabs + sub-page tabs)",
+          "New sections: Quick Reference, Control Systems, DSP & Audio, Wireless Mics, Video Conferencing, Electrical & Power, Vendors & Brands, Project Documentation",
+          "Visual elements: stat grids, progress bars, formula blocks, Accordion vendor breakdowns, tabbed system comparisons",
+        ],
+      },
+      {
+        title: "Accessibility & Feedback",
+        items: [
+          "Tooltips added to all icon-only buttons across Tracker, Documents, Admin and Delivery Notes",
+          "Sonner toast notifications throughout — project switch, sign out, create/update/delete confirmations",
+        ],
+      },
+    ],
+  },
+  {
     version: "v0.3.0",
     date: "2026-06-24",
     type: "minor",
