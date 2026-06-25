@@ -69,13 +69,33 @@ export function useProjectsRealtime() {
   }, [qc])
 }
 
+export type ProjectInput = {
+  name: string
+  description?: string | null
+  sort?: number
+  client_name?: string | null
+  client_po?: string | null
+  our_po?: string | null
+  site_location?: string | null
+  site_contact?: string | null
+}
+
 export function useCreateProject() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (p: { name: string; description?: string | null; sort?: number }) => {
+    mutationFn: async (p: ProjectInput) => {
       const { data, error } = await supabase
         .from("projects")
-        .insert({ name: p.name, description: p.description ?? null, sort: p.sort ?? 0 })
+        .insert({
+          name: p.name,
+          description: p.description ?? null,
+          sort: p.sort ?? 0,
+          client_name: p.client_name ?? null,
+          client_po: p.client_po ?? null,
+          our_po: p.our_po ?? null,
+          site_location: p.site_location ?? null,
+          site_contact: p.site_contact ?? null,
+        })
         .select()
         .single()
       if (error) throw error

@@ -8,6 +8,7 @@ import App from "./App.tsx"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ProjectProvider } from "@/contexts/ProjectContext"
 import { Toaster } from "@/components/ui/sonner"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,8 +22,10 @@ createRoot(document.getElementById("root")!).render(
       <HashRouter>
         <AuthProvider>
           <ProjectProvider>
-            <App />
-            <Toaster richColors position="top-right" />
+            <TooltipProvider delayDuration={400}>
+              <App />
+              <Toaster richColors position="top-right" />
+            </TooltipProvider>
           </ProjectProvider>
         </AuthProvider>
       </HashRouter>

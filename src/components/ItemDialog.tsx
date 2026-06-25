@@ -42,6 +42,7 @@ import {
 } from "@/hooks/useItemFiles"
 import { useSystems } from "@/hooks/useSystems"
 import { useAuth } from "@/contexts/AuthContext"
+import { useProject } from "@/contexts/ProjectContext"
 import {
   DELIVERY_STATUSES,
   INSTALLATION_STATUSES,
@@ -275,14 +276,23 @@ export function ItemDialog({
 }) {
   const { user } = useAuth()
   const { activeSystems } = useSystems()
+  const { currentProject } = useProject()
   const create = useCreateItem()
   const update = useUpdateItem()
   const [form, setForm] = useState<FormState>(blank(defaultSystem))
   const editing = !!item
 
   useEffect(() => {
-    if (open) setForm(item ? fromItem(item) : blank(defaultSystem))
-  }, [open, item, defaultSystem])
+    if (open) {
+      if (item) {
+        setForm(fromItem(item))
+      } else {
+        const base = blank(defaultSystem)
+        base.location = currentProject?.site_location ?? ""
+        setForm(base)
+      }
+    }
+  }, [open, item, defaultSystem, currentProject])
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }))

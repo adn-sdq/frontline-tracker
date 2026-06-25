@@ -89,13 +89,13 @@ export function DeliveryNoteDialog({
     if (!open) return
     setDnNumber(nextNum ? buildDnNumber(currentProject?.name, nextNum) : "")
     setDate(format(new Date(), "yyyy-MM-dd"))
-    setPo("")
-    setCustomerPo("")
-    setDeliverTo("First Fix Team")
-    setLocation("")
-    setContact("")
+    setPo(currentProject?.our_po ?? "")
+    setCustomerPo(currentProject?.client_po ?? "")
+    setDeliverTo(currentProject?.client_name ?? "First Fix Team")
+    setLocation(currentProject?.site_location ?? "")
+    setContact(currentProject?.site_contact ?? "")
     setLines(items.map(itemToLine))
-  }, [open, items, nextNum])
+  }, [open, items, nextNum, currentProject])
 
   function setLine(idx: number, patch: Partial<DeliveryNoteItem>) {
     setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, ...patch } : l)))
