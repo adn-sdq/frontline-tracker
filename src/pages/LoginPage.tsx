@@ -207,6 +207,15 @@ export default function LoginPage() {
                   ? <><Loader2 className="size-4 animate-spin" /> Signing in…</>
                   : "Sign in"}
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 w-full rounded-xl gap-2 text-muted-foreground"
+                onClick={() => setFeatureOpen(true)}
+              >
+                <Lightbulb className="size-4" />
+                Request a feature
+              </Button>
             </form>
 
             <p className="mt-4 text-xs text-muted-foreground">
@@ -216,20 +225,10 @@ export default function LoginPage() {
           </div>
 
           {/* Footer */}
-          <div className="mt-6 flex items-center justify-between border-t pt-4">
+          <div className="mt-6 border-t pt-4">
             <span className="font-mono text-[10px] text-muted-foreground/60">
               {APP_VERSION} · {APP_VERSION_DATE}
             </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-auto gap-1.5 p-0 text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => setFeatureOpen(true)}
-            >
-              <Lightbulb className="size-3" />
-              Request a feature
-            </Button>
           </div>
         </div>
       </div>
@@ -276,7 +275,7 @@ export default function LoginPage() {
                   </Label>
                   <Input
                     id="username"
-                    placeholder="your.name"
+                    placeholder="Username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     autoComplete="username"
@@ -323,6 +322,15 @@ export default function LoginPage() {
                     ? <><Loader2 className="size-4 animate-spin" /> Signing in…</>
                     : "Sign in"}
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 w-full rounded-xl gap-2 text-muted-foreground"
+                  onClick={() => setFeatureOpen(true)}
+                >
+                  <Lightbulb className="size-4" />
+                  Request a feature
+                </Button>
               </form>
 
               <p className="mt-5 text-xs text-muted-foreground">
@@ -339,21 +347,9 @@ export default function LoginPage() {
                   <div className="text-[11px] text-muted-foreground">Frontline Internal Tools</div>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-auto gap-1.5 p-0 text-xs text-muted-foreground hover:text-foreground"
-                  onClick={() => setFeatureOpen(true)}
-                >
-                  <Lightbulb className="size-3" />
-                  Request a feature
-                </Button>
-                <span className="font-mono text-[10px] text-muted-foreground/60">
-                  {APP_VERSION} · {APP_VERSION_DATE}
-                </span>
-              </div>
+              <span className="font-mono text-[10px] text-muted-foreground/60">
+                {APP_VERSION} · {APP_VERSION_DATE}
+              </span>
             </div>
           </div>
         </div>
