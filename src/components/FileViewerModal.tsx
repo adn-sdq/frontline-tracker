@@ -20,8 +20,11 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 
-// CDN worker URL — reliable under any base path deployment (e.g. /frontline-tracker/)
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
+// Vite resolves this statically — handles /frontline-tracker/ base path correctly in prod
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url,
+).href
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
