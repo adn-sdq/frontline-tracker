@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react"
 import {
+  ChevronUp,
   FolderOpen,
+  Inbox,
   KeyRound,
+  Lightbulb,
   Loader2,
   Pencil,
   Plus,
@@ -16,9 +19,12 @@ import {
   useAllProfiles,
   useCreateAccount,
   useDeleteAccount,
+  useFeatureRequests,
   useSetPassword,
+  useUpdateFeatureRequest,
   useUpdateProfile,
   useUpdateUserDetails,
+  type FeatureRequest,
 } from "@/hooks/useAdmin"
 import {
   useAllProjectMembers,
@@ -64,9 +70,201 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { APP_PAGES, APP_PAGE_LABELS, ORGS, ORG_LABELS, type AppPage, type Org, type Profile } from "@/lib/types"
+import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { PageHeader } from "@/components/PageHeader"
+
+const STATUS_LABELS: Record<FeatureRequest["status"], string> = {
+  pending: "Pending",
+  planned: "Planned",
+  in_progress: "In Progress",
+  done: "Done",
+  rejected: "Rejected",
+}
+
+const STATUS_STYLES: Record<FeatureRequest["status"], string> = {
+  pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  planned: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  in_progress: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+  done: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+  rejected: "bg-muted text-muted-foreground",
+}
+
+function FeatureInbox() {
+  const [open, setOpen] = useState(false)
+  const [filter, setFilter] = useState<"all" | FeatureRequest["status"]>("all")
+  const { data: requests = [], isLoading } = useFeatureRequests()
+  const update = useUpdateFeatureRequest()
+
+  const visible =
+    filter === "all" ? requests : requests.filter((r) => r.status === filter)
+
+  const pendingCount = requests.filter((r) => r.status === "pending").length
+
+  function upvote(r: FeatureRequest) {
+    update.mutate({ id: r.id, patch: { upvotes: r.upvotes + 1 } })
+  }
+
+  function setStatus(r: FeatureRequest, status: FeatureRequest["status"]) {
+    update.mutate(
+      { id: r.id, patch: { status } },
+      { onSuccess: () => toast.success("Status updated") },
+    )
+  }
+
+  return (
+    <>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative size-8 text-muted-foreground/40 hover:text-muted-foreground"
+            onClick={() => setOpen(true)}
+          >
+            <Lightbulb className="size-4" />
+            {pendingCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex size-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
+                {pendingCount > 9 ? "9+" : pendingCount}
+              </span>
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="text-xs">
+          Feature inbox
+        </TooltipContent>
+      </Tooltip>
+
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent
+          side="right"
+          className="flex w-full flex-col overflow-hidden p-0 sm:max-w-104"
+        >
+          <SheetHeader className="border-b px-5 py-4">
+            <SheetTitle className="flex items-center gap-2 text-base">
+              <Lightbulb className="size-4 text-primary" />
+              Feature Inbox
+              {requests.length > 0 && (
+                <span className="ml-auto text-xs font-normal text-muted-foreground">
+                  {requests.length} total
+                </span>
+              )}
+            </SheetTitle>
+          </SheetHeader>
+
+          {/* Filter pills */}
+          <div className="flex gap-1.5 overflow-x-auto border-b px-4 py-2.5 scrollbar-none">
+            {(["all", "pending", "planned", "in_progress", "done", "rejected"] as const).map(
+              (s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setFilter(s)}
+                  className={cn(
+                    "shrink-0 rounded-full px-2.5 py-0.5 text-xs transition-colors",
+                    filter === s
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted",
+                  )}
+                >
+                  {s === "all" ? "All" : STATUS_LABELS[s]}
+                </button>
+              ),
+            )}
+          </div>
+
+          {/* List */}
+          <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="size-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : visible.length === 0 ? (
+              <div className="flex flex-col items-center py-16 text-center">
+                <div className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-muted">
+                  <Inbox className="size-5 text-muted-foreground" />
+                </div>
+                <p className="font-display text-lg">All clear</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  No requests here yet.
+                </p>
+              </div>
+            ) : (
+              visible.map((r) => (
+                <div
+                  key={r.id}
+                  className="rounded-xl border bg-card p-3 transition-shadow hover:shadow-sm"
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium leading-snug">{r.title}</p>
+                      {r.description && (
+                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                          {r.description}
+                        </p>
+                      )}
+                    </div>
+                    {/* Upvote */}
+                    <button
+                      type="button"
+                      onClick={() => upvote(r)}
+                      className="flex shrink-0 flex-col items-center gap-0 rounded-lg px-1.5 py-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                    >
+                      <ChevronUp className="size-3.5" />
+                      <span className="text-[10px] font-bold tabular-nums">
+                        {r.upvotes}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <Select
+                      value={r.status}
+                      onValueChange={(v) =>
+                        setStatus(r, v as FeatureRequest["status"])
+                      }
+                    >
+                      <SelectTrigger
+                        className={cn(
+                          "h-5 w-auto gap-1 rounded-full border-0 px-2 py-0 text-[10px] font-semibold shadow-none ring-0 focus:ring-0",
+                          STATUS_STYLES[r.status],
+                        )}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(STATUS_LABELS).map(([val, label]) => (
+                          <SelectItem key={val} value={val} className="text-xs">
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="ml-auto text-[10px] text-muted-foreground/60">
+                      {r.submitter_name ?? "Anonymous"} ·{" "}
+                      {new Date(r.submitted_at).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  )
+}
 
 export default function AdminPage() {
   const { profile } = useAuth()
@@ -89,7 +287,9 @@ export default function AdminPage() {
         eyebrow="Control"
         title="Admin"
         subtitle="Manage team accounts, projects and the system list."
-      />
+      >
+        <FeatureInbox />
+      </PageHeader>
       <ProjectsSection />
       <AccountsSection />
       <SystemsSection />

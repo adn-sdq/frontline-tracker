@@ -2,6 +2,20 @@
 
 ---
 
+## v2.1.0 — 2026-06-26
+
+Feature inbox for admins + full Sonner toast coverage across the app.
+
+### Admin
+- New **Feature Inbox** drawer — subtle lightbulb icon button in the Admin header opens a right-hand sheet showing all submitted feature requests
+- Filter by status (All / Pending / Planned / In Progress / Done / Rejected)
+- Upvote requests to prioritise them; change status inline via a colored badge dropdown
+- Pending count badge on the icon so nothing gets missed
+
+### Toasts
+- Every create, update, and delete action across the app now shows a success toast
+- Previously missing: assign/remove project members, org/role/page-access changes, project & system toggles, comment posting, file date updates
+
 ## v1.4.0 — 2026-06-25
 
 Carried the sign-in page's editorial design language across the whole app.
