@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Enforce that every version bump in src/lib/version.ts is accompanied by
+# a matching entry in src/pages/ChangelogPage.tsx.
+
+VERSION_FILE="src/lib/version.ts"
+CHANGELOG_FILE="src/pages/ChangelogPage.tsx"
+
+# Only run if version.ts is staged.
+git diff --cached --name-only | grep -q "^${VERSION_FILE}$" || exit 0
+
+# Extract the version string from the staged version.ts.
+NEW_VERSION=$(git show ":${VERSION_FILE}" 2>/dev/null \
+  | grep 'APP_VERSION\s*=' \
+  | grep -o '"v[^"]*"' \
+  | tr -d '"')
+
+if [ -z "$NEW_VERSION" ]; then
+  echo "⚠️  pre-commit: could not read APP_VERSION from staged ${VERSION_FILE}" >&2
+  exit 1
+fi
+
+# Check whether the staged (or working-tree) changelog contains that version.
+CHANGELOG_STAGED=$(git show ":${CHANGELOG_FILE}" 2>/dev/null)
+if [ -z "$CHANGELOG_STAGED" ]; then
+  # Fallback: read from disk if the file isn't staged.
+  CHANGELOG_STAGED=$(cat "${CHANGELOG_FILE}" 2>/dev/null)
+fi
+
+if echo "$CHANGELOG_STAGED" | grep -q "\"${NEW_VERSION}\""; then
+  exit 0
+fi
+
+echo "" >&2
+echo "╔══════════════════════════════════════════════════════════════╗" >&2
+echo "║  🚫  CHANGELOG NOT UPDATED                                   ║" >&2
+echo "╠══════════════════════════════════════════════════════════════╣" >&2
+echo "║                                                              ║" >&2
+printf  "║  version.ts was bumped to %-35s║\n" "${NEW_VERSION}" >&2
+echo "║  but src/pages/ChangelogPage.tsx has no entry for it.        ║" >&2
+echo "║                                                              ║" >&2
+echo "║  Add a release entry to RELEASES[] in ChangelogPage.tsx      ║" >&2
+echo "║  then stage that file before committing.                     ║" >&2
+echo "║                                                              ║" >&2
+echo "╚══════════════════════════════════════════════════════════════╝" >&2
+echo "" >&2
+exit 1
