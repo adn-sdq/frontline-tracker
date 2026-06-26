@@ -3,6 +3,60 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase"
 import type { Org, Profile } from "@/lib/types"
 
+// ── Feature requests (admin-only) ─────────────────────────────────────────────
+
+export interface FeatureRequest {
+  id: string
+  title: string
+  description: string | null
+  submitted_by: string | null
+  submitted_at: string
+  status: "pending" | "planned" | "in_progress" | "done" | "rejected"
+  upvotes: number
+  submitter_name?: string | null
+}
+
+const FR_KEY = ["feature_requests"]
+
+export function useFeatureRequests() {
+  return useQuery<FeatureRequest[]>({
+    queryKey: FR_KEY,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("feature_requests")
+        .select("*, profiles(full_name, username)")
+        .order("upvotes", { ascending: false })
+        .order("submitted_at", { ascending: false })
+      if (error) throw error
+      return (data ?? []).map((r) => ({
+        ...r,
+        submitter_name:
+          (r.profiles as { full_name?: string; username?: string } | null)?.full_name ??
+          (r.profiles as { full_name?: string; username?: string } | null)?.username ??
+          null,
+        profiles: undefined,
+      })) as FeatureRequest[]
+    },
+  })
+}
+
+export function useUpdateFeatureRequest() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: {
+      id: string
+      patch: Partial<Pick<FeatureRequest, "status" | "upvotes">>
+    }) => {
+      const { error } = await supabase
+        .from("feature_requests")
+        .update(args.patch)
+        .eq("id", args.id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: FR_KEY }),
+  })
+}
+
 const PROFILES_KEY = ["profiles", "all"]
 
 export function useAllProfiles() {
