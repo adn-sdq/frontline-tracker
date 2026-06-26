@@ -149,6 +149,7 @@ export function DocumentDrawer({
     try {
       await addComment.mutateAsync({ documentId: doc.id, body: comment.trim() })
       setComment("")
+      toast.success("Comment posted")
     } catch (err) {
       toast.error("Could not post comment", {
         description: err instanceof Error ? err.message : "Unknown error",
@@ -324,7 +325,10 @@ export function DocumentDrawer({
                         <DatePicker
                           value={f.dated ?? ""}
                           onChange={(val) =>
-                            doc && updateFileDate.mutate({ id: f.id, documentId: doc.id, dated: val })
+                            doc && updateFileDate.mutate(
+                              { id: f.id, documentId: doc.id, dated: val },
+                              { onSuccess: () => toast.success("Date updated") }
+                            )
                           }
                           placeholder="—"
                           clearable={false}

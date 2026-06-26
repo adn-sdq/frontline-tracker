@@ -121,6 +121,7 @@ function AccountsSection() {
     try {
       if (assigned) await unassign.mutateAsync({ projectId, userId: p.id })
       else await assign.mutateAsync({ projectId, userId: p.id })
+      toast.success(assigned ? "Removed from project" : "Added to project")
     } catch (e) {
       toast.error("Could not update projects", {
         description: e instanceof Error ? e.message : "Unknown error",
@@ -131,6 +132,7 @@ function AccountsSection() {
   async function changeOrg(p: Profile, org: string) {
     try {
       await updateProfile.mutateAsync({ id: p.id, patch: { org: org as Org } })
+      toast.success("Organisation updated")
     } catch (e) {
       toast.error("Could not update", {
         description: e instanceof Error ? e.message : "Unknown error",
@@ -144,6 +146,7 @@ function AccountsSection() {
         id: p.id,
         patch: { is_admin: value === "admin" },
       })
+      toast.success(value === "admin" ? "Promoted to admin" : "Set to member")
     } catch (e) {
       toast.error("Could not update", {
         description: e instanceof Error ? e.message : "Unknown error",
@@ -161,6 +164,7 @@ function AccountsSection() {
     const patch = next.length === APP_PAGES.length ? null : next
     try {
       await updateProfile.mutateAsync({ id: p.id, patch: { allowed_pages: patch } })
+      toast.success("Page access updated")
     } catch (e) {
       toast.error("Could not update", {
         description: e instanceof Error ? e.message : "Unknown error",
@@ -935,6 +939,7 @@ function ProjectsSection() {
   async function toggleActive(id: string, active: boolean) {
     try {
       await update.mutateAsync({ id, patch: { active } })
+      toast.success(active ? "Project activated" : "Project deactivated")
     } catch (e) {
       toast.error("Could not update", { description: e instanceof Error ? e.message : "Unknown error" })
     }
@@ -1077,6 +1082,7 @@ function SystemsSection() {
   async function toggle(k: string, active: boolean) {
     try {
       await toggleSystem.mutateAsync({ key: k, active })
+      toast.success(active ? "System enabled" : "System disabled")
     } catch (e) {
       toast.error("Could not update", {
         description: e instanceof Error ? e.message : "Unknown error",
