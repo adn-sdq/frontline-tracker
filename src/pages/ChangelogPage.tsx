@@ -17,6 +17,61 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.0.0",
+    date: "2026-06-25",
+    type: "major",
+    summary: "FIT 2.0 — a complete visual redesign. Every screen carries the brand identity established at sign-in: Fraunces serif titles, brand orange + navy palette, editorial page headers, and elevated cards throughout.",
+    sections: [
+      {
+        title: "Brand & Identity",
+        items: [
+          "App renamed FIT — Frontline Internal Tools, with a new custom SVG logo",
+          "Login headline updated: 'Built at the front. Tracked to Handover.' — resonates with Frontline's on-site mission",
+          "Art panel quote: 'From the first PO to the final sign-off — nothing slips.'",
+          "Brand orange (#E37C30) and navy (#1B354F) as primary palette in both light and dark mode",
+          "Fraunces display serif registered as --font-display, used for all headlines",
+        ],
+      },
+      {
+        title: "Sign-in Page",
+        items: [
+          "Crystalline geometric SVG art panel — hand-built, no image assets, scales perfectly",
+          "Desktop: split-card with art on left, form on right; floating card on ambient backdrop",
+          "Mobile: art fills top 42svh, FIT logo pinned to art, form fills remaining height",
+        ],
+      },
+      {
+        title: "App-wide Design System",
+        items: [
+          "Shared PageHeader component: orange eyebrow + Fraunces serif title on every page",
+          "App canvas: subtly tinted dot-textured background so white cards lift off the surface",
+          "Consistent rounded-xl cards with hover lift and border transitions throughout",
+        ],
+      },
+      {
+        title: "Projects (landing)",
+        items: [
+          "Time-aware greeting ('Good morning / afternoon / evening') with user's first name",
+          "Project cards: reveal-on-hover top accent bar, lift animation, branded icon tile",
+        ],
+      },
+      {
+        title: "Tickets",
+        items: [
+          "Cards redesigned with a two-zone desktop layout: title + meta on the left, badges + age pinned right",
+          "Consistent max-width with all other pages (was narrower before)",
+          "Empty state: editorial icon tile with Fraunces heading",
+        ],
+      },
+      {
+        title: "Request a Feature",
+        items: [
+          "Moved from the login page into the authenticated app (user menu + mobile nav)",
+        ],
+      },
+    ],
+  },
+  {
     version: "v1.4.0",
     date: "2026-06-25",
     type: "minor",

@@ -61,10 +61,10 @@ export default function LoginPage() {
             <div className="mb-7">
               <p className="text-xs font-medium text-muted-foreground">Sign in to</p>
               <h1 className="mt-1 font-display text-[2.1rem] leading-[1.1] tracking-tight text-foreground">
-                Where Every Part
+                From first order
                 <br />
-                Finds Its{" "}
-                <span className="italic text-primary">Place</span>
+                to final{" "}
+                <span className="italic text-primary">Handover</span>
               </h1>
             </div>
 
@@ -140,7 +140,7 @@ export default function LoginPage() {
               <LoginArt className="h-full w-full" />
               <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/45 via-transparent to-transparent p-7">
                 <p className="font-display text-lg italic leading-snug text-white/90">
-                  "Every part, in its place — on time, on record."
+                  "From the first PO to the final sign-off — nothing slips."
                 </p>
                 <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-white/55">
                   Frontline Internal Tools
@@ -155,10 +155,10 @@ export default function LoginPage() {
               <div className="mb-8">
                 <p className="text-sm font-medium text-muted-foreground">Sign in to</p>
                 <h1 className="mt-1.5 font-display text-5xl leading-[1.08] tracking-tight text-foreground">
-                  Where Every Part
+                  Built at the front.
                   <br />
-                  Finds Its{" "}
-                  <span className="italic text-primary">Place</span>
+                  Tracked to{" "}
+                  <span className="italic text-primary">Handover</span>
                 </h1>
               </div>
 
