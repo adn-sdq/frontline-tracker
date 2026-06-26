@@ -17,6 +17,84 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.1.0",
+    date: "2026-06-26",
+    type: "minor",
+    summary: "Feature inbox for admins to review, prioritise, and track submitted feature requests. Full Sonner toast coverage across every mutation in the app.",
+    sections: [
+      {
+        title: "Admin — Feature Inbox",
+        items: [
+          "Subtle lightbulb icon button in the Admin page header opens a right-hand drawer — visible to admins but unobtrusive",
+          "Pending count badge on the icon so nothing gets missed",
+          "Filter requests by status: All / Pending / Planned / In Progress / Done / Rejected",
+          "Upvote button (arrow + count) on each card to prioritise requests",
+          "Change status inline via a color-coded badge dropdown (amber → blue → orange → green)",
+          "Shows submitter name and submission date per request",
+        ],
+      },
+      {
+        title: "Toasts",
+        items: [
+          "Every create, update, and delete action now shows a success toast",
+          "Previously missing: project member assign/remove, org change, admin role change, page access toggle",
+          "Also added: project activate/deactivate, system enable/disable, comment posted, file date updated",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.0.3",
+    date: "2026-06-26",
+    type: "patch",
+    summary: "Complete Sonner toast coverage — every mutation now gives feedback.",
+    sections: [
+      {
+        title: "Toasts",
+        items: [
+          "Admin: assign/remove user from project, org change, admin role toggle, page access toggle",
+          "Admin: project activate/deactivate, system enable/disable",
+          "Documents: comment posted, file date updated",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.0.2",
+    date: "2026-06-25",
+    type: "patch",
+    summary: "Docs page redesign — persistent sidebar on desktop, improved typography and hierarchy.",
+    sections: [
+      {
+        title: "Docs Page",
+        items: [
+          "Persistent left sidebar (w-64, sticky) on desktop replaces the two-row horizontal scroll nav",
+          "Mobile keeps the original compact tab rows",
+          "Fraunces display serif applied to section headings and stat numbers",
+          "Stat grid numbers now use tabular-nums and brand primary color",
+          "FIT logo replaces PackageCheck icon in the top bar; back link corrected to '/'",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.0.1",
+    date: "2026-06-25",
+    type: "patch",
+    summary: "Auth timing fixes — sign-in now navigates to the project picker immediately, and refreshing inside a project returns to the picker.",
+    sections: [
+      {
+        title: "Auth",
+        items: [
+          "Fixed race condition where loading cleared before profile fetch completed, causing wrong redirects on sign-in",
+          "App now waits for both session and profile to resolve before rendering protected routes",
+          "ProjectsPage clears any persisted project selection on mount — refresh or back always shows the picker",
+          "Entering a project requires an explicit card click; localStorage still remembers last project for fast re-entry when intended",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.0.0",
     date: "2026-06-25",
     type: "major",
