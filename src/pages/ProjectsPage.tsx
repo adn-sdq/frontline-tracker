@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowRight, FolderOpen, Loader2, LogOut } from "lucide-react"
 
@@ -19,6 +20,12 @@ export default function ProjectsPage() {
   const navigate = useNavigate()
   const name = profile?.full_name ?? profile?.username ?? user?.email ?? "User"
   const firstName = name.split(" ")[0]
+
+  // Clear any persisted selection so the picker is always shown fresh.
+  // The user must actively click a project card to enter it.
+  useEffect(() => {
+    setCurrentProject(null)
+  }, [])
 
   function open(id: string) {
     setCurrentProject(id)

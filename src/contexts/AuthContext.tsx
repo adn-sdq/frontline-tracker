@@ -30,11 +30,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
-      setLoading(false)
+      // No session — done loading. With a session, wait for the profile
+      // fetch below to clear loading so routes render with full context.
+      if (!data.session) setLoading(false)
     })
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next)
+      if (!next) setLoading(false)
     })
     return () => sub.subscription.unsubscribe()
   }, [])
@@ -52,7 +55,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("id", uid)
       .maybeSingle()
       .then(({ data }) => {
-        if (active) setProfile((data as Profile) ?? null)
+        if (active) {
+          setProfile((data as Profile) ?? null)
+          setLoading(false)
+        }
       })
     return () => {
       active = false
