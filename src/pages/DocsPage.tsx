@@ -3,7 +3,6 @@ import { Link } from "react-router-dom"
 import {
   ArrowLeft,
   ChevronRight,
-  PackageCheck,
   Wifi,
   Cable,
   Volume2,
@@ -23,6 +22,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { FitLogo } from "@/components/FitLogo"
 import {
   Accordion,
   AccordionContent,
@@ -37,7 +37,7 @@ import { Progress } from "@/components/ui/progress"
 // ── Content primitives ────────────────────────────────────────────────────────
 
 function Heading({ children }: { children: React.ReactNode }) {
-  return <h1 className="text-2xl font-bold tracking-tight mb-2">{children}</h1>
+  return <h1 className="font-display text-3xl leading-tight tracking-tight text-foreground mb-2">{children}</h1>
 }
 
 function Lead({ children }: { children: React.ReactNode }) {
@@ -45,7 +45,7 @@ function Lead({ children }: { children: React.ReactNode }) {
 }
 
 function H2({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-lg font-semibold mt-10 mb-3 pt-6 border-t">{children}</h2>
+  return <h2 className="font-display text-xl tracking-tight mt-10 mb-3 pt-6 border-t">{children}</h2>
 }
 
 function H3({ children }: { children: React.ReactNode }) {
@@ -166,7 +166,7 @@ function StatGrid({
       {stats.map((s) => (
         <Card key={s.label} className="gap-0 py-0">
           <CardContent className="px-4 py-3">
-            <div className="text-xl font-bold tracking-tight tabular-nums">{s.value}</div>
+            <div className="font-display text-2xl tracking-tight text-primary tabular-nums">{s.value}</div>
             <div className="mt-0.5 text-xs font-medium">{s.label}</div>
             {s.sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{s.sub}</div>}
           </CardContent>
@@ -2526,9 +2526,9 @@ export default function DocsPage() {
 
       {/* ── Top bar ── */}
       <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
+        <div className="flex h-14 items-center gap-3 px-4">
           <Link
-            to="/login"
+            to="/"
             className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground shrink-0"
           >
             <ArrowLeft className="size-4" />
@@ -2536,19 +2536,17 @@ export default function DocsPage() {
           </Link>
           <Separator orientation="vertical" className="mx-1 h-5" />
           <div className="flex min-w-0 items-center gap-2">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <PackageCheck className="size-4" />
-            </div>
-            <span className="whitespace-nowrap text-sm font-semibold">Frontline Tracker</span>
-            <span className="text-muted-foreground">/</span>
+            <FitLogo size={24} />
+            <span className="whitespace-nowrap text-sm font-semibold">FIT</span>
+            <span className="text-muted-foreground/50">/</span>
             <span className="truncate text-sm text-muted-foreground">Engineering Reference</span>
           </div>
         </div>
       </header>
 
-      {/* ── Section nav (sticky row 1) ── */}
-      <div className="sticky top-14 z-10 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto max-w-6xl overflow-x-auto">
+      {/* ── Mobile section + page nav ── */}
+      <div className="lg:hidden sticky top-14 z-10 border-b bg-background/95 backdrop-blur">
+        <div className="overflow-x-auto">
           <div className="flex h-11 items-center gap-0.5 px-3">
             {DOCS.map((section) => (
               <button
@@ -2563,32 +2561,70 @@ export default function DocsPage() {
                 )}
               >
                 <section.icon className="size-3.5 shrink-0" />
-                <span>{section.label}</span>
+                {section.label}
               </button>
             ))}
           </div>
         </div>
-
-        {/* ── Page sub-nav (sticky row 2, shown when section has >1 page) ── */}
         {activeSection && activeSection.pages.length > 1 && (
-          <div className="border-t">
-            <div className="mx-auto max-w-6xl overflow-x-auto">
-              <div className="flex h-9 items-center gap-0.5 px-3">
-                {activeSection.pages.map((page) => (
+          <div className="border-t overflow-x-auto">
+            <div className="flex h-9 items-center gap-0.5 px-3">
+              {activeSection.pages.map((page) => (
+                <button
+                  key={page.id}
+                  type="button"
+                  onClick={() => navigate(page.id, setActiveId)}
+                  className={cn(
+                    "flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1 text-xs transition-colors whitespace-nowrap",
+                    activeId === page.id
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  )}
+                >
+                  {page.label}
+                  {page.badge && (
+                    <Badge variant="secondary" className="ml-1 h-4 py-0 text-[10px]">
+                      {page.badge}
+                    </Badge>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Desktop: sidebar + content ── */}
+      <div className="flex">
+
+        {/* Sidebar */}
+        <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 sticky top-14 h-[calc(100svh-3.5rem)] overflow-y-auto border-r bg-background px-3 py-6">
+          {DOCS.map((section) => (
+            <div key={section.id} className="mb-5">
+              {/* Section label */}
+              <div className="mb-1.5 flex items-center gap-1.5 px-2">
+                <section.icon className="size-3.5 shrink-0 text-muted-foreground/60" />
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
+                  {section.label}
+                </span>
+              </div>
+              {/* Pages */}
+              <div className="space-y-0.5">
+                {section.pages.map((page) => (
                   <button
                     key={page.id}
                     type="button"
                     onClick={() => navigate(page.id, setActiveId)}
                     className={cn(
-                      "flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1 text-xs transition-colors whitespace-nowrap",
+                      "w-full text-left rounded-lg px-3 py-2 text-sm transition-colors",
                       activeId === page.id
                         ? "bg-primary/10 text-primary font-medium"
                         : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     )}
                   >
-                    {page.label}
+                    <span className="leading-snug">{page.label}</span>
                     {page.badge && (
-                      <Badge variant="secondary" className="ml-1 h-4 py-0 text-[10px]">
+                      <Badge variant="secondary" className="ml-2 h-4 py-0 text-[10px]">
                         {page.badge}
                       </Badge>
                     )}
@@ -2596,40 +2632,43 @@ export default function DocsPage() {
                 ))}
               </div>
             </div>
+          ))}
+        </aside>
+
+        {/* Content */}
+        <main className="min-w-0 flex-1 px-5 py-10 md:px-10 lg:px-14">
+          <div className="max-w-3xl">
+            {activePage?.content ?? (
+              <p className="text-muted-foreground">Select a topic from the sidebar.</p>
+            )}
+
+            {/* Prev / next */}
+            <div className="mt-14 flex items-center justify-between gap-4 border-t pt-6">
+              {prevPage ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(prevPage.id, setActiveId)}
+                  className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <ArrowLeft className="size-4" />
+                  {prevPage.label}
+                </button>
+              ) : <span />}
+              {nextPage && (
+                <button
+                  type="button"
+                  onClick={() => navigate(nextPage.id, setActiveId)}
+                  className="ml-auto flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {nextPage.label}
+                  <ChevronRight className="size-4" />
+                </button>
+              )}
+            </div>
           </div>
-        )}
+        </main>
+
       </div>
-
-      {/* ── Content ── */}
-      <main className="mx-auto max-w-3xl px-5 py-10 md:px-10">
-        {activePage?.content ?? (
-          <p className="text-muted-foreground">Select a topic above.</p>
-        )}
-
-        {/* Prev / next */}
-        <div className="mt-14 flex items-center justify-between gap-4 border-t pt-6">
-          {prevPage ? (
-            <button
-              type="button"
-              onClick={() => navigate(prevPage.id, setActiveId)}
-              className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ArrowLeft className="size-4" />
-              {prevPage.label}
-            </button>
-          ) : <span />}
-          {nextPage && (
-            <button
-              type="button"
-              onClick={() => navigate(nextPage.id, setActiveId)}
-              className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground ml-auto"
-            >
-              {nextPage.label}
-              <ChevronRight className="size-4" />
-            </button>
-          )}
-        </div>
-      </main>
     </div>
   )
 }
