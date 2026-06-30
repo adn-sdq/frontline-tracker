@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import {
+  ChevronDown,
   ChevronUp,
   FolderOpen,
   Inbox,
@@ -19,6 +20,7 @@ import {
   useAllProfiles,
   useCreateAccount,
   useDeleteAccount,
+  useDeleteFeatureRequest,
   useFeatureRequests,
   useSetPassword,
   useUpdateFeatureRequest,
@@ -102,14 +104,21 @@ function FeatureInbox() {
   const [filter, setFilter] = useState<"all" | FeatureRequest["status"]>("all")
   const { data: requests = [], isLoading } = useFeatureRequests()
   const update = useUpdateFeatureRequest()
+  const remove = useDeleteFeatureRequest()
 
   const visible =
     filter === "all" ? requests : requests.filter((r) => r.status === filter)
 
-  const pendingCount = requests.filter((r) => r.status === "pending").length
-
   function upvote(r: FeatureRequest) {
     update.mutate({ id: r.id, patch: { upvotes: r.upvotes + 1 } })
+  }
+
+  function downvote(r: FeatureRequest) {
+    update.mutate({ id: r.id, patch: { upvotes: r.upvotes - 1 } })
+  }
+
+  function deleteRequest(id: string) {
+    remove.mutate(id, { onSuccess: () => toast.success("Request deleted") })
   }
 
   function setStatus(r: FeatureRequest, status: FeatureRequest["status"]) {
@@ -126,15 +135,10 @@ function FeatureInbox() {
           <Button
             variant="ghost"
             size="icon"
-            className="relative size-8 text-muted-foreground/40 hover:text-muted-foreground"
+            className="size-8 text-muted-foreground/40 hover:text-muted-foreground"
             onClick={() => setOpen(true)}
           >
             <Lightbulb className="size-4" />
-            {pendingCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex size-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
-                {pendingCount > 9 ? "9+" : pendingCount}
-              </span>
-            )}
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="text-xs">
@@ -211,17 +215,28 @@ function FeatureInbox() {
                         </p>
                       )}
                     </div>
-                    {/* Upvote */}
-                    <button
-                      type="button"
-                      onClick={() => upvote(r)}
-                      className="flex shrink-0 flex-col items-center gap-0 rounded-lg px-1.5 py-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                    >
-                      <ChevronUp className="size-3.5" />
-                      <span className="text-[10px] font-bold tabular-nums">
+                    {/* Vote */}
+                    <div className="flex shrink-0 flex-col items-center rounded-lg border bg-muted/40 text-muted-foreground">
+                      <button
+                        type="button"
+                        title="Upvote"
+                        onClick={() => upvote(r)}
+                        className="rounded-t-lg px-1.5 pt-1 pb-0.5 transition-colors hover:bg-primary/10 hover:text-primary"
+                      >
+                        <ChevronUp className="size-3.5" />
+                      </button>
+                      <span className="text-[10px] font-bold tabular-nums leading-none py-0.5">
                         {r.upvotes}
                       </span>
-                    </button>
+                      <button
+                        type="button"
+                        title="Downvote"
+                        onClick={() => downvote(r)}
+                        className="rounded-b-lg px-1.5 pb-1 pt-0.5 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <ChevronDown className="size-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Footer */}
@@ -248,13 +263,20 @@ function FeatureInbox() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <span className="ml-auto text-[10px] text-muted-foreground/60">
-                      {r.submitter_name ?? "Anonymous"} ·{" "}
+                    <span className="text-[10px] text-muted-foreground/60">
                       {new Date(r.submitted_at).toLocaleDateString("en-GB", {
                         day: "numeric",
                         month: "short",
                       })}
                     </span>
+                    <button
+                      type="button"
+                      title="Delete request"
+                      onClick={() => deleteRequest(r.id)}
+                      className="ml-auto rounded p-0.5 text-muted-foreground/40 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="size-3" />
+                    </button>
                   </div>
                 </div>
               ))
