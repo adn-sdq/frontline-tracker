@@ -50,6 +50,20 @@ export function useUpdateFeatureRequest() {
   })
 }
 
+export function useDeleteFeatureRequest() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("feature_requests")
+        .delete()
+        .eq("id", id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: FR_KEY }),
+  })
+}
+
 const PROFILES_KEY = ["profiles", "all"]
 
 export function useAllProfiles() {
