@@ -24,18 +24,11 @@ export function useFeatureRequests() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("feature_requests")
-        .select("*, profiles(full_name, username)")
+        .select("id, title, description, submitted_by, submitted_at, status, upvotes")
         .order("upvotes", { ascending: false })
         .order("submitted_at", { ascending: false })
       if (error) throw error
-      return (data ?? []).map((r) => ({
-        ...r,
-        submitter_name:
-          (r.profiles as { full_name?: string; username?: string } | null)?.full_name ??
-          (r.profiles as { full_name?: string; username?: string } | null)?.username ??
-          null,
-        profiles: undefined,
-      })) as FeatureRequest[]
+      return (data ?? []) as FeatureRequest[]
     },
   })
 }
