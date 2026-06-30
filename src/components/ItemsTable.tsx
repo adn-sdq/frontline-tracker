@@ -210,7 +210,7 @@ function SerialToggle({
       onClick={onToggle}
       title={expanded ? "Hide serial numbers" : "Show serial numbers"}
       className={[
-        "flex shrink-0 flex-col items-center justify-center gap-0.5 border-l px-3 transition-colors",
+        "flex w-14 shrink-0 flex-col items-center justify-center gap-0.5 border-l transition-colors",
         expanded
           ? "bg-primary/5 text-primary"
           : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",

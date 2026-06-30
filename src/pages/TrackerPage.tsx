@@ -108,9 +108,13 @@ export default function TrackerPage() {
   const [importOpen, setImportOpen] = useState(false)
   const [deleteItem, setDeleteItem] = useState<Item | null>(null)
 
-  // Delivery-note cart
+  // Delivery-note cart + mode
+  const [dnMode, setDnMode] = useState(false)
   const [cart, setCart] = useState<Map<string, DnCartEntry>>(new Map())
   const [dnOpen, setDnOpen] = useState(false)
+
+  function enterDnMode() { setDnMode(true) }
+  function exitDnMode() { setDnMode(false); setCart(new Map()) }
 
   function handleCartChange(itemId: string, entry: DnCartEntry | null) {
     setCart((prev) => {
@@ -228,13 +232,12 @@ export default function TrackerPage() {
         {/* Desktop actions */}
         <div className="hidden flex-wrap items-center gap-2 sm:flex">
           <Button
-            variant={cart.size > 0 ? "default" : "outline"}
+            variant={dnMode ? "secondary" : "outline"}
             size="sm"
-            disabled={cart.size === 0}
-            onClick={() => setDnOpen(true)}
+            onClick={() => (dnMode ? exitDnMode() : enterDnMode())}
           >
             <Truck className="size-4" />
-            Delivery note{cart.size > 0 ? ` (${cart.size})` : ""}
+            {dnMode ? "Cancel delivery" : "Delivery note"}
           </Button>
           <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
             <Upload className="size-4" /> Import
@@ -262,18 +265,25 @@ export default function TrackerPage() {
         </div>
       </PageHeader>
 
-      {/* ── Cart banner (mobile) — shown when cart has items ── */}
-      {cart.size > 0 && (
-        <div className="sticky top-2 z-10 flex items-center justify-between gap-3 rounded-xl border bg-primary/5 px-4 py-2.5 shadow-sm sm:hidden">
+      {/* ── DN mode sticky banner (desktop + mobile) ── */}
+      {dnMode && (
+        <div className="sticky top-2 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-primary/5 px-4 py-2.5 shadow-sm">
           <div className="text-sm">
-            <strong>{cart.size}</strong> item{cart.size !== 1 ? "s" : ""} in delivery
+            {cart.size === 0
+              ? <span className="text-muted-foreground">Tap <strong>+</strong> on any item to add it to the delivery</span>
+              : <><strong>{cart.size}</strong> item{cart.size !== 1 ? "s" : ""} selected</>
+            }
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setCart(new Map())}>
-              <X className="size-4" /> Clear
+            <Button variant="ghost" size="sm" onClick={exitDnMode}>
+              <X className="size-4" /> Cancel
             </Button>
-            <Button size="sm" onClick={() => setDnOpen(true)}>
-              <Truck className="size-4" /> Generate
+            <Button
+              size="sm"
+              disabled={cart.size === 0}
+              onClick={() => setDnOpen(true)}
+            >
+              <Truck className="size-4" /> Generate ({cart.size})
             </Button>
           </div>
         </div>
@@ -486,8 +496,8 @@ export default function TrackerPage() {
               items={filtered}
               profiles={profiles}
               onView={setViewItem}
-              cartMap={cart}
-              onCartChange={handleCartChange}
+              cartMap={dnMode ? cart : undefined}
+              onCartChange={dnMode ? handleCartChange : undefined}
             />
           </div>
           <div className="md:hidden">
@@ -496,8 +506,8 @@ export default function TrackerPage() {
               profiles={profiles}
               onView={setViewItem}
               onAdd={openAdd}
-              cartMap={cart}
-              onCartChange={handleCartChange}
+              cartMap={dnMode ? cart : undefined}
+              onCartChange={dnMode ? handleCartChange : undefined}
             />
           </div>
         </>
@@ -523,7 +533,7 @@ export default function TrackerPage() {
         open={dnOpen}
         onOpenChange={setDnOpen}
         initialLines={cartLines}
-        onSaved={() => setCart(new Map())}
+        onSaved={exitDnMode}
       />
       <HistoryDrawer
         item={historyItem}
