@@ -18,9 +18,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/DatePicker"
 import { useProject } from "@/contexts/ProjectContext"
 import { useCreateDeliveryNote, useNextDnNumber } from "@/hooks/useDeliveryNotes"
-import { useItemSerialsForItems } from "@/hooks/useItemSerials"
 import { printDeliveryNote } from "@/lib/deliveryNotePdf"
-import type { DeliveryNoteItem, Item } from "@/lib/types"
+import type { DeliveryNoteItem } from "@/lib/types"
 
 // Auto-name: DN-[PROJECT_CODE]-[YYYYMMDD]-[NNN]
 // e.g. DN-ILMI-20260624-001
@@ -33,19 +32,6 @@ function buildDnNumber(projectName: string | undefined, seq: number): string {
   const date = format(new Date(), "yyyyMMdd")
   const num = String(seq).padStart(3, "0")
   return `DN-${code}-${date}-${num}`
-}
-
-// Build a sensible default delivery-note line from a tracker item:
-// first line = brand + model, second line = description; serial = unique_id.
-function itemToLine(i: Item): DeliveryNoteItem {
-  const head = [i.brand, i.model_no].filter(Boolean).join(" ")
-  const description = [head, i.description].filter(Boolean).join("\n")
-  const qty = i.qty_delivered || i.qty_ordered || i.qty_required || 1
-  return {
-    description: description || (i.unique_id ?? ""),
-    qty,
-    serial: i.unique_id ?? "",
-  }
 }
 
 function Field({
@@ -66,17 +52,17 @@ function Field({
 export function DeliveryNoteDialog({
   open,
   onOpenChange,
-  items,
+  initialLines,
+  onSaved,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  items: Item[]
+  initialLines: DeliveryNoteItem[]
+  onSaved?: () => void
 }) {
   const { currentProject } = useProject()
   const create = useCreateDeliveryNote()
   const { data: nextNum } = useNextDnNumber()
-  const itemIds = items.map((i) => i.id)
-  const { data: allSerials = [] } = useItemSerialsForItems(itemIds)
 
   const [dnNumber, setDnNumber] = useState("")
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"))
@@ -97,25 +83,8 @@ export function DeliveryNoteDialog({
     setDeliverTo(currentProject?.client_name ?? "First Fix Team")
     setLocation(currentProject?.site_location ?? "")
     setContact(currentProject?.site_contact ?? "")
-    setLines(items.map(itemToLine))
-  }, [open, items, nextNum, currentProject])
-
-  // Once serials load, fill the serial field on each line.
-  useEffect(() => {
-    if (!open || !allSerials.length) return
-    setLines((prev) =>
-      prev.map((line, i) => {
-        const item = items[i]
-        if (!item) return line
-        const serials = allSerials
-          .filter((s) => s.item_id === item.id && s.serial_number)
-          .sort((a, b) => a.unit_index - b.unit_index)
-          .map((s) => s.serial_number!)
-        if (!serials.length) return line
-        return { ...line, serial: serials.join(" / ") }
-      })
-    )
-  }, [open, allSerials, items])
+    setLines(initialLines)
+  }, [open, nextNum, currentProject])
 
   function setLine(idx: number, patch: Partial<DeliveryNoteItem>) {
     setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, ...patch } : l)))
@@ -180,6 +149,7 @@ export function DeliveryNoteDialog({
         items: cleaned,
       })
       toast.success("Delivery note saved & generated")
+      onSaved?.()
       onOpenChange(false)
     } catch (e) {
       toast.error("Could not save", {

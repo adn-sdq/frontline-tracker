@@ -17,6 +17,26 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.2.0",
+    date: "2026-06-30",
+    type: "minor",
+    summary: "Cart-based delivery note flow — add individual items with specific quantities and serial numbers before generating a DN.",
+    sections: [
+      {
+        title: "Delivery Note — Cart Flow",
+        items: [
+          "Each procurement item now has a PackagePlus button to add it to a delivery cart",
+          "Popover lets you set the quantity and pick specific serial numbers per item",
+          "Cart persists across the page — build up a multi-item delivery without leaving the list",
+          "Delivery note button in the header shows cart size and is disabled when cart is empty",
+          "Mobile sticky banner shows cart size with Clear and Generate shortcuts",
+          "Generating the DN clears the cart automatically",
+          "Removed the old all-or-nothing checkbox selection mode",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.1.1",
     date: "2026-06-30",
     type: "patch",

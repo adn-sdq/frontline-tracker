@@ -7,9 +7,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StatusBadge } from "@/components/StatusControls"
 import { SerialSubPanel } from "@/components/SerialSubPanel"
+import { AddToDnPopover } from "@/components/AddToDnPopover"
 import { useSystems } from "@/hooks/useSystems"
 import { useItemSerials } from "@/hooks/useItemSerials"
-import { SYSTEM_LABELS, type Item, type Profile } from "@/lib/types"
+import { SYSTEM_LABELS, type DnCartEntry, type Item, type Profile } from "@/lib/types"
 
 interface Props {
   items: Item[]
@@ -18,6 +19,8 @@ interface Props {
   selectable?: boolean
   selectedIds?: Set<string>
   onToggle?: (id: string) => void
+  cartMap?: Map<string, DnCartEntry>
+  onCartChange?: (itemId: string, entry: DnCartEntry | null) => void
 }
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -58,6 +61,8 @@ export function ItemsTable({
   selectable = false,
   selectedIds,
   onToggle,
+  cartMap,
+  onCartChange,
 }: Props) {
   const { labelFor } = useSystems()
 
@@ -158,6 +163,16 @@ export function ItemsTable({
                   qty={Number(item.qty_required)}
                   expanded={expanded}
                   onToggle={() => setExpandedId(expanded ? null : item.id)}
+                />
+              )}
+
+              {/* ── Add to DN ── */}
+              {onCartChange && (
+                <AddToDnPopover
+                  item={item}
+                  entry={cartMap?.get(item.id)}
+                  onSave={(e) => onCartChange(item.id, e)}
+                  onRemove={() => onCartChange(item.id, null)}
                 />
               )}
             </div>

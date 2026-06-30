@@ -2,6 +2,21 @@
 
 ---
 
+## v2.2.0 — 2026-06-30
+
+Cart-based delivery note flow — add items one by one with specific qty and serials before generating.
+
+### Delivery Note
+- Each item row/card now has a **PackagePlus** button to add it to a delivery cart
+- Popover lets you set the quantity and pick specific serial numbers for that delivery
+- Cart persists while you browse — add multiple items before generating
+- Delivery note button shows cart size; disabled when cart is empty
+- Mobile sticky banner shows cart count with Clear and Generate shortcuts
+- Generating the DN clears the cart
+- Removed the old all-or-nothing checkbox selection mode
+
+---
+
 ## v2.1.0 — 2026-06-26
 
 Feature inbox for admins + full Sonner toast coverage across the app.
