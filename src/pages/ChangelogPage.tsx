@@ -17,6 +17,23 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.1.1",
+    date: "2026-06-30",
+    type: "patch",
+    summary: "Feature inbox polish — downvoting, delete, and removal of the notification bubble.",
+    sections: [
+      {
+        title: "Admin — Feature Inbox",
+        items: [
+          "Downvote button added alongside upvote — score can go negative to deprioritise",
+          "Delete button on each request card — removes it immediately with a confirmation toast",
+          "Removed the pending count badge from the lightbulb icon",
+          "Fixed query bug where the inbox showed empty due to a broken profiles join",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.1.0",
     date: "2026-06-26",
     type: "minor",
