@@ -2,6 +2,19 @@
 
 ---
 
+## v2.4.1 — 2026-07-01
+
+Added "Save" button to the delivery note form — record a note without generating a PDF.
+
+### Bug Fixes / Improvements
+
+- Delivery note dialog now has three action buttons: Preview only, Save, and Save & print
+- "Save" records the note to the database without opening the print dialog — for notes created externally or handed in on paper
+- "Save & print" retains the previous behaviour (save + open PDF)
+- "Preview only" still generates the PDF without saving
+
+---
+
 ## v2.4.0 — 2026-07-01
 
 Manual delivery note creation from the Delivery Notes page.
