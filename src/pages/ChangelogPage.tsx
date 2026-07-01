@@ -17,6 +17,28 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.2.1",
+    date: "2026-07-01",
+    type: "patch",
+    summary: "Fixed serial column alignment and improved delivery note mode with an explicit toggle and sticky banner.",
+    sections: [
+      {
+        title: "Delivery Note",
+        items: [
+          "Cart buttons are now hidden by default — activate with the Delivery note button in the header",
+          "Sticky banner shows while in DN mode with item count, Cancel, and Generate actions",
+          "Generating or cancelling exits DN mode and clears the cart automatically",
+        ],
+      },
+      {
+        title: "UI",
+        items: [
+          "Serial number column is now a fixed width so counts like 0/22 and 1/1 align across all rows",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.2.0",
     date: "2026-06-30",
     type: "minor",

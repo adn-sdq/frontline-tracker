@@ -2,6 +2,22 @@
 
 ---
 
+## v2.2.1 — 2026-07-01
+
+Fixed serial column alignment + improved DN mode with explicit toggle and sticky banner.
+
+### Delivery Note
+
+- Cart buttons hidden by default; "Delivery note" header button enters DN mode
+- Sticky banner shows item count with Cancel and Generate actions
+- Generating or cancelling exits DN mode and clears cart
+
+### Fixes
+
+- Serial column is now fixed-width so `0/22` and `1/1` align across all rows
+
+---
+
 ## v2.2.0 — 2026-06-30
 
 Cart-based delivery note flow — add items one by one with specific qty and serials before generating.
