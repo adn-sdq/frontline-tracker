@@ -17,6 +17,21 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.2.3",
+    date: "2026-07-01",
+    type: "patch",
+    summary: "Fixed account creation failing due to a stale Edge Function deployment.",
+    sections: [
+      {
+        title: "Bug Fixes",
+        items: [
+          "Redeployed the admin-users Edge Function (v3) — create account, set password, and delete account now work again",
+          "Root cause: the previously deployed bundle was unretrievable, causing all calls to fail at the network level",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.2.2",
     date: "2026-07-01",
     type: "patch",
