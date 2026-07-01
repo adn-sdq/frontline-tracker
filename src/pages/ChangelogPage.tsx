@@ -17,6 +17,48 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.2.1",
+    date: "2026-07-01",
+    type: "patch",
+    summary: "Fixed serial column alignment and improved delivery note mode with an explicit toggle and sticky banner.",
+    sections: [
+      {
+        title: "Delivery Note",
+        items: [
+          "Cart buttons are now hidden by default — activate with the Delivery note button in the header",
+          "Sticky banner shows while in DN mode with item count, Cancel, and Generate actions",
+          "Generating or cancelling exits DN mode and clears the cart automatically",
+        ],
+      },
+      {
+        title: "UI",
+        items: [
+          "Serial number column is now a fixed width so counts like 0/22 and 1/1 align across all rows",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.2.0",
+    date: "2026-06-30",
+    type: "minor",
+    summary: "Cart-based delivery note flow — add individual items with specific quantities and serial numbers before generating a DN.",
+    sections: [
+      {
+        title: "Delivery Note — Cart Flow",
+        items: [
+          "Each procurement item now has a PackagePlus button to add it to a delivery cart",
+          "Popover lets you set the quantity and pick specific serial numbers per item",
+          "Cart persists across the page — build up a multi-item delivery without leaving the list",
+          "Delivery note button in the header shows cart size and is disabled when cart is empty",
+          "Mobile sticky banner shows cart size with Clear and Generate shortcuts",
+          "Generating the DN clears the cart automatically",
+          "Removed the old all-or-nothing checkbox selection mode",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.1.1",
     date: "2026-06-30",
     type: "patch",

@@ -8,9 +8,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StatusBadge } from "@/components/StatusControls"
 import { SerialSubPanel } from "@/components/SerialSubPanel"
+import { AddToDnPopover } from "@/components/AddToDnPopover"
 import { useItemSerials } from "@/hooks/useItemSerials"
 import { useSystems } from "@/hooks/useSystems"
-import { SYSTEM_LABELS, type Item, type Profile } from "@/lib/types"
+import { SYSTEM_LABELS, type DnCartEntry, type Item, type Profile } from "@/lib/types"
 
 interface Props {
   items: Item[]
@@ -20,6 +21,8 @@ interface Props {
   selectable?: boolean
   selectedIds?: Set<string>
   onToggle?: (id: string) => void
+  cartMap?: Map<string, DnCartEntry>
+  onCartChange?: (itemId: string, entry: DnCartEntry | null) => void
 }
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -85,6 +88,8 @@ function ItemCard({
   selected,
   onToggle,
   onView,
+  cartEntry,
+  onCartChange,
 }: {
   item: Item
   profiles: Record<string, Profile>
@@ -93,6 +98,8 @@ function ItemCard({
   selected: boolean
   onToggle?: (id: string) => void
   onView: (item: Item) => void
+  cartEntry?: DnCartEntry
+  onCartChange?: (itemId: string, entry: DnCartEntry | null) => void
 }) {
   const [expanded, setExpanded] = useState(false)
   const { data: serials = [] } = useItemSerials(expanded || false ? item.id : null)
@@ -219,6 +226,19 @@ function ItemCard({
           )}
         </>
       )}
+
+      {/* ── Add to DN ── */}
+      {onCartChange && (
+        <div className="border-t">
+          <AddToDnPopover
+            item={item}
+            entry={cartEntry}
+            onSave={(e) => onCartChange(item.id, e)}
+            onRemove={() => onCartChange(item.id, null)}
+            variant="card"
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -244,6 +264,8 @@ export function ItemsCards({
   selectable = false,
   selectedIds,
   onToggle,
+  cartMap,
+  onCartChange,
 }: Props) {
   const { labelFor } = useSystems()
 
@@ -261,6 +283,8 @@ export function ItemsCards({
           selected={selectedIds?.has(item.id) ?? false}
           onToggle={onToggle}
           onView={onView}
+          cartEntry={cartMap?.get(item.id)}
+          onCartChange={onCartChange}
         />
       ))}
     </div>

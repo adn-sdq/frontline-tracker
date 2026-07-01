@@ -378,6 +378,12 @@ export interface DeliveryNoteItem {
   serial: string
 }
 
+export interface DnCartEntry {
+  item: Item
+  qty: number
+  serials: string[]
+}
+
 export interface DeliveryNote {
   id: string
   project_id: string

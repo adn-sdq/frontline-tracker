@@ -2,6 +2,37 @@
 
 ---
 
+## v2.2.1 — 2026-07-01
+
+Fixed serial column alignment + improved DN mode with explicit toggle and sticky banner.
+
+### Delivery Note
+
+- Cart buttons hidden by default; "Delivery note" header button enters DN mode
+- Sticky banner shows item count with Cancel and Generate actions
+- Generating or cancelling exits DN mode and clears cart
+
+### Fixes
+
+- Serial column is now fixed-width so `0/22` and `1/1` align across all rows
+
+---
+
+## v2.2.0 — 2026-06-30
+
+Cart-based delivery note flow — add items one by one with specific qty and serials before generating.
+
+### Delivery Note
+- Each item row/card now has a **PackagePlus** button to add it to a delivery cart
+- Popover lets you set the quantity and pick specific serial numbers for that delivery
+- Cart persists while you browse — add multiple items before generating
+- Delivery note button shows cart size; disabled when cart is empty
+- Mobile sticky banner shows cart count with Clear and Generate shortcuts
+- Generating the DN clears the cart
+- Removed the old all-or-nothing checkbox selection mode
+
+---
+
 ## v2.1.0 — 2026-06-26
 
 Feature inbox for admins + full Sonner toast coverage across the app.

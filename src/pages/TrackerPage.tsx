@@ -5,6 +5,7 @@ import {
   Filter,
   Plus,
   Search,
+  Truck,
   Upload,
   X,
 } from "lucide-react"
@@ -60,6 +61,8 @@ import {
   INSTALLATION_STATUSES,
   PROCUREMENT_STATUSES,
   STATUS_LABELS,
+  type DeliveryNoteItem,
+  type DnCartEntry,
   type DeliveryStatus,
   type InstallationStatus,
   type Item,
@@ -105,23 +108,30 @@ export default function TrackerPage() {
   const [importOpen, setImportOpen] = useState(false)
   const [deleteItem, setDeleteItem] = useState<Item | null>(null)
 
-  // Delivery-note selection mode
-  const [selectMode, setSelectMode] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  // Delivery-note cart + mode
+  const [dnMode, setDnMode] = useState(false)
+  const [cart, setCart] = useState<Map<string, DnCartEntry>>(new Map())
   const [dnOpen, setDnOpen] = useState(false)
 
-  function toggleSelect(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+  function enterDnMode() { setDnMode(true) }
+  function exitDnMode() { setDnMode(false); setCart(new Map()) }
+
+  function handleCartChange(itemId: string, entry: DnCartEntry | null) {
+    setCart((prev) => {
+      const next = new Map(prev)
+      entry === null ? next.delete(itemId) : next.set(itemId, entry)
       return next
     })
   }
 
-  function exitSelect() {
-    setSelectMode(false)
-    setSelectedIds(new Set())
-  }
+  const cartLines: DeliveryNoteItem[] = [...cart.values()].map((e) => ({
+    description:
+      [e.item.brand, e.item.model_no, e.item.description]
+        .filter(Boolean)
+        .join("\n") || e.item.unique_id || "",
+    qty: e.qty,
+    serial: e.serials.join(" / "),
+  }))
 
   function toggleStatusFilter<K extends keyof StatusFilters>(
     category: K,
@@ -181,11 +191,6 @@ export default function TrackerPage() {
     return c
   }, [items, activeSystems])
 
-  const selectedItems = useMemo(
-    () => items.filter((i) => selectedIds.has(i.id)),
-    [items, selectedIds]
-  )
-
   function openAdd() {
     setEditItem(null)
     setDialogOpen(true)
@@ -227,11 +232,12 @@ export default function TrackerPage() {
         {/* Desktop actions */}
         <div className="hidden flex-wrap items-center gap-2 sm:flex">
           <Button
-            variant={selectMode ? "secondary" : "outline"}
+            variant={dnMode ? "secondary" : "outline"}
             size="sm"
-            onClick={() => (selectMode ? exitSelect() : setSelectMode(true))}
+            onClick={() => (dnMode ? exitDnMode() : enterDnMode())}
           >
-            <FileText className="size-4" /> Delivery note
+            <Truck className="size-4" />
+            {dnMode ? "Cancel delivery" : "Delivery note"}
           </Button>
           <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
             <Upload className="size-4" /> Import
@@ -259,22 +265,25 @@ export default function TrackerPage() {
         </div>
       </PageHeader>
 
-      {/* ── Selection mode banner ── */}
-      {selectMode && (
+      {/* ── DN mode sticky banner (desktop + mobile) ── */}
+      {dnMode && (
         <div className="sticky top-2 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-primary/5 px-4 py-2.5 shadow-sm">
           <div className="text-sm">
-            <strong>{selectedIds.size}</strong> selected
+            {cart.size === 0
+              ? <span className="text-muted-foreground">Tap <strong>+</strong> on any item to add it to the delivery</span>
+              : <><strong>{cart.size}</strong> item{cart.size !== 1 ? "s" : ""} selected</>
+            }
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={exitSelect}>
+            <Button variant="ghost" size="sm" onClick={exitDnMode}>
               <X className="size-4" /> Cancel
             </Button>
             <Button
               size="sm"
-              disabled={selectedIds.size === 0}
+              disabled={cart.size === 0}
               onClick={() => setDnOpen(true)}
             >
-              <FileText className="size-4" /> Generate ({selectedIds.size})
+              <Truck className="size-4" /> Generate ({cart.size})
             </Button>
           </div>
         </div>
@@ -429,12 +438,6 @@ export default function TrackerPage() {
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuCheckboxItem
-                checked={selectMode}
-                onCheckedChange={(v) => (v ? setSelectMode(true) : exitSelect())}
-              >
-                <FileText className="size-4" /> Delivery note
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
                 checked={false}
                 onCheckedChange={() => setImportOpen(true)}
               >
@@ -493,9 +496,8 @@ export default function TrackerPage() {
               items={filtered}
               profiles={profiles}
               onView={setViewItem}
-              selectable={selectMode}
-              selectedIds={selectedIds}
-              onToggle={toggleSelect}
+              cartMap={dnMode ? cart : undefined}
+              onCartChange={dnMode ? handleCartChange : undefined}
             />
           </div>
           <div className="md:hidden">
@@ -504,9 +506,8 @@ export default function TrackerPage() {
               profiles={profiles}
               onView={setViewItem}
               onAdd={openAdd}
-              selectable={selectMode}
-              selectedIds={selectedIds}
-              onToggle={toggleSelect}
+              cartMap={dnMode ? cart : undefined}
+              onCartChange={dnMode ? handleCartChange : undefined}
             />
           </div>
         </>
@@ -530,8 +531,9 @@ export default function TrackerPage() {
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
       <DeliveryNoteDialog
         open={dnOpen}
-        onOpenChange={(o) => { setDnOpen(o); if (!o) exitSelect() }}
-        items={selectedItems}
+        onOpenChange={setDnOpen}
+        initialLines={cartLines}
+        onSaved={exitDnMode}
       />
       <HistoryDrawer
         item={historyItem}
