@@ -121,26 +121,38 @@ export function DeliveryNoteDialog({
     })
   }
 
-  async function generateAndSave() {
-    const cleaned = lines.filter(
-      (l) => l.description.trim() || l.serial.trim()
-    )
-    if (cleaned.length === 0) {
-      toast.error("Add at least one item")
-      return
+  function buildPayload(cleaned: typeof lines) {
+    return {
+      dn_number: dnNumber || String(nextNum ?? 1),
+      dn_date: date,
+      po: po || null,
+      customer_po: customerPo || null,
+      deliver_to: deliverTo || null,
+      location: location || null,
+      contact: contact || null,
+      items: cleaned,
+      notes: null,
     }
+  }
+
+  async function saveOnly() {
+    const cleaned = lines.filter((l) => l.description.trim() || l.serial.trim())
+    if (cleaned.length === 0) { toast.error("Add at least one item"); return }
     try {
-      await create.mutateAsync({
-        dn_number: dnNumber || String(nextNum ?? 1),
-        dn_date: date,
-        po: po || null,
-        customer_po: customerPo || null,
-        deliver_to: deliverTo || null,
-        location: location || null,
-        contact: contact || null,
-        items: cleaned,
-        notes: null,
-      })
+      await create.mutateAsync(buildPayload(cleaned))
+      toast.success("Delivery note saved")
+      onSaved?.()
+      onOpenChange(false)
+    } catch (e) {
+      toast.error("Could not save", { description: e instanceof Error ? e.message : "Unknown error" })
+    }
+  }
+
+  async function generateAndSave() {
+    const cleaned = lines.filter((l) => l.description.trim() || l.serial.trim())
+    if (cleaned.length === 0) { toast.error("Add at least one item"); return }
+    try {
+      await create.mutateAsync(buildPayload(cleaned))
       printDeliveryNote({
         dnNumber: dnNumber || String(nextNum ?? 1),
         date,
@@ -156,9 +168,7 @@ export function DeliveryNoteDialog({
       onSaved?.()
       onOpenChange(false)
     } catch (e) {
-      toast.error("Could not save", {
-        description: e instanceof Error ? e.message : "Unknown error",
-      })
+      toast.error("Could not save", { description: e instanceof Error ? e.message : "Unknown error" })
     }
   }
 
@@ -166,9 +176,9 @@ export function DeliveryNoteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92svh] overflow-x-hidden overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Generate delivery note</DialogTitle>
+          <DialogTitle>Delivery note</DialogTitle>
           <DialogDescription>
-            Review the header and item lines, then generate a printable PDF.
+            Fill in the header and item lines. Save to record it, or save & print to generate a PDF.
           </DialogDescription>
         </DialogHeader>
 
@@ -272,11 +282,15 @@ export function DeliveryNoteDialog({
             Cancel
           </Button>
           <Button variant="outline" onClick={generate}>
-            <FileText className="size-4" /> Preview / Print only
+            <FileText className="size-4" /> Preview only
+          </Button>
+          <Button variant="outline" onClick={saveOnly} disabled={create.isPending}>
+            {create.isPending && <Loader2 className="size-4 animate-spin" />}
+            Save
           </Button>
           <Button onClick={generateAndSave} disabled={create.isPending}>
             {create.isPending && <Loader2 className="size-4 animate-spin" />}
-            Save & generate
+            Save & print
           </Button>
         </DialogFooter>
       </DialogContent>

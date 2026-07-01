@@ -17,6 +17,23 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.4.1",
+    date: "2026-07-01",
+    type: "patch",
+    summary: "Save a delivery note without generating a PDF — for notes created externally or handed in on paper.",
+    sections: [
+      {
+        title: "Improvements",
+        items: [
+          "Delivery note dialog now has three action buttons: Preview only, Save, and Save & print",
+          "\"Save\" records the note without opening the print dialog",
+          "\"Save & print\" retains the previous behaviour",
+          "\"Preview only\" generates the PDF without saving",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.4.0",
     date: "2026-07-01",
     type: "minor",
