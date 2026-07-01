@@ -49,6 +49,7 @@ import {
   useUpdateDocument,
 } from "@/hooks/useDocuments"
 import { useProfiles } from "@/hooks/useItems"
+import { useProject } from "@/contexts/ProjectContext"
 import { useSystems } from "@/hooks/useSystems"
 import {
   DOC_STATUSES,
@@ -65,7 +66,8 @@ export default function DocumentsPage() {
   const { data: docs = [], isLoading } = useDocuments()
   const { data: profiles = {} } = useProfiles()
   const { data: fileCounts = {} } = useFileCounts()
-  const { activeSystems, labelFor } = useSystems()
+  const { currentProjectId } = useProject()
+  const { activeSystems, labelFor } = useSystems(currentProjectId)
   const del = useDeleteDocument()
   const updateDoc = useUpdateDocument()
 

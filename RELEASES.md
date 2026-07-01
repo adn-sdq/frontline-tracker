@@ -2,6 +2,20 @@
 
 ---
 
+## v2.3.0 — 2026-07-01
+
+Per-project system assignment — each project now has its own set of enabled systems.
+
+### Features
+
+- Admin → Projects: "Systems enabled for this project" checkbox list in the create/edit dialog
+- Systems assigned to a project filter all system tabs (Tracker, Documents), dropdowns (Add/Edit item, Add document), and Dashboard stats
+- Project rows in the admin panel show badges for each assigned system at a glance
+- Default: all globally active systems are pre-selected when creating a new project
+- Powered by a `project_systems` junction table with RLS — each project independently opts in to specific systems
+
+---
+
 ## v2.2.4 — 2026-07-01
 
 Fixed "No projects assigned" showing on every login without a page refresh.

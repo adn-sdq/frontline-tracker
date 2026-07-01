@@ -29,6 +29,7 @@ import {
 } from "@/hooks/useDocuments"
 import { useSystems } from "@/hooks/useSystems"
 import { useAuth } from "@/contexts/AuthContext"
+import { useProject } from "@/contexts/ProjectContext"
 import { DOC_TYPES, DOC_TYPE_LABELS, type DocStatus, type DocType, type DocumentRow } from "@/lib/types"
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -43,7 +44,8 @@ export function DocumentDialog({
   doc: DocumentRow | null
 }) {
   const { user } = useAuth()
-  const { activeSystems } = useSystems()
+  const { currentProjectId } = useProject()
+  const { activeSystems } = useSystems(currentProjectId)
   const create = useCreateDocument()
   const update = useUpdateDocument()
   const upload = useUploadDocumentFile()

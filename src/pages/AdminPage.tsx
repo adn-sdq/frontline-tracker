@@ -37,8 +37,16 @@ import {
   useUpdateProject,
   type ProjectInput,
 } from "@/hooks/useProjects"
-import { useSystems, useToggleSystem, useUpsertSystem } from "@/hooks/useSystems"
+import {
+  useAllProjectSystems,
+  useProjectSystemKeys,
+  useSetProjectSystems,
+  useSystems,
+  useToggleSystem,
+  useUpsertSystem,
+} from "@/hooks/useSystems"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
@@ -1042,28 +1050,101 @@ function ProjectDialog({
   open,
   onClose,
   initial,
-  onSave,
-  busy,
+  projectId,
+  projectsCount,
 }: {
   open: boolean
   onClose: () => void
   initial: ProjectInput
-  onSave: (v: ProjectInput) => void
-  busy: boolean
+  projectId?: string        // undefined = create, string = edit
+  projectsCount: number     // for sort on create
 }) {
+  const create = useCreateProject()
+  const update = useUpdateProject()
+  const setProjectSystems = useSetProjectSystems()
+  const { systems: allSystems } = useSystems()
+  const activeSystems = allSystems.filter((s) => s.active)
+  const { data: existingKeys } = useProjectSystemKeys(projectId ?? null)
+
   const [form, setForm] = useState<ProjectInput>(initial)
+  const [selectedSystems, setSelectedSystems] = useState<string[]>([])
+  const [busy, setBusy] = useState(false)
+  const isNew = !projectId
+
   const prevOpenRef = useRef(false)
+  const systemsSeededRef = useRef(false)
+
+  // Seed form and systems when dialog opens.
   useEffect(() => {
     const justOpened = open && !prevOpenRef.current
     prevOpenRef.current = open
-    if (justOpened) setForm(initial)
+    if (!open) { systemsSeededRef.current = false; return }
+    if (!justOpened) return
+    setForm(initial)
+    if (!isNew && existingKeys !== undefined) {
+      setSelectedSystems(existingKeys)
+      systemsSeededRef.current = true
+    } else {
+      // Default: all active systems selected
+      setSelectedSystems(activeSystems.map((s) => s.key))
+      if (!isNew) systemsSeededRef.current = false // wait for real data
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initial])
+
+  // When existing keys load after dialog opens, apply them (only once per open).
+  useEffect(() => {
+    if (!open || isNew || existingKeys === undefined || systemsSeededRef.current) return
+    setSelectedSystems(existingKeys)
+    systemsSeededRef.current = true
+  }, [existingKeys, open, isNew])
+
   const set = (k: keyof ProjectInput, v: string) => setForm((f) => ({ ...f, [k]: v }))
-  const isNew = !("id" in initial)
+
+  function toggleSystem(key: string) {
+    setSelectedSystems((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    )
+  }
+
+  async function save() {
+    setBusy(true)
+    try {
+      let pid: string
+      if (isNew) {
+        const project = await create.mutateAsync({ ...form, sort: projectsCount + 1 })
+        pid = project.id
+        toast.success(`Project "${form.name.trim()}" created`)
+      } else {
+        await update.mutateAsync({
+          id: projectId,
+          patch: {
+            name: form.name.trim(),
+            description: form.description?.trim() || null,
+            client_name: form.client_name?.trim() || null,
+            client_po: form.client_po?.trim() || null,
+            our_po: form.our_po?.trim() || null,
+            site_location: form.site_location?.trim() || null,
+            site_contact: form.site_contact?.trim() || null,
+          },
+        })
+        pid = projectId
+        toast.success("Project updated")
+      }
+      await setProjectSystems.mutateAsync({ projectId: pid, keys: selectedSystems })
+      onClose()
+    } catch (e) {
+      toast.error(isNew ? "Could not create project" : "Could not update project", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{isNew ? "New project" : "Edit project"}</DialogTitle>
           <DialogDescription>
@@ -1072,7 +1153,6 @@ function ProjectDialog({
         </DialogHeader>
 
         <div className="grid gap-4">
-          {/* Row 1 */}
           <div className="grid gap-1.5">
             <Label className="text-xs text-muted-foreground">Project name *</Label>
             <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. MiSK Ilmi Phase 2" autoFocus />
@@ -1084,7 +1164,6 @@ function ProjectDialog({
 
           <Separator />
 
-          {/* Row 2 — client */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label className="text-xs text-muted-foreground">Client / deliver to</Label>
@@ -1096,7 +1175,6 @@ function ProjectDialog({
             </div>
           </div>
 
-          {/* Row 3 — POs */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label className="text-xs text-muted-foreground">Our PO number</Label>
@@ -1108,16 +1186,42 @@ function ProjectDialog({
             </div>
           </div>
 
-          {/* Row 4 — location */}
           <div className="grid gap-1.5">
             <Label className="text-xs text-muted-foreground">Site location</Label>
             <Input value={form.site_location ?? ""} onChange={(e) => set("site_location", e.target.value)} placeholder="e.g. MiSK Ilmi Campus, Riyadh" />
+          </div>
+
+          <Separator />
+
+          {/* Systems */}
+          <div className="grid gap-2">
+            <Label className="text-xs text-muted-foreground">
+              Systems enabled for this project
+            </Label>
+            {activeSystems.length === 0 ? (
+              <p className="text-xs text-muted-foreground/60">No systems configured globally yet.</p>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {activeSystems.map((s) => (
+                  <label
+                    key={s.key}
+                    className="flex cursor-pointer items-center gap-2 text-sm select-none"
+                  >
+                    <Checkbox
+                      checked={selectedSystems.includes(s.key)}
+                      onCheckedChange={() => toggleSystem(s.key)}
+                    />
+                    {s.label}
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
-          <Button onClick={() => onSave(form)} disabled={busy || !form.name.trim()}>
+          <Button onClick={save} disabled={busy || !form.name.trim()}>
             {busy && <Loader2 className="size-4 animate-spin" />}
             {isNew ? "Create project" : "Save changes"}
           </Button>
@@ -1129,39 +1233,13 @@ function ProjectDialog({
 
 function ProjectsSection() {
   const { data: projects = [], isLoading } = useAllProjects()
-  const create = useCreateProject()
   const update = useUpdateProject()
+  const { data: allProjectSystems = [] } = useAllProjectSystems()
+  const { labelFor } = useSystems()
   const [createOpen, setCreateOpen] = useState(false)
-  const [editProject, setEditProject] = useState<(ProjectInput & { id: string }) | null>(null)
+  const [editProjectId, setEditProjectId] = useState<string | null>(null)
 
-  async function handleCreate(form: ProjectInput) {
-    try {
-      await create.mutateAsync({ ...form, sort: projects.length + 1 })
-      toast.success(`Project "${form.name.trim()}" created`)
-      setCreateOpen(false)
-    } catch (e) {
-      toast.error("Could not create project", { description: e instanceof Error ? e.message : "Unknown error" })
-    }
-  }
-
-  async function handleEdit(form: ProjectInput) {
-    if (!editProject) return
-    try {
-      await update.mutateAsync({ id: editProject.id, patch: {
-        name: form.name.trim(),
-        description: form.description?.trim() || null,
-        client_name: form.client_name?.trim() || null,
-        client_po: form.client_po?.trim() || null,
-        our_po: form.our_po?.trim() || null,
-        site_location: form.site_location?.trim() || null,
-        site_contact: form.site_contact?.trim() || null,
-      }})
-      toast.success("Project updated")
-      setEditProject(null)
-    } catch (e) {
-      toast.error("Could not update project", { description: e instanceof Error ? e.message : "Unknown error" })
-    }
-  }
+  const editProject = projects.find((p) => p.id === editProjectId) ?? null
 
   async function toggleActive(id: string, active: boolean) {
     try {
@@ -1171,6 +1249,13 @@ function ProjectsSection() {
       toast.error("Could not update", { description: e instanceof Error ? e.message : "Unknown error" })
     }
   }
+
+  // Build a map: projectId → system keys for badge display
+  const systemsByProject = allProjectSystems.reduce<Record<string, string[]>>((acc, row) => {
+    if (!acc[row.project_id]) acc[row.project_id] = []
+    acc[row.project_id].push(row.system_key)
+    return acc
+  }, {})
 
   return (
     <>
@@ -1194,64 +1279,69 @@ function ProjectsSection() {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {projects.map((p) => (
-              <div
-                key={p.id}
-                className="rounded-lg border p-3 space-y-2"
-              >
-                {/* Header row: name + actions */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="font-medium truncate">{p.name}</span>
-                    {!p.active && <Badge variant="secondary" className="shrink-0">Inactive</Badge>}
+            {projects.map((p) => {
+              const sysKeys = systemsByProject[p.id] ?? []
+              return (
+                <div
+                  key={p.id}
+                  className="rounded-lg border p-3 space-y-2"
+                >
+                  {/* Header row: name + actions */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+                      <span className="font-medium truncate">{p.name}</span>
+                      {!p.active && <Badge variant="secondary" className="shrink-0">Inactive</Badge>}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7"
+                            onClick={() => setEditProjectId(p.id)}
+                          >
+                            <Pencil className="size-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit project details</TooltipContent>
+                      </Tooltip>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-7 px-2"
+                        onClick={() => toggleActive(p.id, !p.active)}
+                      >
+                        {p.active ? "Deactivate" : "Activate"}
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7"
-                          onClick={() => setEditProject({
-                            id: p.id,
-                            name: p.name,
-                            description: p.description,
-                            client_name: p.client_name,
-                            client_po: p.client_po,
-                            our_po: p.our_po,
-                            site_location: p.site_location,
-                            site_contact: p.site_contact,
-                          })}
-                        >
-                          <Pencil className="size-3.5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Edit project details</TooltipContent>
-                    </Tooltip>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs h-7 px-2"
-                      onClick={() => toggleActive(p.id, !p.active)}
-                    >
-                      {p.active ? "Deactivate" : "Activate"}
-                    </Button>
-                  </div>
-                </div>
 
-                {/* Details: each on its own line so nothing wraps mid-word */}
-                {(p.client_name || p.our_po || p.client_po || p.site_location || p.site_contact) && (
-                  <div className="grid grid-cols-1 gap-0.5 pl-6 text-xs text-muted-foreground sm:grid-cols-2">
-                    {p.client_name && <span className="truncate">Client: <strong className="text-foreground">{p.client_name}</strong></span>}
-                    {p.site_contact && <span className="truncate">Contact: <strong className="text-foreground">{p.site_contact}</strong></span>}
-                    {p.our_po && <span className="truncate">Our PO: <strong className="text-foreground">{p.our_po}</strong></span>}
-                    {p.client_po && <span className="truncate">Client PO: <strong className="text-foreground">{p.client_po}</strong></span>}
-                    {p.site_location && <span className="truncate sm:col-span-2">Location: <strong className="text-foreground">{p.site_location}</strong></span>}
-                  </div>
-                )}
-              </div>
-            ))}
+                  {/* Details */}
+                  {(p.client_name || p.our_po || p.client_po || p.site_location || p.site_contact) && (
+                    <div className="grid grid-cols-1 gap-0.5 pl-6 text-xs text-muted-foreground sm:grid-cols-2">
+                      {p.client_name && <span className="truncate">Client: <strong className="text-foreground">{p.client_name}</strong></span>}
+                      {p.site_contact && <span className="truncate">Contact: <strong className="text-foreground">{p.site_contact}</strong></span>}
+                      {p.our_po && <span className="truncate">Our PO: <strong className="text-foreground">{p.our_po}</strong></span>}
+                      {p.client_po && <span className="truncate">Client PO: <strong className="text-foreground">{p.client_po}</strong></span>}
+                      {p.site_location && <span className="truncate sm:col-span-2">Location: <strong className="text-foreground">{p.site_location}</strong></span>}
+                    </div>
+                  )}
+
+                  {/* System badges */}
+                  {sysKeys.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pl-6">
+                      {sysKeys.map((k) => (
+                        <Badge key={k} variant="outline" className="text-xs px-1.5 py-0">
+                          {labelFor(k)}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </CardContent>
@@ -1261,15 +1351,22 @@ function ProjectsSection() {
       open={createOpen}
       onClose={() => setCreateOpen(false)}
       initial={blankProjectInput()}
-      onSave={handleCreate}
-      busy={create.isPending}
+      projectsCount={projects.length}
     />
     <ProjectDialog
       open={!!editProject}
-      onClose={() => setEditProject(null)}
-      initial={editProject ?? blankProjectInput()}
-      onSave={handleEdit}
-      busy={update.isPending}
+      onClose={() => setEditProjectId(null)}
+      initial={editProject ? {
+        name: editProject.name,
+        description: editProject.description,
+        client_name: editProject.client_name,
+        client_po: editProject.client_po,
+        our_po: editProject.our_po,
+        site_location: editProject.site_location,
+        site_contact: editProject.site_contact,
+      } : blankProjectInput()}
+      projectId={editProjectId ?? undefined}
+      projectsCount={projects.length}
     />
     </>
   )

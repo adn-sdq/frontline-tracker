@@ -276,8 +276,8 @@ export function ItemDialog({
   defaultSystem?: System
 }) {
   const { user } = useAuth()
-  const { activeSystems } = useSystems()
-  const { currentProject } = useProject()
+  const { currentProject, currentProjectId } = useProject()
+  const { activeSystems } = useSystems(currentProjectId)
   const create = useCreateItem()
   const update = useUpdateItem()
   const [form, setForm] = useState<FormState>(blank(defaultSystem))

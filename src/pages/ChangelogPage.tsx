@@ -17,6 +17,25 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.3.0",
+    date: "2026-07-01",
+    type: "minor",
+    summary: "Each project now has its own set of enabled systems, configured independently by admins.",
+    sections: [
+      {
+        title: "Features",
+        items: [
+          "Admin → Projects: system checkbox list in the create/edit dialog — choose which systems are active for each project",
+          "System tabs in Tracker and Documents filter to the current project's assigned systems only",
+          "Add/Edit item and Add document dropdowns show only the project's enabled systems",
+          "Dashboard stats panel shows per-system breakdowns for the project's assigned systems",
+          "Project rows in the Admin panel show badges for each assigned system at a glance",
+          "Default: all globally active systems are pre-selected when creating a new project",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.2.4",
     date: "2026-07-01",
     type: "patch",
