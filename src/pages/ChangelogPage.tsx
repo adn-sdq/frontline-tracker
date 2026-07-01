@@ -17,6 +17,24 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.4.0",
+    date: "2026-07-01",
+    type: "minor",
+    summary: "Create delivery notes manually from the Delivery Notes page without going through the Procurement flow.",
+    sections: [
+      {
+        title: "Features",
+        items: [
+          "New \"New delivery note\" button on the Delivery Notes page opens the full form with all header fields and an empty item list",
+          "All header fields editable: DN number, date, PO, customer PO, deliver to, location, and contact — pre-filled from project settings",
+          "Add, edit, and remove line items freely before saving",
+          "\"Preview / Print only\" option generates the PDF without saving to the database",
+          "\"Save & generate\" saves the note and opens the printable PDF",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.3.3",
     date: "2026-07-01",
     type: "patch",
