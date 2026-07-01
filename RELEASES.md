@@ -2,6 +2,17 @@
 
 ---
 
+## v2.2.3 — 2026-07-01
+
+Fixed account creation / password reset failing with "Failed to send a request to the Edge Function".
+
+### Bug Fixes
+
+- Redeployed admin-users Edge Function (v2 → v3) — bundle was corrupt/unretrievable
+- Affects: Create account, Set password, Delete account, Edit username
+
+---
+
 ## v2.2.2 — 2026-07-01
 
 Fixed form state resetting on background re-renders caused by realtime subscriptions.
