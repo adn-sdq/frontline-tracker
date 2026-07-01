@@ -2,6 +2,16 @@
 
 ---
 
+## v2.3.2 — 2026-07-01
+
+Fixed long file names overflowing the upload area in the document dialog.
+
+### Bug Fixes
+
+- Selected file names now wrap across multiple lines instead of overflowing the dialog edge
+
+---
+
 ## v2.3.1 — 2026-07-01
 
 Fixed dialogs overflowing horizontally when an input field contains a long value.

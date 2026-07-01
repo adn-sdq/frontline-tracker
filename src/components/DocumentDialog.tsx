@@ -218,9 +218,9 @@ export function DocumentDialog({
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
           {file ? (
-            <div className="flex items-center gap-2 rounded-md border p-2 text-sm">
-              <Paperclip className="size-4 shrink-0 text-muted-foreground" />
-              <span className="min-w-0 flex-1 truncate">{file.name}</span>
+            <div className="flex items-start gap-2 rounded-md border p-2 text-sm">
+              <Paperclip className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 flex-1 break-all">{file.name}</span>
               <Button
                 type="button"
                 variant="ghost"
