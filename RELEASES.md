@@ -2,6 +2,18 @@
 
 ---
 
+## v2.2.4 — 2026-07-01
+
+Fixed "No projects assigned" showing on every login without a page refresh.
+
+### Bug Fixes
+
+- Projects load correctly immediately after login
+- Root cause: query ran pre-login, cached `[]`, then reused that stale empty result after auth
+- Fix: user ID is now part of the query key; query is disabled when not authenticated
+
+---
+
 ## v2.2.3 — 2026-07-01
 
 Fixed account creation / password reset failing with "Failed to send a request to the Edge Function".

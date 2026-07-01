@@ -17,6 +17,22 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.2.4",
+    date: "2026-07-01",
+    type: "patch",
+    summary: "Fixed project list showing empty after login without a page refresh.",
+    sections: [
+      {
+        title: "Bug Fixes",
+        items: [
+          "Projects now load correctly immediately after login — no refresh needed",
+          "Root cause: the projects query ran before login and cached an empty result; subsequent logins reused that stale cache",
+          "Fix: query key now includes the user ID so each login triggers a fresh fetch, and the query is disabled entirely when not authenticated",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.2.3",
     date: "2026-07-01",
     type: "patch",

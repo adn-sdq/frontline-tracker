@@ -30,7 +30,7 @@ function storageKey(userId: string | undefined) {
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   useProjectsRealtime()
-  const { data: projects = [], isLoading } = useProjects()
+  const { data: projects = [], isLoading } = useProjects(user?.id)
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null)
 
   const key = storageKey(user?.id)
