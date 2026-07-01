@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { format, parseISO } from "date-fns"
-import { FileText, Printer, Search, Trash2 } from "lucide-react"
+import { FileText, Plus, Printer, Search, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,7 @@ import {
 } from "@/hooks/useDeliveryNotes"
 import { useProfiles } from "@/hooks/useItems"
 import { printDeliveryNote } from "@/lib/deliveryNotePdf"
+import { DeliveryNoteDialog } from "@/components/DeliveryNoteDialog"
 import type { DeliveryNote } from "@/lib/types"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
@@ -58,6 +59,7 @@ export default function DeliveryNotesPage() {
   const [search, setSearch] = useState("")
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
+  const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<DeliveryNote | null>(null)
 
   function who(id: string | null) {
@@ -110,11 +112,16 @@ export default function DeliveryNotesPage() {
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
-      <PageHeader
-        eyebrow="Logistics"
-        title="Delivery Notes"
-        subtitle={`${notes.length} note${notes.length !== 1 ? "s" : ""} generated for ${currentProject?.name ?? "this project"}`}
-      />
+      <div className="flex items-start justify-between gap-3">
+        <PageHeader
+          eyebrow="Logistics"
+          title="Delivery Notes"
+          subtitle={`${notes.length} note${notes.length !== 1 ? "s" : ""} for ${currentProject?.name ?? "this project"}`}
+        />
+        <Button className="shrink-0 mt-1" onClick={() => setCreateOpen(true)}>
+          <Plus className="size-4" /> New delivery note
+        </Button>
+      </div>
 
       {/* Filters */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -179,7 +186,7 @@ export default function DeliveryNotesPage() {
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {notes.length === 0
-                ? "Generate delivery notes from the Procurement page."
+                ? "Create one manually or generate from the Procurement page."
                 : "Try adjusting your search or date range."}
             </p>
           </div>
@@ -272,6 +279,13 @@ export default function DeliveryNotesPage() {
           ))}
         </div>
       )}
+
+      {/* Manual create */}
+      <DeliveryNoteDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        initialLines={[]}
+      />
 
       {/* Delete confirm */}
       <Dialog

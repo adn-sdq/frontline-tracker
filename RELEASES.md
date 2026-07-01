@@ -2,6 +2,21 @@
 
 ---
 
+## v2.4.0 — 2026-07-01
+
+Manual delivery note creation from the Delivery Notes page.
+
+### Features
+
+- New "New delivery note" button on the Delivery Notes page — opens the full delivery note form with all header fields and an empty item list
+- All header fields are editable: DN number, date, PO, customer PO, deliver to, location, contact
+- Add, edit, and remove line items freely before saving
+- Preview / Print only option available (does not save to database)
+- Save & generate saves to the database and opens the PDF
+- Empty state updated to mention manual creation as an option
+
+---
+
 ## v2.3.3 — 2026-07-01
 
 Fixed stale delete dialog on tickets and added PO / VO document types.
