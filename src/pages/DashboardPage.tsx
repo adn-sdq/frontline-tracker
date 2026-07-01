@@ -4,6 +4,7 @@ import { AlertTriangle, Loader2 } from "lucide-react"
 import * as Progress from "@radix-ui/react-progress"
 
 import { useItems } from "@/hooks/useItems"
+import { useProject } from "@/contexts/ProjectContext"
 import { useSystems } from "@/hooks/useSystems"
 import {
   PROCUREMENT_STATUSES,
@@ -102,16 +103,17 @@ function CountBar({ label, count, total, barClass }: { label: string; count: num
 
 export default function DashboardPage() {
   const { data: allItems = [], isLoading } = useItems()
-  const { systems, labelFor } = useSystems()
+  const { currentProjectId } = useProject()
+  const { activeSystems, labelFor } = useSystems(currentProjectId)
 
   const overall = useMemo(() => summarise(allItems), [allItems])
 
   const perSystem = useMemo(() =>
-    systems.map((sys) => {
+    activeSystems.map((sys) => {
       const items = allItems.filter((it) => it.system === sys.key)
       return { sys, items, totals: summarise(items) }
     }),
-    [allItems, systems]
+    [allItems, activeSystems]
   )
 
   // Item-count analytics by status

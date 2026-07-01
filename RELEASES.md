@@ -2,6 +2,31 @@
 
 ---
 
+## v2.3.1 — 2026-07-01
+
+Fixed dialogs overflowing horizontally when an input field contains a long value.
+
+### Bug Fixes
+
+- Document, Item, Ticket, Delivery Note, and Project dialogs no longer expand beyond their declared width
+- Root cause: `<input>` elements have an intrinsic min-width that lets them grow past their container; adding `overflow-x: hidden` on the dialog clips this correctly
+
+---
+
+## v2.3.0 — 2026-07-01
+
+Per-project system assignment — each project now has its own set of enabled systems.
+
+### Features
+
+- Admin → Projects: "Systems enabled for this project" checkbox list in the create/edit dialog
+- Systems assigned to a project filter all system tabs (Tracker, Documents), dropdowns (Add/Edit item, Add document), and Dashboard stats
+- Project rows in the admin panel show badges for each assigned system at a glance
+- Default: all globally active systems are pre-selected when creating a new project
+- Powered by a `project_systems` junction table with RLS — each project independently opts in to specific systems
+
+---
+
 ## v2.2.4 — 2026-07-01
 
 Fixed "No projects assigned" showing on every login without a page refresh.

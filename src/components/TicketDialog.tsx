@@ -147,7 +147,7 @@ export function TicketDialog({ open, onOpenChange, ticket }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-x-hidden overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{ticket ? `Edit ${ticket.ticket_number}` : "New Support Ticket"}</DialogTitle>
         </DialogHeader>

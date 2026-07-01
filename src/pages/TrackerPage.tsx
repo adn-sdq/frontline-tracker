@@ -54,6 +54,7 @@ import {
   useItemsRealtime,
   useProfiles,
 } from "@/hooks/useItems"
+import { useProject } from "@/contexts/ProjectContext"
 import { useSystems } from "@/hooks/useSystems"
 import { exportItemsCsv } from "@/lib/csv"
 import {
@@ -92,7 +93,8 @@ export default function TrackerPage() {
   useItemsRealtime()
   const { data: items = [], isLoading } = useItems()
   const { data: profiles = {} } = useProfiles()
-  const { activeSystems } = useSystems()
+  const { currentProjectId } = useProject()
+  const { activeSystems } = useSystems(currentProjectId)
   const del = useDeleteItem()
 
   const [system, setSystem] = useState<System | "ALL">("ALL")
