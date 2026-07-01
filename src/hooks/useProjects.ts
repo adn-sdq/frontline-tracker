@@ -12,9 +12,13 @@ const PROJECTS_KEY = ["projects"]
 
 // Projects the signed-in user can access (RLS returns all for admins,
 // assigned-only for members).
-export function useProjects() {
+//
+// userId is included in the query key so the cache is scoped per user —
+// this prevents a pre-login empty result from polluting the post-login fetch.
+export function useProjects(userId?: string | null) {
   return useQuery<Project[]>({
-    queryKey: PROJECTS_KEY,
+    queryKey: [...PROJECTS_KEY, userId],
+    enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projects")
