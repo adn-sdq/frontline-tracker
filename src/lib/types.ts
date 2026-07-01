@@ -278,6 +278,8 @@ export const DOC_TYPES = [
   "as_built",
   "inspection_request",
   "rfi",
+  "po",
+  "vo",
   "other",
 ] as const
 export type DocType = (typeof DOC_TYPES)[number]
@@ -293,6 +295,8 @@ export const DOC_TYPE_LABELS: Record<string, string> = {
   as_built: "As-Built",
   inspection_request: "Inspection Request",
   rfi: "RFI",
+  po: "PO",
+  vo: "VO",
   other: "Other",
 }
 
