@@ -60,8 +60,11 @@ export function DocumentDialog({
   const [file, setFile] = useState<File | null>(null)
   const [fileDate, setFileDate] = useState(today())
 
+  const prevOpenRef = useRef(false)
   useEffect(() => {
-    if (!open) return
+    const justOpened = open && !prevOpenRef.current
+    prevOpenRef.current = open
+    if (!justOpened) return
     setTitle(doc?.title ?? "")
     setDocNumber(doc?.doc_number ?? "")
     setSystem(doc?.system ?? "")
@@ -71,6 +74,7 @@ export function DocumentDialog({
     setDescription(doc?.description ?? "")
     setFile(null)
     setFileDate(today())
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, doc])
 
   async function submit() {

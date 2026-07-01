@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   ChevronDown,
   ChevronUp,
@@ -1052,7 +1052,12 @@ function ProjectDialog({
   busy: boolean
 }) {
   const [form, setForm] = useState<ProjectInput>(initial)
-  useEffect(() => { if (open) setForm(initial) }, [open, initial])
+  const prevOpenRef = useRef(false)
+  useEffect(() => {
+    const justOpened = open && !prevOpenRef.current
+    prevOpenRef.current = open
+    if (justOpened) setForm(initial)
+  }, [open, initial])
   const set = (k: keyof ProjectInput, v: string) => setForm((f) => ({ ...f, [k]: v }))
   const isNew = !("id" in initial)
 

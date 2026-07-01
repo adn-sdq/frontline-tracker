@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -72,9 +72,12 @@ export function TicketDialog({ open, onOpenChange, ticket }: Props) {
   const update = useUpdateTicket()
   const busy = create.isPending || update.isPending
 
-  // Seed form when editing or reset on open
+  // Seed form only when the dialog opens — not on every re-render.
+  const prevOpenRef = useRef(false)
   useEffect(() => {
-    if (!open) return
+    const justOpened = open && !prevOpenRef.current
+    prevOpenRef.current = open
+    if (!justOpened) return
     if (ticket) {
       setForm({
         title: ticket.title,
@@ -92,6 +95,7 @@ export function TicketDialog({ open, onOpenChange, ticket }: Props) {
     } else {
       setForm(blank())
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, ticket])
 
   // Live preview of ticket number for new tickets
