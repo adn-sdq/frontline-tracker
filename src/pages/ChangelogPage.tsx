@@ -17,6 +17,20 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.3.2",
+    date: "2026-07-01",
+    type: "patch",
+    summary: "Fixed long file names overflowing the upload area in the document dialog.",
+    sections: [
+      {
+        title: "Bug Fixes",
+        items: [
+          "Selected file names now wrap across multiple lines instead of overflowing the dialog edge",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.3.1",
     date: "2026-07-01",
     type: "patch",
