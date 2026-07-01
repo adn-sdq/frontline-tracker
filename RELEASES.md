@@ -2,6 +2,17 @@
 
 ---
 
+## v2.3.1 — 2026-07-01
+
+Fixed dialogs overflowing horizontally when an input field contains a long value.
+
+### Bug Fixes
+
+- Document, Item, Ticket, Delivery Note, and Project dialogs no longer expand beyond their declared width
+- Root cause: `<input>` elements have an intrinsic min-width that lets them grow past their container; adding `overflow-x: hidden` on the dialog clips this correctly
+
+---
+
 ## v2.3.0 — 2026-07-01
 
 Per-project system assignment — each project now has its own set of enabled systems.

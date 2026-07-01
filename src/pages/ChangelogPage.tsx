@@ -17,6 +17,21 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.3.1",
+    date: "2026-07-01",
+    type: "patch",
+    summary: "Fixed dialogs overflowing horizontally when an input field contains a long value.",
+    sections: [
+      {
+        title: "Bug Fixes",
+        items: [
+          "Document, Item, Ticket, Delivery Note, and Project dialogs no longer expand beyond their width when a field has a very long value",
+          "Root cause: input elements have an intrinsic min-width that lets them grow past their container; overflow-x: hidden on the dialog clips this correctly",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.3.0",
     date: "2026-07-01",
     type: "minor",

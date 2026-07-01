@@ -164,7 +164,7 @@ export function DeliveryNoteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92svh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-h-[92svh] overflow-x-hidden overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Generate delivery note</DialogTitle>
           <DialogDescription>
