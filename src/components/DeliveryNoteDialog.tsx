@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { FileText, Loader2, Plus, Trash2 } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
@@ -73,9 +73,12 @@ export function DeliveryNoteDialog({
   const [contact, setContact] = useState("")
   const [lines, setLines] = useState<DeliveryNoteItem[]>([])
 
-  // Re-seed the form each time the dialog opens.
+  // Re-seed only when the dialog opens — not on subsequent realtime refreshes.
+  const prevOpenRef = useRef(false)
   useEffect(() => {
-    if (!open) return
+    const justOpened = open && !prevOpenRef.current
+    prevOpenRef.current = open
+    if (!justOpened) return
     setDnNumber(nextNum ? buildDnNumber(currentProject?.name, nextNum) : "")
     setDate(format(new Date(), "yyyy-MM-dd"))
     setPo(currentProject?.our_po ?? "")
@@ -84,6 +87,7 @@ export function DeliveryNoteDialog({
     setLocation(currentProject?.site_location ?? "")
     setContact(currentProject?.site_contact ?? "")
     setLines(initialLines)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, nextNum, currentProject])
 
   function setLine(idx: number, patch: Partial<DeliveryNoteItem>) {

@@ -17,6 +17,23 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.2.2",
+    date: "2026-07-01",
+    type: "patch",
+    summary: "Fixed form state resetting when switching tabs or when realtime updates fire while a dialog is open.",
+    sections: [
+      {
+        title: "Bug Fixes",
+        items: [
+          "Project dialog no longer resets fields when the page re-renders in the background",
+          "Item dialog no longer resets when switching system tabs while the dialog is open",
+          "Ticket, Document, and Delivery Note dialogs all fixed with the same pattern",
+          "Root cause: form seed effect now only fires on dialog open, not on every re-render triggered by realtime subscriptions",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.2.1",
     date: "2026-07-01",
     type: "patch",

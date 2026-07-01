@@ -2,6 +2,18 @@
 
 ---
 
+## v2.2.2 — 2026-07-01
+
+Fixed form state resetting on background re-renders caused by realtime subscriptions.
+
+### Bug Fixes
+
+- All dialogs (Project, Item, Ticket, Document, Delivery Note) now seed form only on open
+- Switching system tabs while item dialog is open no longer wipes entered values
+- Root cause: effect deps included query-cache objects with new references on every realtime push
+
+---
+
 ## v2.2.1 — 2026-07-01
 
 Fixed serial column alignment + improved DN mode with explicit toggle and sticky banner.

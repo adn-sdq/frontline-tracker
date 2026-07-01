@@ -283,17 +283,23 @@ export function ItemDialog({
   const [form, setForm] = useState<FormState>(blank(defaultSystem))
   const editing = !!item
 
+  // Only seed the form when the dialog transitions from closed → open.
+  // Excluding item/defaultSystem/currentProject from triggering a reset
+  // prevents realtime subscription refreshes from wiping a half-filled form.
+  const prevOpenRef = useRef(false)
   useEffect(() => {
-    if (open) {
-      if (item) {
-        setForm(fromItem(item))
-      } else {
-        const base = blank(defaultSystem)
-        base.location = currentProject?.site_location ?? ""
-        setForm(base)
-      }
+    const justOpened = open && !prevOpenRef.current
+    prevOpenRef.current = open
+    if (!justOpened) return
+    if (item) {
+      setForm(fromItem(item))
+    } else {
+      const base = blank(defaultSystem)
+      base.location = currentProject?.site_location ?? ""
+      setForm(base)
     }
-  }, [open, item, defaultSystem, currentProject])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, item])
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }))
