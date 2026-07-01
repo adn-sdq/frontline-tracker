@@ -17,6 +17,26 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.3.3",
+    date: "2026-07-01",
+    type: "patch",
+    summary: "Fixed stale delete dialog appearing on ticket switch; added PO and VO document types.",
+    sections: [
+      {
+        title: "Bug Fixes",
+        items: [
+          "Selecting a new ticket immediately after deleting one no longer shows a stale delete confirmation dialog",
+        ],
+      },
+      {
+        title: "Features",
+        items: [
+          "Added PO and VO to the document type dropdown in Documents",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.3.2",
     date: "2026-07-01",
     type: "patch",

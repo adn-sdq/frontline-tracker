@@ -70,6 +70,13 @@ export function TicketDetailSheet({ ticket, onClose, onEdit }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const commentsEndRef = useRef<HTMLDivElement>(null)
 
+  // Reset delete confirmation when a different ticket is opened.
+  const ticketIdRef = useRef<string | undefined>(undefined)
+  if (ticket?.id !== ticketIdRef.current) {
+    ticketIdRef.current = ticket?.id
+    if (confirmDelete) setConfirmDelete(false)
+  }
+
   useEffect(() => {
     commentsEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [comments.length])

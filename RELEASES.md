@@ -2,6 +2,21 @@
 
 ---
 
+## v2.3.3 — 2026-07-01
+
+Fixed stale delete dialog on tickets and added PO / VO document types.
+
+### Bug Fixes
+
+- Selecting a new ticket immediately after deleting one no longer shows the delete confirmation dialog
+- Root cause: delete dialog state persisted in the sheet component between ticket switches
+
+### Features
+
+- Added PO and VO to the document type dropdown
+
+---
+
 ## v2.3.2 — 2026-07-01
 
 Fixed long file names overflowing the upload area in the document dialog.
