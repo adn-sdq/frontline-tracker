@@ -170,19 +170,19 @@ export default function TicketsPage() {
 
       {/* Ticket list */}
       {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 rounded-lg border bg-muted/40 animate-pulse" />
+        <div className="divide-y overflow-hidden rounded-lg border">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-14 animate-pulse bg-muted/40" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border bg-card py-16 text-center gap-3">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-            <TicketIcon className="h-7 w-7" />
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border bg-card py-16 text-center">
+          <div className="flex size-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+            <TicketIcon className="h-6 w-6" />
           </div>
           <div>
-            <p className="font-display text-base text-foreground">
-              {tickets.length === 0 ? "No tickets yet" : "No matches"}
+            <p className="text-sm font-semibold text-foreground">
+              {tickets.length === 0 ? "No tickets yet" : "No tickets matched your search"}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {tickets.length === 0
@@ -197,59 +197,52 @@ export default function TicketsPage() {
           )}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="divide-y overflow-hidden rounded-lg border bg-card">
           {filtered.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setSelectedTicket(t)}
-              className="w-full text-left rounded-xl border bg-card transition-all hover:border-primary/30 hover:shadow-sm active:scale-[0.995]"
+              className="flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors hover:bg-accent sm:flex-row sm:items-center sm:gap-4"
             >
-              {/* Desktop: horizontal split. Mobile: stacked. */}
-              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
-
-                {/* LEFT — ticket number + title + meta */}
-                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                  <span className="font-mono text-[11px] text-muted-foreground/60">{t.ticket_number}</span>
-                  <p className="truncate font-medium leading-snug">{t.title}</p>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground/70">{t.project_name}</span>
-                    {t.site_location && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3 shrink-0" />
-                        <span className="truncate max-w-40">{t.site_location}</span>
-                      </span>
-                    )}
-                    {t.assigned_to && (
-                      <span className="flex items-center gap-1">
-                        <User className="h-3 w-3 shrink-0" />
-                        {nameFor(t.assigned_to) ?? "Assigned"}
-                      </span>
-                    )}
-                  </div>
+              {/* LEFT — title line + meta line, fixed order */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                    {t.ticket_number}
+                  </span>
+                  <p className="truncate text-sm font-medium">{t.title}</p>
                 </div>
-
-                {/* RIGHT — badges + age */}
-                <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:gap-2">
-                  {/* Status + priority on one row */}
-                  <div className="flex items-center gap-1.5">
-                    <Badge className={`${TICKET_PRIORITY_STYLES[t.priority]} text-[11px] px-1.5 py-0`}>
-                      {TICKET_PRIORITY_LABELS[t.priority]}
-                    </Badge>
-                    <Badge className={`${TICKET_STATUS_STYLES[t.status]} text-[11px] px-1.5 py-0`}>
-                      {TICKET_STATUS_LABELS[t.status]}
-                    </Badge>
-                  </div>
-                  {/* Category + age on second row */}
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[11px] px-1.5 py-0">{TICKET_CATEGORY_LABELS[t.category]}</Badge>
-                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                      <Clock className="h-3 w-3 shrink-0" />
-                      {formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                  <span>{t.project_name}</span>
+                  {t.site_location && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="max-w-40 truncate">{t.site_location}</span>
                     </span>
-                  </div>
+                  )}
+                  {t.assigned_to && (
+                    <span className="flex items-center gap-1">
+                      <User className="h-3 w-3 shrink-0" />
+                      {nameFor(t.assigned_to) ?? "Assigned"}
+                    </span>
+                  )}
                 </div>
+              </div>
 
+              {/* RIGHT — aligned columns: category · priority · status · age */}
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                <Badge variant="outline">{TICKET_CATEGORY_LABELS[t.category]}</Badge>
+                <Badge className={TICKET_PRIORITY_STYLES[t.priority]}>
+                  {TICKET_PRIORITY_LABELS[t.priority]}
+                </Badge>
+                <Badge className={TICKET_STATUS_STYLES[t.status]}>
+                  {TICKET_STATUS_LABELS[t.status]}
+                </Badge>
+                <span className="flex w-24 items-center justify-end gap-1 text-xs text-muted-foreground tabular-nums">
+                  <Clock className="h-3 w-3 shrink-0" />
+                  {formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}
+                </span>
               </div>
             </button>
           ))}

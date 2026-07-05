@@ -297,13 +297,13 @@ export default function DocumentsPage() {
             return (
               <div
                 key={d.id}
-                className={`group flex cursor-pointer flex-col gap-2 rounded-xl border bg-card p-4 transition-colors hover:border-primary/40 ${isSelected ? "border-primary/60 bg-primary/5" : ""}`}
+                className={`group flex cursor-pointer flex-col gap-2.5 rounded-lg border bg-card p-4 transition-colors hover:border-primary/40 ${isSelected ? "border-primary/60 bg-primary/5" : ""}`}
                 onClick={() => {
                   if (selectMode) toggleSelect(d.id)
                   else setOpenDoc(d)
                 }}
               >
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-3">
                   {selectMode && (
                     <div className="mt-0.5 shrink-0">
                       {isSelected ? (
@@ -314,11 +314,14 @@ export default function DocumentsPage() {
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{d.title}</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="truncate text-sm font-medium">{d.title}</div>
+                    <div className="mt-0.5 font-mono text-xs text-muted-foreground">
                       {[d.doc_number, d.revision].filter(Boolean).join(" · ") ||
                         "No number"}
                     </div>
+                  </div>
+                  <div className="shrink-0">
+                    <DocStatusBadge status={d.status} />
                   </div>
                   {!selectMode && (
                     <DropdownMenu>
@@ -355,8 +358,8 @@ export default function DocumentsPage() {
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <DocStatusBadge status={d.status} />
+                {/* Meta row — fixed order: type · system · files, updated right */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t pt-2.5 text-xs text-muted-foreground">
                   {d.doc_type && (
                     <Badge variant="secondary" className="text-xs">
                       {DOC_TYPE_LABELS[d.doc_type]}
@@ -365,18 +368,17 @@ export default function DocumentsPage() {
                   {d.system && (
                     <Badge variant="outline">{labelFor(d.system)}</Badge>
                   )}
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
                     <FileText className="size-3.5" />
                     {fileCounts[d.id] ?? 0}
                   </span>
-                </div>
-
-                <div className="text-xs text-muted-foreground">
-                  Updated by{" "}
-                  <span className="font-medium text-foreground">
-                    {who(d.updated_by)}
-                  </span>{" "}
-                  {formatDistanceToNow(new Date(d.updated_at), { addSuffix: true })}
+                  <span className="ml-auto truncate">
+                    Updated by{" "}
+                    <span className="font-medium text-foreground">
+                      {who(d.updated_by)}
+                    </span>{" "}
+                    {formatDistanceToNow(new Date(d.updated_at), { addSuffix: true })}
+                  </span>
                 </div>
               </div>
             )

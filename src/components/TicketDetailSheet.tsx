@@ -1,26 +1,16 @@
 import { useState, useRef, useEffect } from "react"
 import { formatDistanceToNow, format } from "date-fns"
 import {
-  X,
   Pencil,
   Trash2,
-  MapPin,
-  Phone,
-  User,
-  Tag,
-  Calendar,
   MessageSquare,
   Send,
   Loader2,
   AlertTriangle,
+  Phone,
 } from "lucide-react"
 import { toast } from "sonner"
 
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-} from "@/components/ui/sheet"
 import {
   Dialog,
   DialogContent,
@@ -33,6 +23,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
+import { DetailSection, Property, PropertyList } from "@/components/PropertyList"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { useAllProfiles } from "@/hooks/useAdmin"
@@ -58,6 +49,11 @@ interface Props {
   onEdit: (t: Ticket) => void
 }
 
+/**
+ * Ticket detail — wide two-column dialog: description + comment thread on
+ * the left, a properties rail (status, priority, site, people) on the right,
+ * with the comment composer pinned along the bottom.
+ */
 export function TicketDetailSheet({ ticket, onClose, onEdit }: Props) {
   const { user } = useAuth()
   const { data: profiles = [] } = useAllProfiles()
@@ -78,7 +74,7 @@ export function TicketDetailSheet({ ticket, onClose, onEdit }: Props) {
   }
 
   useEffect(() => {
-    commentsEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    commentsEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
   }, [comments.length])
 
   if (!ticket) return null
@@ -120,136 +116,149 @@ export function TicketDetailSheet({ ticket, onClose, onEdit }: Props) {
 
   return (
     <>
-      <Sheet open={!!ticket} onOpenChange={(v) => !v && onClose()}>
-        <SheetContent className="w-full sm:max-w-lg flex flex-col gap-0 p-0 overflow-hidden">
-          {/* Sticky header */}
-          <div className="shrink-0 border-b px-5 py-4 space-y-2">
-            <div className="flex items-start gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="font-mono text-xs text-muted-foreground">{ticket.ticket_number}</p>
-                <SheetTitle className="text-base leading-snug mt-0.5">{ticket.title}</SheetTitle>
-              </div>
-              <Button variant="ghost" size="icon" className="shrink-0 -mr-1 -mt-1" onClick={onClose}>
-                <X className="h-4 w-4" />
+      <Dialog open={!!ticket} onOpenChange={(v) => !v && onClose()}>
+        <DialogContent className="flex max-h-[85svh] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl">
+          {/* ── Header: number + title left, actions right ─────────────── */}
+          <DialogHeader className="shrink-0 gap-3 border-b px-6 pb-4 pt-5 pr-14 text-left sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
+            <div className="min-w-0">
+              <p className="font-mono text-xs text-muted-foreground">{ticket.ticket_number}</p>
+              <DialogTitle className="mt-1 text-lg leading-snug">{ticket.title}</DialogTitle>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-7 text-destructive hover:text-destructive"
+                onClick={() => setConfirmDelete(true)}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => onEdit(ticket)}>
+                <Pencil className="size-4" /> Edit
               </Button>
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              <Badge className={TICKET_PRIORITY_STYLES[ticket.priority]}>
-                {TICKET_PRIORITY_LABELS[ticket.priority]}
-              </Badge>
-              <Badge className={TICKET_STATUS_STYLES[ticket.status]}>
-                {TICKET_STATUS_LABELS[ticket.status]}
-              </Badge>
-              <Badge variant="outline">{TICKET_CATEGORY_LABELS[ticket.category]}</Badge>
-            </div>
-          </div>
+          </DialogHeader>
 
-          {/* Scrollable body */}
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+          {/* ── Body: thread left, properties rail right ─────────────────── */}
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="grid md:grid-cols-[1fr_280px]">
+              {/* Main column */}
+              <div className="flex min-w-0 flex-col gap-6 px-6 py-5">
+                {ticket.description && (
+                  <DetailSection title="Description">
+                    <p className="text-sm whitespace-pre-wrap">{ticket.description}</p>
+                  </DetailSection>
+                )}
 
-            {/* Quick status change */}
-            <div className="space-y-1.5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Move to</p>
-              <div className="flex flex-wrap gap-1.5">
-                {TICKET_STATUSES.filter((s) => s !== ticket.status).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => handleStatusChange(s)}
-                    className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-opacity hover:opacity-80 ${TICKET_STATUS_STYLES[s]}`}
-                  >
-                    {TICKET_STATUS_LABELS[s]}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Details grid */}
-            <div className="space-y-2 text-sm">
-              <div className="flex gap-2">
-                <Tag className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                <div>
-                  <p className="font-medium">{ticket.project_name}</p>
-                  {ticket.site_location && (
-                    <p className="text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <MapPin className="h-3 w-3" /> {ticket.site_location}
-                    </p>
+                <DetailSection
+                  title={`Comments (${comments.length})`}
+                  icon={MessageSquare}
+                >
+                  {comments.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No comments yet.</p>
                   )}
-                </div>
+                  <div className="flex flex-col gap-3">
+                    {comments.map((c) => {
+                      const isMe = c.author === user?.id
+                      return (
+                        <div key={c.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
+                          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+                            {nameFor(c.author).slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className={`max-w-[80%] space-y-0.5 ${isMe ? "items-end" : ""}`}>
+                            <p className={`text-xs text-muted-foreground ${isMe ? "text-right" : ""}`}>
+                              {nameFor(c.author)} ·{" "}
+                              {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
+                            </p>
+                            <div
+                              className={`rounded-lg px-3 py-2 text-sm ${
+                                isMe ? "bg-primary text-primary-foreground" : "bg-muted"
+                              }`}
+                            >
+                              {c.body}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    <div ref={commentsEndRef} />
+                  </div>
+                </DetailSection>
               </div>
-              {(ticket.site_contact || ticket.site_phone) && (
-                <div className="flex gap-2">
-                  <User className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <div>
-                    {ticket.site_contact && <p className="font-medium">{ticket.site_contact}</p>}
-                    {ticket.site_phone && (
-                      <p className="text-muted-foreground flex items-center gap-1">
-                        <Phone className="h-3 w-3" /> {ticket.site_phone}
-                      </p>
+
+              {/* Properties rail */}
+              <aside className="border-t bg-muted/20 px-6 py-5 md:border-t-0 md:border-l">
+                <h3 className="mb-3 text-sm font-semibold">Details</h3>
+
+                <PropertyList>
+                  <Property label="Status">
+                    <Badge className={TICKET_STATUS_STYLES[ticket.status]}>
+                      {TICKET_STATUS_LABELS[ticket.status]}
+                    </Badge>
+                  </Property>
+                  <Property label="Priority">
+                    <Badge className={TICKET_PRIORITY_STYLES[ticket.priority]}>
+                      {TICKET_PRIORITY_LABELS[ticket.priority]}
+                    </Badge>
+                  </Property>
+                  <Property label="Category">{TICKET_CATEGORY_LABELS[ticket.category]}</Property>
+                </PropertyList>
+
+                <div className="mt-3">
+                  <p className="mb-1.5 text-xs text-muted-foreground">Move to</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {TICKET_STATUSES.filter((s) => s !== ticket.status).map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => handleStatusChange(s)}
+                        className={`rounded-full border px-2.5 py-0.5 text-xs font-medium transition-opacity hover:opacity-80 ${TICKET_STATUS_STYLES[s]}`}
+                      >
+                        {TICKET_STATUS_LABELS[s]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator className="my-4" />
+
+                <PropertyList>
+                  <Property label="Project">{ticket.project_name}</Property>
+                  <Property label="Location">{ticket.site_location}</Property>
+                  <Property label="Contact">
+                    {(ticket.site_contact || ticket.site_phone) && (
+                      <span className="flex flex-col gap-0.5">
+                        {ticket.site_contact && <span>{ticket.site_contact}</span>}
+                        {ticket.site_phone && (
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <Phone className="size-3" /> {ticket.site_phone}
+                          </span>
+                        )}
+                      </span>
                     )}
-                  </div>
-                </div>
-              )}
-              {ticket.assigned_to && (
-                <div className="flex gap-2">
-                  <User className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <p><span className="text-muted-foreground">Assigned to </span>{nameFor(ticket.assigned_to)}</p>
-                </div>
-              )}
-              <div className="flex gap-2 text-muted-foreground">
-                <Calendar className="h-4 w-4 mt-0.5 shrink-0" />
-                <p>Opened by {nameFor(ticket.created_by)} · {format(new Date(ticket.created_at), "d MMM yyyy")}</p>
-              </div>
-            </div>
+                  </Property>
+                  <Property label="Assigned to">
+                    {ticket.assigned_to ? nameFor(ticket.assigned_to) : null}
+                  </Property>
+                </PropertyList>
 
-            {ticket.description && (
-              <>
-                <Separator />
-                <div className="space-y-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description</p>
-                  <p className="text-sm whitespace-pre-wrap">{ticket.description}</p>
-                </div>
-              </>
-            )}
+                <Separator className="my-4" />
 
-            <Separator />
-
-            {/* Comments thread */}
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <MessageSquare className="h-3.5 w-3.5" /> Comments ({comments.length})
-              </p>
-              {comments.length === 0 && (
-                <p className="text-sm text-muted-foreground italic">No comments yet.</p>
-              )}
-              {comments.map((c) => {
-                const isMe = c.author === user?.id
-                return (
-                  <div key={c.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
-                    <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-semibold shrink-0">
-                      {nameFor(c.author).slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className={`max-w-[80%] space-y-0.5 ${isMe ? "items-end" : ""}`}>
-                      <p className={`text-xs text-muted-foreground ${isMe ? "text-right" : ""}`}>
-                        {nameFor(c.author)} · {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
-                      </p>
-                      <div className={`rounded-xl px-3 py-2 text-sm ${isMe ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                        {c.body}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-              <div ref={commentsEndRef} />
+                <PropertyList className="text-xs">
+                  <Property label="Opened by">{nameFor(ticket.created_by)}</Property>
+                  <Property label="Opened">
+                    {format(new Date(ticket.created_at), "d MMM yyyy")}
+                  </Property>
+                </PropertyList>
+              </aside>
             </div>
           </div>
 
-          {/* Sticky footer: comment input + actions */}
-          <div className="shrink-0 border-t px-4 py-3 space-y-2">
+          {/* ── Composer — pinned to the bottom, spans both columns ──────── */}
+          <div className="shrink-0 border-t px-4 py-3">
             <div className="flex gap-2">
               <Textarea
-                placeholder="Add a comment…"
+                placeholder="Add a comment…  (⌘↵ to send)"
                 rows={2}
                 className="resize-none text-sm"
                 value={commentBody}
@@ -264,38 +273,33 @@ export function TicketDetailSheet({ ticket, onClose, onEdit }: Props) {
                 onClick={submitComment}
                 disabled={!commentBody.trim() || addComment.isPending}
               >
-                {addComment.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </Button>
-            </div>
-            <div className="flex justify-between items-center">
-              <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setConfirmDelete(true)}>
-                <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
-              </Button>
-              <Button type="button" size="sm" onClick={() => onEdit(ticket)}>
-                <Pencil className="h-3.5 w-3.5 mr-1" /> Edit ticket
+                {addComment.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Send className="size-4" />
+                )}
               </Button>
             </div>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive" /> Delete ticket?
+              <AlertTriangle className="size-4 text-destructive" /> Delete ticket?
             </DialogTitle>
             <DialogDescription>
-              This will permanently delete {ticket.ticket_number} and all its comments. This cannot be undone.
+              This will permanently delete {ticket.ticket_number} and all its comments. This
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setConfirmDelete(false)}>Cancel</Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDelete}
-            >
+            <Button type="button" variant="ghost" onClick={() => setConfirmDelete(false)}>
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleDelete}>
               Delete
             </Button>
           </DialogFooter>

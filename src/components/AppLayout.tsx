@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react"
+import { useLocation } from "react-router-dom"
 
 import { AppSidebar } from "@/components/shell/AppSidebar"
 import { TopBar } from "@/components/shell/TopBar"
@@ -11,6 +12,7 @@ import { FeatureRequestDialog } from "@/components/shell/AccountDialogs"
  */
 export function AppLayout({ children }: { children: ReactNode }) {
   const [featureOpen, setFeatureOpen] = useState(false)
+  const { pathname } = useLocation()
 
   return (
     <div className="flex h-svh overflow-hidden bg-background">
@@ -19,7 +21,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar onRequestFeature={() => setFeatureOpen(true)} />
         <main className="app-canvas flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="mx-auto max-w-350">{children}</div>
+          {/* keyed by route so content animates in on every navigation */}
+          <div key={pathname} className="animate-page-enter mx-auto max-w-350">
+            {children}
+          </div>
         </main>
       </div>
 
