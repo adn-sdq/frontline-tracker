@@ -123,13 +123,11 @@ export function TopBar({ onRequestFeature }: { onRequestFeature?: () => void }) 
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
-            className="flex h-8 w-full max-w-lg items-center gap-2 rounded-md border bg-muted/40 px-3 text-sm text-muted-foreground shadow-xs transition-colors hover:bg-muted"
+            className="flex h-8 w-full max-w-xl items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm text-muted-foreground transition-colors hover:border-primary-hover"
           >
             <Search className="size-4 shrink-0" />
             <span className="flex-1 truncate text-left">Search pages, projects…</span>
-            <kbd className="hidden rounded border bg-background px-1.5 font-mono text-[10px] text-muted-foreground sm:inline-block">
-              ⌘K
-            </kbd>
+            <span className="hidden text-xs text-muted-foreground sm:inline">⌘ + K</span>
           </button>
         </div>
 

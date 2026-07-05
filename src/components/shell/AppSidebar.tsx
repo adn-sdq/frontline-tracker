@@ -45,7 +45,7 @@ function ProjectSwitcher() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-2 rounded-md border bg-background px-2.5 py-1.5 text-left text-sm shadow-xs transition-colors hover:bg-accent"
+          className="flex h-8 w-full items-center gap-2 rounded-sm border border-input bg-background px-2.5 text-left text-sm transition-colors hover:bg-accent"
         >
           <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
           <span className="flex-1 truncate font-medium">
@@ -91,7 +91,7 @@ function NewMenu({ onNavigate }: { onNavigate?: () => void }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-2 rounded-md bg-brand-muted px-2.5 py-1.5 text-sm font-semibold text-brand-muted-foreground transition-colors hover:bg-brand-muted/70"
+          className="flex h-9 w-full items-center gap-2 rounded-md bg-brand-muted px-3 text-sm font-semibold text-brand-muted-foreground transition-colors hover:bg-brand/15"
         >
           <Plus className="size-4" /> New
         </button>
@@ -128,7 +128,7 @@ function NavRow({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }
   const Icon = item.icon
   if (item.soon) {
     return (
-      <div className="flex cursor-default items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] font-medium text-sidebar-foreground/45">
+      <div className="flex cursor-default items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground/45">
         <Icon className="size-4 shrink-0" />
         <span className="flex-1 truncate">{item.label}</span>
         <Badge variant="outline" className="h-4 px-1.5 text-[10px] font-normal text-muted-foreground">
@@ -144,10 +144,10 @@ function NavRow({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
-          "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
+          "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors",
           isActive
-            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
+            : "font-normal text-sidebar-foreground hover:bg-sidebar-accent/50"
         )
       }
     >
@@ -191,7 +191,7 @@ export function SidebarContent({
         {sections.map((section, i) => (
           <div key={section.label ?? i} className={cn(i > 0 && "mt-4")}>
             {section.label && (
-              <p className="mb-1 px-2.5 text-[11px] font-medium text-muted-foreground">
+              <p className="mb-1 px-2.5 text-xs font-normal text-muted-foreground">
                 {section.label}
               </p>
             )}
@@ -210,7 +210,7 @@ export function SidebarContent({
           <button
             type="button"
             onClick={onRequestFeature}
-            className="mb-1 flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            className="mb-1 flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
           >
             <Lightbulb className="size-4" /> Request a feature
           </button>
