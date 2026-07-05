@@ -80,8 +80,6 @@ interface Props {
 }
 
 export function ProfileDialog({ profile: profileUserOrNull, open, onClose, isAdmin, canEditSelf }: Props) {
-  // profileUserOrNull is null when no profile is selected — the Dialog renders but shows nothing.
-  const profileUser = profileUserOrNull!
   const { user, refetchProfile } = useAuth()
   const updateProfile = useUpdateProfile()
   const updateDetails = useUpdateUserDetails()
@@ -110,6 +108,10 @@ export function ProfileDialog({ profile: profileUserOrNull, open, onClose, isAdm
   const [avatarBusy, setAvatarBusy] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // All hooks must be called before this guard (React rules).
+  if (!profileUserOrNull) return null
+  const profileUser = profileUserOrNull
 
   const isSelf = profileUser.id === user?.id
 
