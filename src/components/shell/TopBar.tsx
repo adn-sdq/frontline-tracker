@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react"
 import { useLocation } from "react-router-dom"
-import { ChevronRight, KeyRound, LogOut, Menu, Moon, Search, Sun } from "lucide-react"
+import { ChevronRight, LogOut, Menu, Moon, Search, Sun, UserCircle } from "lucide-react"
 import { toast } from "sonner"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { useProject } from "@/contexts/ProjectContext"
 import { useTheme } from "@/hooks/useTheme"
 import { pageLabelFor } from "@/lib/navigation"
-import { ORG_LABELS } from "@/lib/types"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ORG_LABELS, ROLE_LABELS } from "@/lib/types"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
@@ -23,17 +23,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SidebarContent } from "@/components/shell/AppSidebar"
 import { CommandPalette } from "@/components/shell/CommandPalette"
-import { ChangePasswordDialog } from "@/components/shell/AccountDialogs"
+import { ProfileDialog } from "@/components/ProfileDialog"
 
 function initials(name?: string | null) {
   if (!name) return "?"
   const parts = name.trim().split(/\s+/)
-  return (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase()
 }
 
 function UserMenu() {
   const { profile, user, signOut } = useAuth()
-  const [changePwOpen, setChangePwOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const name = profile?.full_name ?? profile?.username ?? user?.email ?? "User"
 
   return (
@@ -42,25 +42,34 @@ function UserMenu() {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="gap-2 px-1.5">
             <Avatar className="size-7">
+              {profile?.avatar_url && (
+                <AvatarImage src={profile.avatar_url} alt={name} className="object-cover" />
+              )}
               <AvatarFallback className="bg-primary/10 text-primary text-xs uppercase">
                 {initials(name)}
               </AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent side="bottom" align="end" className="w-52">
+        <DropdownMenuContent side="bottom" align="end" className="w-56">
           <DropdownMenuLabel className="flex flex-col gap-1">
             <span className="truncate">{name}</span>
-            {profile?.org && (
-              <Badge variant="outline" className="w-fit font-normal">
-                {ORG_LABELS[profile.org] ?? profile.org}
-                {profile.is_admin ? " · Admin" : ""}
-              </Badge>
-            )}
+            <div className="flex flex-wrap items-center gap-1">
+              {profile?.org && (
+                <Badge variant="outline" className="w-fit text-[10px] font-normal h-4 px-1.5">
+                  {ORG_LABELS[profile.org] ?? profile.org}
+                </Badge>
+              )}
+              {profile?.role && (
+                <Badge variant="secondary" className="w-fit text-[10px] font-normal h-4 px-1.5">
+                  {ROLE_LABELS[profile.role] ?? profile.role}
+                </Badge>
+              )}
+            </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setChangePwOpen(true)}>
-            <KeyRound className="size-4" /> Change password
+          <DropdownMenuItem onClick={() => setProfileOpen(true)}>
+            <UserCircle className="size-4" /> My profile
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -75,7 +84,14 @@ function UserMenu() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <ChangePasswordDialog open={changePwOpen} onClose={() => setChangePwOpen(false)} />
+      {profile && (
+        <ProfileDialog
+          profile={profile}
+          open={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          canEditSelf
+        />
+      )}
     </>
   )
 }

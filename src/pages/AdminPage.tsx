@@ -4,13 +4,13 @@ import {
   ChevronUp,
   FolderOpen,
   Inbox,
-  KeyRound,
   Lightbulb,
   Loader2,
   Pencil,
   Plus,
   Shield,
   Trash2,
+  UserCircle,
   UserPlus,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -22,7 +22,6 @@ import {
   useDeleteAccount,
   useDeleteFeatureRequest,
   useFeatureRequests,
-  useSetPassword,
   useUpdateFeatureRequest,
   useUpdateProfile,
   useUpdateUserDetails,
@@ -86,7 +85,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { APP_PAGES, APP_PAGE_LABELS, ORGS, ORG_LABELS, type AppPage, type Org, type Profile } from "@/lib/types"
+import { APP_PAGES, APP_PAGE_LABELS, ORGS, ORG_LABELS, ROLES, ROLE_LABELS, type AppPage, type Org, type Profile, type Role } from "@/lib/types"
+import { ProfileDialog } from "@/components/ProfileDialog"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { PageHeader } from "@/components/PageHeader"
@@ -336,13 +336,12 @@ function AccountsSection() {
   const assign = useAssignProject()
   const unassign = useUnassignProject()
   const updateProfile = useUpdateProfile()
-  const setPassword = useSetPassword()
   const deleteAccount = useDeleteAccount()
 
   const [createOpen, setCreateOpen] = useState(false)
-  const [pwUser, setPwUser] = useState<Profile | null>(null)
   const [delUser, setDelUser] = useState<Profile | null>(null)
   const [editUser, setEditUser] = useState<Profile | null>(null)
+  const [viewProfile, setViewProfile] = useState<Profile | null>(null)
 
   async function toggleProjectMember(p: Profile, projectId: string) {
     const assigned = memberships.some(
@@ -370,13 +369,13 @@ function AccountsSection() {
     }
   }
 
-  async function changeAdmin(p: Profile, value: string) {
+  async function changeRole(p: Profile, role: Role) {
     try {
       await updateProfile.mutateAsync({
         id: p.id,
-        patch: { is_admin: value === "admin" },
+        patch: { role, is_admin: role === "admin" },
       })
-      toast.success(value === "admin" ? "Promoted to admin" : "Set to member")
+      toast.success(`Role changed to ${ROLE_LABELS[role]}`)
     } catch (e) {
       toast.error("Could not update", {
         description: e instanceof Error ? e.message : "Unknown error",
@@ -435,11 +434,11 @@ function AccountsSection() {
                       <span className="font-mono text-xs text-muted-foreground">{p.username}</span>
                     </div>
                     <div className="flex shrink-0 items-center gap-0.5">
+                      <Button variant="ghost" size="icon" className="size-8" onClick={() => setViewProfile(p)}>
+                        <UserCircle className="size-3.5" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="size-8" onClick={() => setEditUser(p)}>
                         <Pencil className="size-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="size-8" onClick={() => setPwUser(p)}>
-                        <KeyRound className="size-3.5" />
                       </Button>
                       {p.id !== user?.id && (
                         <Button variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => setDelUser(p)}>
@@ -457,11 +456,10 @@ function AccountsSection() {
                         {ORGS.map((o) => <SelectItem key={o} value={o}>{ORG_LABELS[o]}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                    <Select value={p.is_admin ? "admin" : "member"} onValueChange={(v) => changeAdmin(p, v)} disabled={p.id === user?.id}>
+                    <Select value={p.role ?? (p.is_admin ? "admin" : "member")} onValueChange={(v) => changeRole(p, v as Role)} disabled={p.id === user?.id}>
                       <SelectTrigger size="sm" className="h-8 w-full"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="member">Member</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
+                        {ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -547,12 +545,25 @@ function AccountsSection() {
                 {profiles.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">
-                      {p.full_name ?? "—"}
-                      {p.id === user?.id && (
-                        <Badge variant="secondary" className="ml-2">
-                          You
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          className="flex items-center gap-1.5 hover:text-primary transition-colors"
+                          onClick={() => setViewProfile(p)}
+                        >
+                          {p.avatar_url ? (
+                            <img src={p.avatar_url} alt="" className="size-6 rounded-full object-cover" />
+                          ) : (
+                            <div className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold uppercase text-primary">
+                              {((p.full_name ?? p.username ?? "?").slice(0, 2))}
+                            </div>
+                          )}
+                          <span>{p.full_name ?? "—"}</span>
+                        </button>
+                        {p.id === user?.id && (
+                          <Badge variant="secondary">You</Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="font-mono text-xs">
                       {p.username}
@@ -576,16 +587,17 @@ function AccountsSection() {
                     </TableCell>
                     <TableCell>
                       <Select
-                        value={p.is_admin ? "admin" : "member"}
-                        onValueChange={(v) => changeAdmin(p, v)}
+                        value={p.role ?? (p.is_admin ? "admin" : "member")}
+                        onValueChange={(v) => changeRole(p, v as Role)}
                         disabled={p.id === user?.id}
                       >
                         <SelectTrigger size="sm" className="h-7 w-28">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="member">Member</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
+                          {ROLES.map((r) => (
+                            <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -681,19 +693,19 @@ function AccountsSection() {
                       <div className="flex items-center gap-1">
                         <Tooltip>
                           <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-7" onClick={() => setViewProfile(p)}>
+                              <UserCircle className="size-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>View profile</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" className="size-7" onClick={() => setEditUser(p)}>
                               <Pencil className="size-4" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Edit name / username</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="size-7" onClick={() => setPwUser(p)}>
-                              <KeyRound className="size-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Reset password</TooltipContent>
                         </Tooltip>
                         {p.id !== user?.id && (
                           <Tooltip>
@@ -718,12 +730,6 @@ function AccountsSection() {
 
       <CreateAccountDialog open={createOpen} onOpenChange={setCreateOpen} />
       <EditProfileDialog user={editUser} onClose={() => setEditUser(null)} />
-      <ResetPasswordDialog
-        user={pwUser}
-        onClose={() => setPwUser(null)}
-        setPassword={(id, password) => setPassword.mutateAsync({ id, password })}
-        busy={setPassword.isPending}
-      />
       <DeleteAccountDialog
         user={delUser}
         onClose={() => setDelUser(null)}
@@ -741,6 +747,12 @@ function AccountsSection() {
           }
         }}
         busy={deleteAccount.isPending}
+      />
+      <ProfileDialog
+        profile={viewProfile}
+        open={!!viewProfile}
+        onClose={() => setViewProfile(null)}
+        isAdmin
       />
     </Card>
   )
@@ -842,7 +854,7 @@ function CreateAccountDialog({
   const [fullName, setFullName] = useState("")
   const [password, setPassword] = useState("")
   const [org, setOrg] = useState<Org>("frontline")
-  const [isAdmin, setIsAdmin] = useState("member")
+  const [role, setRole] = useState<Role>("member")
 
   async function submit() {
     if (!username.trim() || !password.trim()) {
@@ -855,14 +867,14 @@ function CreateAccountDialog({
         password: password.trim(),
         full_name: fullName.trim() || username.trim(),
         org,
-        is_admin: isAdmin === "admin",
+        is_admin: role === "admin",
       })
       toast.success(`Account "${username.trim()}" created`)
       setUsername("")
       setFullName("")
       setPassword("")
       setOrg("frontline")
-      setIsAdmin("member")
+      setRole("member")
       onOpenChange(false)
     } catch (e) {
       toast.error("Could not create account", {
@@ -921,13 +933,14 @@ function CreateAccountDialog({
             </div>
             <div className="grid gap-1.5">
               <Label className="text-xs text-muted-foreground">Role</Label>
-              <Select value={isAdmin} onValueChange={setIsAdmin}>
+              <Select value={role} onValueChange={(v) => setRole(v as Role)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -948,60 +961,6 @@ function CreateAccountDialog({
   )
 }
 
-function ResetPasswordDialog({
-  user,
-  onClose,
-  setPassword,
-  busy,
-}: {
-  user: Profile | null
-  onClose: () => void
-  setPassword: (id: string, password: string) => Promise<unknown>
-  busy: boolean
-}) {
-  const [pw, setPw] = useState("")
-  return (
-    <Dialog open={!!user} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Reset password</DialogTitle>
-          <DialogDescription>
-            Set a new password for {user?.full_name ?? user?.username}.
-          </DialogDescription>
-        </DialogHeader>
-        <Input
-          value={pw}
-          onChange={(e) => setPw(e.target.value)}
-          placeholder="New password"
-        />
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            disabled={busy || pw.length < 6 || !user}
-            onClick={async () => {
-              if (!user) return
-              try {
-                await setPassword(user.id, pw)
-                toast.success("Password updated")
-                setPw("")
-                onClose()
-              } catch (e) {
-                toast.error("Could not update password", {
-                  description: e instanceof Error ? e.message : "Unknown error",
-                })
-              }
-            }}
-          >
-            {busy && <Loader2 className="size-4 animate-spin" />}
-            Update
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 function DeleteAccountDialog({
   user,
@@ -1269,7 +1228,7 @@ function ProjectsSection() {
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>Projects</CardTitle>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
+        <Button size="sm" variant="outline" onClick={() => setCreateOpen(true)}>
           <Plus className="size-4" /> New project
         </Button>
       </CardHeader>

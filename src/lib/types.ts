@@ -120,6 +120,19 @@ export const ORG_LABELS: Record<string, string> = {
   firstfix: "First Fix",
 }
 
+export const ROLES = ["admin", "member", "guest"] as const
+export type Role = (typeof ROLES)[number]
+export const ROLE_LABELS: Record<Role, string> = {
+  admin: "Admin",
+  member: "Member",
+  guest: "Guest",
+}
+export const ROLE_DESCRIPTIONS: Record<Role, string> = {
+  admin: "Full access — manage users, projects and all data",
+  member: "Standard access — create and edit within assigned projects",
+  guest: "Read-only — can view data but cannot create or modify",
+}
+
 export interface Project {
   id: string
   name: string
@@ -259,10 +272,11 @@ export interface Profile {
   id: string
   username: string | null
   full_name: string | null
-  role: string
+  role: Role
   org: Org | null
   is_admin: boolean
   allowed_pages: string[] | null
+  avatar_url: string | null
   created_at: string
 }
 

@@ -2,7 +2,6 @@ import {
   BarChart3,
   ClipboardList,
   FileText,
-  FolderKanban,
   LayoutGrid,
   LifeBuoy,
   PenTool,
@@ -34,9 +33,6 @@ export interface NavSection {
 }
 
 const SECTIONS: NavSection[] = [
-  {
-    items: [{ to: "/projects", label: "Projects", icon: FolderKanban }],
-  },
   {
     label: "Procurement",
     items: [
@@ -90,6 +86,7 @@ export function navSectionsFor(profile: Profile | null): NavSection[] {
 }
 
 const EXTRA_LABELS: Record<string, string> = {
+  "/projects": "Projects",
   "/changelog": "Changelog",
   "/docs": "Docs",
 }

@@ -168,3 +168,32 @@ export function useUnassignProject() {
     },
   })
 }
+
+export interface ProjectStats {
+  items: number
+  documents: number
+  deliveryNotes: number
+  tickets: number
+}
+
+export function useProjectStats(projectId: string | null) {
+  return useQuery<ProjectStats>({
+    queryKey: ["project-stats", projectId],
+    enabled: !!projectId,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const [items, docs, dns, tickets] = await Promise.all([
+        supabase.from("items").select("id", { count: "exact", head: true }).eq("project_id", projectId!),
+        supabase.from("documents").select("id", { count: "exact", head: true }).eq("project_id", projectId!),
+        supabase.from("delivery_notes").select("id", { count: "exact", head: true }).eq("project_id", projectId!),
+        supabase.from("tickets").select("id", { count: "exact", head: true }).eq("project_id", projectId!),
+      ])
+      return {
+        items: items.count ?? 0,
+        documents: docs.count ?? 0,
+        deliveryNotes: dns.count ?? 0,
+        tickets: tickets.count ?? 0,
+      }
+    },
+  })
+}

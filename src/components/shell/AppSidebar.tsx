@@ -32,7 +32,6 @@ import {
 
 function ProjectSwitcher() {
   const { projects, currentProject, currentProjectId, setCurrentProject } = useProject()
-  const navigate = useNavigate()
 
   function switchProject(id: string) {
     const p = projects.find((p) => p.id === id)
@@ -55,7 +54,7 @@ function ProjectSwitcher() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuLabel>Projects</DropdownMenuLabel>
+        <DropdownMenuLabel>Switch project</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {projects.map((p) => (
           <DropdownMenuItem key={p.id} onClick={() => switchProject(p.id)} className="gap-2">
@@ -64,10 +63,6 @@ function ProjectSwitcher() {
             {p.id === currentProjectId && <Check className="size-4 text-primary" />}
           </DropdownMenuItem>
         ))}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate("/projects")}>
-          <LayoutGrid className="size-4" /> All projects
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
