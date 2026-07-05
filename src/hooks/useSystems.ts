@@ -59,6 +59,7 @@ export function useProjectSystemKeys(projectId: string | null) {
   return useQuery<string[]>({
     queryKey: [...PS_KEY, projectId],
     enabled: !!projectId,
+    staleTime: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("project_systems")
@@ -74,6 +75,7 @@ export function useProjectSystemKeys(projectId: string | null) {
 export function useAllProjectSystems() {
   return useQuery<{ project_id: string; system_key: string }[]>({
     queryKey: [...PS_KEY, "all"],
+    staleTime: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("project_systems")

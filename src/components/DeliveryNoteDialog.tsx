@@ -90,6 +90,14 @@ export function DeliveryNoteDialog({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, nextNum, currentProject])
 
+  // If nextNum arrived after the dialog opened and the field is still blank, fill it in.
+  useEffect(() => {
+    if (open && dnNumber === "" && nextNum) {
+      setDnNumber(buildDnNumber(currentProject?.name, nextNum))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, nextNum])
+
   function setLine(idx: number, patch: Partial<DeliveryNoteItem>) {
     setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, ...patch } : l)))
   }

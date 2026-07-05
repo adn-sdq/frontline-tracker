@@ -106,7 +106,18 @@ export default function DashboardPage() {
   const { currentProjectId } = useProject()
   const { activeSystems, labelFor } = useSystems(currentProjectId)
 
-  const overall = useMemo(() => summarise(allItems), [allItems])
+  const activeSystemKeys = useMemo(
+    () => new Set(activeSystems.map((s) => s.key)),
+    [activeSystems]
+  )
+
+  // Restrict overall totals to items in active systems so they match the per-system breakdown.
+  const scopedItems = useMemo(
+    () => allItems.filter((it) => activeSystemKeys.has(it.system)),
+    [allItems, activeSystemKeys]
+  )
+
+  const overall = useMemo(() => summarise(scopedItems), [scopedItems])
 
   const perSystem = useMemo(() =>
     activeSystems.map((sys) => {
