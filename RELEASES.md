@@ -2,6 +2,22 @@
 
 ---
 
+## v2.4.2 — 2026-07-05
+
+Seven bugs identified by code review and fixed.
+
+### Bug Fixes
+
+- **Project dialog:** success toast now fires only after both the project row and system assignments are saved — previously fired after the first write, misleading users if the second write failed
+- **Project dialog:** Escape key and backdrop click no longer dismiss the dialog while a save is in flight — previously could leave a project with no system assignments
+- **Project dialog:** system checkboxes now correctly default to all-checked when the dialog opens before the systems query has loaded — previously left all unchecked with no recovery path
+- **Dashboard:** Overall totals now match the sum of per-system cards — previously items in systems removed from a project inflated Overall but were invisible in the breakdown
+- **Delivery Notes:** DN number field now fills in when the sequence query resolves after the dialog opens — previously left blank, causing saves to use a raw integer instead of the formatted DN-XXX-YYYYMMDD-NNN string
+- **Hooks:** `useProjectSystemKeys` and `useAllProjectSystems` now both set `staleTime: 30_000` — previously defaulted to 0, causing extra refetches on every window focus
+- **Repo:** Added missing migration file `supabase/migrations/0014_project_systems.sql` — the table was applied via MCP but never committed, which would break any fresh clone
+
+---
+
 ## v2.4.1 — 2026-07-01
 
 Added "Save" button to the delivery note form — record a note without generating a PDF.

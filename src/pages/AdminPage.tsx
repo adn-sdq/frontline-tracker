@@ -1085,19 +1085,27 @@ function ProjectDialog({
       setSelectedSystems(existingKeys)
       systemsSeededRef.current = true
     } else {
-      // Default: all active systems selected
+      // Default: all active systems. If activeSystems is empty (still loading),
+      // leave seeded=false so the second effect can fill in once data arrives.
       setSelectedSystems(activeSystems.map((s) => s.key))
-      if (!isNew) systemsSeededRef.current = false // wait for real data
+      systemsSeededRef.current = activeSystems.length > 0 && isNew
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initial])
 
-  // When existing keys load after dialog opens, apply them (only once per open).
+  // When active systems or existing keys load after dialog opens, apply them once.
   useEffect(() => {
-    if (!open || isNew || existingKeys === undefined || systemsSeededRef.current) return
-    setSelectedSystems(existingKeys)
-    systemsSeededRef.current = true
-  }, [existingKeys, open, isNew])
+    if (!open || systemsSeededRef.current) return
+    if (isNew) {
+      if (activeSystems.length === 0) return  // still loading
+      setSelectedSystems(activeSystems.map((s) => s.key))
+      systemsSeededRef.current = true
+    } else {
+      if (existingKeys === undefined) return  // still loading
+      setSelectedSystems(existingKeys)
+      systemsSeededRef.current = true
+    }
+  }, [existingKeys, activeSystems, open, isNew])
 
   const set = (k: keyof ProjectInput, v: string) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -1114,7 +1122,6 @@ function ProjectDialog({
       if (isNew) {
         const project = await create.mutateAsync({ ...form, sort: projectsCount + 1 })
         pid = project.id
-        toast.success(`Project "${form.name.trim()}" created`)
       } else {
         await update.mutateAsync({
           id: projectId,
@@ -1129,12 +1136,12 @@ function ProjectDialog({
           },
         })
         pid = projectId
-        toast.success("Project updated")
       }
       await setProjectSystems.mutateAsync({ projectId: pid, keys: selectedSystems })
+      toast.success(isNew ? `Project "${form.name.trim()}" created` : "Project updated")
       onClose()
     } catch (e) {
-      toast.error(isNew ? "Could not create project" : "Could not update project", {
+      toast.error(isNew ? "Could not save project" : "Could not update project", {
         description: e instanceof Error ? e.message : "Unknown error",
       })
     } finally {
@@ -1143,7 +1150,7 @@ function ProjectDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o && !busy) onClose() }}>
       <DialogContent className="max-h-[90svh] overflow-x-hidden overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{isNew ? "New project" : "Edit project"}</DialogTitle>

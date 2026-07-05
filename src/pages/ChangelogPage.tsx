@@ -17,6 +17,26 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.4.2",
+    date: "2026-07-05",
+    type: "patch",
+    summary: "Seven bugs identified by code review and fixed.",
+    sections: [
+      {
+        title: "Bug Fixes",
+        items: [
+          "Project dialog: success toast now fires only after both the project row and system assignments are saved",
+          "Project dialog: Escape / backdrop no longer dismiss the dialog while a save is in flight",
+          "Project dialog: system checkboxes now default to all-checked even when the systems query loads after the dialog opens",
+          "Dashboard: Overall totals now match the sum of per-system cards",
+          "Delivery Notes: DN number field now fills in when the sequence query resolves after the dialog opens",
+          "Hooks: useProjectSystemKeys and useAllProjectSystems now set staleTime: 30 000 to avoid extra refetches",
+          "Repo: added missing migration file 0014_project_systems.sql",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.4.1",
     date: "2026-07-01",
     type: "patch",
