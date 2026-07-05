@@ -1,10 +1,9 @@
 import type { ReactNode } from "react"
 
 /**
- * PageHeader — the shared editorial page title used across the app.
- * Mirrors the sign-in page's identity: a small orange eyebrow over a
- * Fraunces display-serif title, with an optional subtitle and an
- * actions slot on the right.
+ * PageHeader — the shared page title used across the app.
+ * Enterprise density: compact sans-serif title with an optional muted
+ * eyebrow, a subtitle, and an actions slot on the right.
  */
 export function PageHeader({
   eyebrow,
@@ -18,18 +17,18 @@ export function PageHeader({
   children?: ReactNode
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
       <div className="min-w-0">
         {eyebrow && (
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
+          <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {eyebrow}
           </p>
         )}
-        <h1 className="font-display text-[1.75rem] leading-none tracking-tight text-foreground sm:text-4xl">
+        <h1 className="text-xl font-semibold leading-tight tracking-tight text-foreground sm:text-2xl">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
         )}
       </div>
       {children && (
