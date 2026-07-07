@@ -38,7 +38,6 @@ import {
   type TechnicianRequest,
   type TechRequestStatus,
 } from "@/lib/types"
-import { PageActions } from "@/contexts/PageActionsContext"
 import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
 import { Button } from "@/components/ui/button"
@@ -530,15 +529,6 @@ export default function TechniciansPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <PageActions>
-        <ActionButton
-          icon={Plus}
-          label="Request technicians"
-          primary
-          onClick={() => setRequestOpen(true)}
-        />
-      </PageActions>
-
       <PageHeader
         title="Technicians"
         subtitle={
@@ -550,16 +540,24 @@ export default function TechniciansPage() {
 
       {isManager ? (
         <Tabs defaultValue="requests">
-          <TabsList>
-            <TabsTrigger value="requests">
-              Requests
-              {pendingCount > 0 && (
-                <Badge className="ml-1 h-4 min-w-4 justify-center px-1 text-[10px]">{pendingCount}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="schedule">Schedule</TabsTrigger>
-            <TabsTrigger value="roster">Roster</TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between gap-2">
+            <TabsList>
+              <TabsTrigger value="requests">
+                Requests
+                {pendingCount > 0 && (
+                  <Badge className="ml-1 h-4 min-w-4 justify-center px-1 text-[10px]">{pendingCount}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="schedule">Schedule</TabsTrigger>
+              <TabsTrigger value="roster">Roster</TabsTrigger>
+            </TabsList>
+            <ActionButton
+              icon={Plus}
+              label="Request technicians"
+              primary
+              onClick={() => setRequestOpen(true)}
+            />
+          </div>
           <div className="pt-4">
             <TabsContent value="requests"><RequestsInbox nameFor={nameFor} /></TabsContent>
             <TabsContent value="schedule"><ScheduleBoard /></TabsContent>
@@ -568,6 +566,14 @@ export default function TechniciansPage() {
         </Tabs>
       ) : (
         <>
+          <div className="flex items-center justify-end">
+            <ActionButton
+              icon={Plus}
+              label="Request technicians"
+              primary
+              onClick={() => setRequestOpen(true)}
+            />
+          </div>
           <Separator />
           <MyRequests userId={user?.id} />
         </>

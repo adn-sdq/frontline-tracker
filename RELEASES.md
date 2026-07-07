@@ -2,6 +2,23 @@
 
 ---
 
+## v2.7.1 — 2026-07-07
+
+Shell polish following the v2.7.0 redesign — collapsed-rail alignment, inline page actions, and a tidier sidebar footer.
+
+### Sidebar
+
+- Fixed icon alignment in the collapsed rail so the logo, collapse toggle and every icon share a single centre line; the nav no longer shifts when a scrollbar appears
+- Delivery Notes uses the truck icon in the sidebar and the New menu, matching its action button
+- Updates now sits beside Docs in the footer meta row with matching link styling, instead of its own row
+
+### Page actions
+
+- Primary add buttons moved inline to the end of each page's search/filter row (e.g. beside the date filters on Delivery Notes) rather than the top bar
+- Tracker keeps its delivery-note toggle and Import/Export overflow together with Add at the end of the filter row
+
+---
+
 ## v2.7.0 — 2026-07-07
 
 App-shell redesign — collapsible sidebar, a cleaner top bar, and consistent icon action buttons across every page.

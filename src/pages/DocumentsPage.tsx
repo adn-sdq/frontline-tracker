@@ -59,7 +59,6 @@ import {
   type DocStatus,
   type DocumentRow,
 } from "@/lib/types"
-import { PageActions } from "@/contexts/PageActionsContext"
 import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
 
@@ -168,26 +167,6 @@ export default function DocumentsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <PageActions>
-        <ActionButton
-          icon={CheckSquare}
-          label={selectMode ? "Cancel selection" : "Select"}
-          active={selectMode}
-          onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
-        />
-        {!selectMode && (
-          <ActionButton
-            icon={Plus}
-            label="Add document"
-            primary
-            onClick={() => {
-              setEditDoc(null)
-              setDialogOpen(true)
-            }}
-          />
-        )}
-      </PageActions>
-
       <PageHeader
         title="Documents"
         subtitle="Submittals & reviews between Frontline and First Fix."
@@ -278,6 +257,25 @@ export default function DocumentsPage() {
             ))}
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-2 sm:ml-auto">
+          <ActionButton
+            icon={CheckSquare}
+            label={selectMode ? "Cancel selection" : "Select"}
+            active={selectMode}
+            onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+          />
+          {!selectMode && (
+            <ActionButton
+              icon={Plus}
+              label="Add document"
+              primary
+              onClick={() => {
+                setEditDoc(null)
+                setDialogOpen(true)
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {isLoading ? (

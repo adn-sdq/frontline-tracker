@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DatePicker } from "@/components/DatePicker"
-import { PageActions } from "@/contexts/PageActionsContext"
 import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
 import {
@@ -113,15 +112,6 @@ export default function DeliveryNotesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageActions>
-        <ActionButton
-          icon={Plus}
-          label="New delivery note"
-          primary
-          onClick={() => setCreateOpen(true)}
-        />
-      </PageActions>
-
       <PageHeader
         title="Delivery Notes"
         subtitle={`${notes.length} note${notes.length !== 1 ? "s" : ""} for ${currentProject?.name ?? "this project"}`}
@@ -166,6 +156,12 @@ export default function DeliveryNotesPage() {
               Clear
             </Button>
           )}
+          <ActionButton
+            icon={Plus}
+            label="New delivery note"
+            primary
+            onClick={() => setCreateOpen(true)}
+          />
         </div>
       </div>
 

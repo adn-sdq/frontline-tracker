@@ -17,6 +17,29 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.7.1",
+    date: "2026-07-07",
+    type: "patch",
+    summary: "Shell polish — aligned the collapsed rail, moved page actions inline, and tidied the sidebar footer.",
+    sections: [
+      {
+        title: "Sidebar",
+        items: [
+          "Fixed icon alignment in the collapsed rail so the logo, toggle and every icon share one centre line (and the nav no longer shifts when a scrollbar appears)",
+          "Delivery Notes now uses the truck icon in the sidebar and the New menu, matching its action button",
+          "Updates now sits beside Docs in the footer meta row with matching link styling, instead of a separate row",
+        ],
+      },
+      {
+        title: "Page actions",
+        items: [
+          "Primary add buttons moved inline to the end of each page's search/filter row (e.g. next to the date filters on Delivery Notes) instead of the top bar",
+          "Tracker keeps its delivery-note toggle and Import/Export overflow together with Add at the end of the filter row",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.7.0",
     date: "2026-07-07",
     type: "minor",

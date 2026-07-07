@@ -1,11 +1,11 @@
 import {
   BarChart3,
-  ClipboardList,
   FileText,
   LayoutGrid,
   LifeBuoy,
   PenTool,
   Shield,
+  Truck,
   UsersRound,
 } from "lucide-react"
 
@@ -37,7 +37,7 @@ const SECTIONS: NavSection[] = [
     label: "Procurement",
     items: [
       { to: "/", label: "Tracker", icon: LayoutGrid, page: "tracker" },
-      { to: "/delivery-notes", label: "Delivery Notes", icon: ClipboardList, page: "tracker" },
+      { to: "/delivery-notes", label: "Delivery Notes", icon: Truck, page: "tracker" },
       { to: "/documents", label: "Documents", icon: FileText, page: "documents" },
     ],
   },

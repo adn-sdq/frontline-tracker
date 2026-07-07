@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-import { PageActions } from "@/contexts/PageActionsContext"
 import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
 import { useTickets } from "@/hooks/useTickets"
@@ -94,10 +93,6 @@ export default function TicketsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <PageActions>
-        <ActionButton icon={Plus} label="New ticket" primary onClick={openNew} />
-      </PageActions>
-
       <PageHeader
         title="Support Tickets"
         subtitle={
@@ -165,6 +160,7 @@ export default function TicketsPage() {
               <X className="h-3.5 w-3.5" /> Clear ({activeFilters})
             </Button>
           )}
+          <ActionButton icon={Plus} label="New ticket" primary onClick={openNew} />
         </div>
       </div>
 

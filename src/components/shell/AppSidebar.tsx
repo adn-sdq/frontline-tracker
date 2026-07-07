@@ -3,7 +3,6 @@ import { Link, NavLink, useNavigate } from "react-router-dom"
 import {
   Check,
   ChevronsUpDown,
-  ClipboardList,
   FileText,
   FolderOpen,
   LayoutGrid,
@@ -15,6 +14,7 @@ import {
   PanelLeftOpen,
   Plus,
   Sun,
+  Truck,
   UserCircle,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -149,7 +149,7 @@ function NewMenu({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: 
         )}
         {reachable.has("/delivery-notes") && (
           <DropdownMenuItem onClick={() => go("/delivery-notes")}>
-            <ClipboardList className="size-4" /> Delivery note
+            <Truck className="size-4" /> Delivery note
           </DropdownMenuItem>
         )}
         {reachable.has("/documents") && (
@@ -362,7 +362,7 @@ export function SidebarContent({
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       {/* Brand + collapse toggle */}
       {collapsed ? (
-        <div className="flex h-14 shrink-0 flex-col items-center justify-center">
+        <div className="flex h-14 shrink-0 items-center justify-center">
           <FitLogo size={28} />
         </div>
       ) : (
@@ -386,12 +386,12 @@ export function SidebarContent({
       )}
 
       {collapsed && onToggleCollapse && (
-        <div className="flex justify-center pb-1">
+        <div className="flex items-center justify-center pb-1">
           <button
             type="button"
             onClick={onToggleCollapse}
             aria-label="Expand sidebar"
-            className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-foreground"
+            className="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-foreground"
           >
             <PanelLeftOpen className="size-4" />
           </button>
@@ -399,13 +399,18 @@ export function SidebarContent({
       )}
 
       {/* Project + quick create */}
-      <div className={cn("flex flex-col gap-2 pb-2", collapsed ? "items-center px-2" : "px-3")}>
+      <div className={cn("flex flex-col gap-2 pb-2", collapsed ? "items-center px-0" : "px-3")}>
         <ProjectSwitcher collapsed={collapsed} />
         <NewMenu collapsed={collapsed} onNavigate={onNavigate} />
       </div>
 
       {/* Nav sections */}
-      <nav className={cn("flex-1 overflow-y-auto py-2", collapsed ? "px-2" : "px-3")}>
+      <nav
+        className={cn(
+          "flex-1 overflow-y-auto py-2",
+          collapsed ? "scrollbar-none px-0" : "px-3"
+        )}
+      >
         {sections.map((section, i) => (
           <div key={section.label ?? i} className={cn(i > 0 && "mt-4")}>
             {section.label && !collapsed && (
@@ -434,78 +439,76 @@ export function SidebarContent({
       <div
         className={cn(
           "shrink-0 space-y-0.5 border-t border-sidebar-border py-2.5",
-          collapsed ? "flex flex-col items-center gap-0.5 px-2" : "px-3"
+          collapsed ? "flex flex-col items-center gap-0.5 px-0" : "px-3"
         )}
       >
         <FooterProfile collapsed={collapsed} />
 
-        {/* Updates */}
         {collapsed ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <NavLink
-                to="/updates"
-                onClick={onNavigate}
-                className={({ isActive }) =>
-                  cn(
-                    "grid size-9 place-items-center rounded-md transition-colors",
-                    isActive
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                  )
-                }
-              >
-                <Newspaper className="size-4.5" />
-              </NavLink>
-            </TooltipTrigger>
-            <TooltipContent side="right">Updates</TooltipContent>
-          </Tooltip>
-        ) : (
-          <NavLink
-            to="/updates"
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors",
-                isActive
-                  ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-              )
-            }
-          >
-            <Newspaper className="size-4 shrink-0" /> Updates
-          </NavLink>
-        )}
+          <>
+            {/* Updates */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <NavLink
+                  to="/updates"
+                  onClick={onNavigate}
+                  className={({ isActive }) =>
+                    cn(
+                      "grid size-9 place-items-center rounded-md transition-colors",
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    )
+                  }
+                >
+                  <Newspaper className="size-4.5" />
+                </NavLink>
+              </TooltipTrigger>
+              <TooltipContent side="right">Updates</TooltipContent>
+            </Tooltip>
 
-        {/* Meta row — theme toggle sits minimally alongside Docs + version */}
-        {collapsed ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={toggle}
-                aria-label={dark ? "Light mode" : "Dark mode"}
-                className="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-foreground"
-              >
-                {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{dark ? "Light mode" : "Dark mode"}</TooltipContent>
-          </Tooltip>
+            {/* Theme */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={toggle}
+                  aria-label={dark ? "Light mode" : "Dark mode"}
+                  className="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-foreground"
+                >
+                  {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{dark ? "Light mode" : "Dark mode"}</TooltipContent>
+            </Tooltip>
+          </>
         ) : (
-          <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] text-muted-foreground">
+          /* Meta row — Docs + Updates links, minimal theme toggle, version */
+          <div className="flex items-center gap-2.5 px-2.5 py-1 text-[11px] text-muted-foreground">
             <Link to="/docs" onClick={onNavigate} className="transition-colors hover:text-foreground">
               Docs
             </Link>
+            <NavLink
+              to="/updates"
+              onClick={onNavigate}
+              className={({ isActive }) =>
+                cn(
+                  "transition-colors hover:text-foreground",
+                  isActive && "font-medium text-foreground"
+                )
+              }
+            >
+              Updates
+            </NavLink>
             <button
               type="button"
               onClick={toggle}
               aria-label={dark ? "Light mode" : "Dark mode"}
-              className="grid size-6 place-items-center rounded transition-colors hover:text-foreground"
+              className="ml-auto grid size-6 place-items-center rounded transition-colors hover:text-foreground"
             >
               {dark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
             </button>
-            <span className="ml-auto font-mono">{APP_VERSION}</span>
+            <span className="font-mono">{APP_VERSION}</span>
           </div>
         )}
       </div>

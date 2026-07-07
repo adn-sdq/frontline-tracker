@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react"
 import {
   Download,
-  FileText,
   Filter,
   MoreHorizontal,
   Plus,
@@ -42,7 +41,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Loader2 } from "lucide-react"
-import { PageActions } from "@/contexts/PageActionsContext"
 import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
 import { ItemsTable, ItemsTableSkeleton } from "@/components/ItemsTable"
@@ -229,34 +227,6 @@ export default function TrackerPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageActions>
-        <ActionButton
-          icon={Truck}
-          label={dnMode ? "Cancel delivery" : "Delivery note"}
-          active={dnMode}
-          onClick={() => (dnMode ? exitDnMode() : enterDnMode())}
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button type="button" variant="outline" size="icon" className="size-9" aria-label="More actions">
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setImportOpen(true)}>
-              <Upload className="size-4" /> Import CSV
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => exportItemsCsv(filtered)}
-              disabled={filtered.length === 0}
-            >
-              <Download className="size-4" /> {exportLabel}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <ActionButton icon={Plus} label="Add item" primary onClick={openAdd} />
-      </PageActions>
-
       {/* ── Header ── */}
       <PageHeader
         title="Procurement Tracker"
@@ -420,35 +390,41 @@ export default function TrackerPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Mobile-only extra actions */}
+          {/* Delivery-note mode toggle */}
+          <ActionButton
+            icon={Truck}
+            label={dnMode ? "Cancel delivery" : "Delivery note"}
+            active={dnMode}
+            onClick={() => (dnMode ? exitDnMode() : enterDnMode())}
+          />
+
+          {/* Import / Export overflow */}
           <DropdownMenu>
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="shrink-0 sm:hidden">
-                    <FileText className="size-4" />
+                  <Button variant="outline" size="icon" className="size-9 shrink-0">
+                    <MoreHorizontal className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
               </TooltipTrigger>
               <TooltipContent>More actions</TooltipContent>
             </Tooltip>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                checked={false}
-                onCheckedChange={() => setImportOpen(true)}
-              >
+              <DropdownMenuItem onClick={() => setImportOpen(true)}>
                 <Upload className="size-4" /> Import CSV
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={false}
-                onCheckedChange={() => exportItemsCsv(filtered)}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => exportItemsCsv(filtered)}
+                disabled={filtered.length === 0}
               >
                 <Download className="size-4" /> {exportLabel}
-              </DropdownMenuCheckboxItem>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Primary add */}
+          <ActionButton icon={Plus} label="Add item" primary onClick={openAdd} />
         </div>
 
         {/* Active filter chips */}
