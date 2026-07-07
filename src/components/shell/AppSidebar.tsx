@@ -7,7 +7,7 @@ import {
   FolderOpen,
   LayoutGrid,
   LifeBuoy,
-  Lightbulb,
+  Newspaper,
   Plus,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -156,10 +156,8 @@ function NavRow({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }
 
 export function SidebarContent({
   onNavigate,
-  onRequestFeature,
 }: {
   onNavigate?: () => void
-  onRequestFeature?: () => void
 }) {
   const { profile } = useAuth()
   const sections = navSectionsFor(profile)
@@ -201,22 +199,23 @@ export function SidebarContent({
 
       {/* Footer */}
       <div className="shrink-0 border-t border-sidebar-border px-3 py-3">
-        {onRequestFeature && (
-          <button
-            type="button"
-            onClick={onRequestFeature}
-            className="mb-1 flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-          >
-            <Lightbulb className="size-4" /> Request a feature
-          </button>
-        )}
+        <NavLink
+          to="/updates"
+          onClick={onNavigate}
+          className={({ isActive }) =>
+            cn(
+              "mb-1 flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+              isActive
+                ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
+                : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            )
+          }
+        >
+          <Newspaper className="size-4" /> Updates
+        </NavLink>
         <div className="flex items-center gap-2 px-2.5 text-[11px] text-muted-foreground">
           <Link to="/docs" onClick={onNavigate} className="transition-colors hover:text-foreground">
             Docs
-          </Link>
-          <span className="text-muted-foreground/40">·</span>
-          <Link to="/changelog" onClick={onNavigate} className="transition-colors hover:text-foreground">
-            Changelog
           </Link>
           <span className="ml-auto font-mono">{APP_VERSION}</span>
         </div>
@@ -227,10 +226,10 @@ export function SidebarContent({
 
 // ── Desktop rail ──────────────────────────────────────────────────────────────
 
-export function AppSidebar({ onRequestFeature }: { onRequestFeature?: () => void }) {
+export function AppSidebar() {
   return (
     <aside className="hidden w-60 shrink-0 border-r border-sidebar-border md:block">
-      <SidebarContent onRequestFeature={onRequestFeature} />
+      <SidebarContent />
     </aside>
   )
 }

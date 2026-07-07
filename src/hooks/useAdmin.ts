@@ -50,6 +50,17 @@ export function useUpdateFeatureRequest() {
   })
 }
 
+export function useUpvoteFeatureRequest() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("upvote_feature_request", { request_id: id })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: FR_KEY }),
+  })
+}
+
 export function useDeleteFeatureRequest() {
   const qc = useQueryClient()
   return useMutation({

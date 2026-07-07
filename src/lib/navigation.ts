@@ -88,6 +88,7 @@ export function navSectionsFor(profile: Profile | null): NavSection[] {
 const EXTRA_LABELS: Record<string, string> = {
   "/projects": "Projects",
   "/changelog": "Changelog",
+  "/updates": "Updates",
   "/docs": "Docs",
 }
 

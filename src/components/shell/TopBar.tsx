@@ -96,7 +96,7 @@ function UserMenu() {
   )
 }
 
-export function TopBar({ onRequestFeature }: { onRequestFeature?: () => void }) {
+export function TopBar() {
   const { pathname } = useLocation()
   const { currentProject } = useProject()
   const { dark, toggle } = useTheme()
@@ -164,13 +164,7 @@ export function TopBar({ onRequestFeature }: { onRequestFeature?: () => void }) 
       {/* Mobile nav sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-64 p-0">
-          <SidebarContent
-            onNavigate={() => setMobileOpen(false)}
-            onRequestFeature={() => {
-              setMobileOpen(false)
-              onRequestFeature?.()
-            }}
-          />
+          <SidebarContent onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
 

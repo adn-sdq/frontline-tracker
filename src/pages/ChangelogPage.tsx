@@ -7,7 +7,7 @@ import { FitLogo } from "@/components/FitLogo"
 // ── Release data ──────────────────────────────────────────────────────────────
 // Add new releases at the top. type: "major" | "minor" | "patch"
 
-interface ReleaseEntry {
+export interface ReleaseEntry {
   version: string
   date: string
   summary: string
@@ -15,7 +15,41 @@ interface ReleaseEntry {
   sections: { title: string; items: string[] }[]
 }
 
-const RELEASES: ReleaseEntry[] = [
+export const RELEASES: ReleaseEntry[] = [
+  {
+    version: "v2.6.0",
+    date: "2026-07-07",
+    type: "minor",
+    summary: "Dedicated Updates page — changelog and feature requests now live inside the app as a first-class experience.",
+    sections: [
+      {
+        title: "Updates Page",
+        items: [
+          "New /updates page inside the app shell — What's New tab (full changelog with type filters and collapsible cards) and Feature Requests tab (submit, upvote, and track status)",
+          "Changelog cards are collapsible — the latest release opens by default, older ones are collapsed for scanning",
+          "Type filter chips (All / Major / Minor / Patch with counts) let you quickly scan what kind of changes landed",
+          "Feature Requests board: submit a new request inline, upvote others, and see status (Pending → Planned → In Progress → Done) in one place",
+          "Upvotes are now tracked per-user with a one-vote guard — your vote persists across sessions",
+          "\"Mine\" badge on requests you submitted, so they're easy to find",
+          "Updates page is accessible to all team members (including read-only guests)",
+        ],
+      },
+      {
+        title: "Navigation",
+        items: [
+          "\"Request a feature\" dialog removed from the sidebar footer — consolidated into the Updates page",
+          "Sidebar footer now links directly to Updates and Docs",
+        ],
+      },
+      {
+        title: "Database",
+        items: [
+          "Migration 0017: feature_requests SELECT opened to all authenticated users; admin-only write/delete policies enforced",
+          "New upvote_feature_request() SECURITY DEFINER function — prevents users from modifying any field other than upvote count",
+        ],
+      },
+    ],
+  },
   {
     version: "v2.5.0",
     date: "2026-07-06",

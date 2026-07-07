@@ -17,6 +17,7 @@ import ChangelogPage from "@/pages/ChangelogPage"
 import DocsPage from "@/pages/DocsPage"
 import TicketsPage from "@/pages/TicketsPage"
 import TechniciansPage from "@/pages/TechniciansPage"
+import UpdatesPage from "@/pages/UpdatesPage"
 import { AppLayout } from "@/components/AppLayout"
 
 function FullScreen({ children }: { children: ReactNode }) {
@@ -178,6 +179,18 @@ export default function App() {
           ) : (
             <AppLayout>
               <TechniciansPage />
+            </AppLayout>
+          )
+        }
+      />
+      <Route
+        path="/updates"
+        element={
+          !session ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <AppLayout>
+              <UpdatesPage />
             </AppLayout>
           )
         }

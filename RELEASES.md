@@ -2,6 +2,26 @@
 
 ---
 
+## v2.6.0 — 2026-07-07
+
+Dedicated Updates page — changelog and feature requests now live inside the app as a first-class experience.
+
+### Updates Page
+- **What's New tab:** full changelog with type filter chips (All / Major / Minor / Patch with counts) and collapsible release cards — the latest opens by default, older ones collapse for easy scanning
+- **Feature Requests tab:** submit a request inline (no dialog), upvote others (one vote per user, persists in localStorage), and track status (Pending → Planned → In Progress → Done) in one place
+- "Mine" badge on requests you submitted; upvote button shows filled state after voting
+- Page is accessible to all team members including read-only guests
+
+### Navigation
+- "Request a feature" dialog removed from the sidebar footer — consolidated into the Updates page
+- Sidebar footer now links directly to Updates (with icon) and Docs
+
+### Database
+- Migration `0017`: `feature_requests` SELECT opened to all authenticated users; admin-only policies enforced for UPDATE/DELETE
+- New `upvote_feature_request()` SECURITY DEFINER function — safe increment, cannot touch status or other fields
+
+---
+
 ## v2.5.0 — 2026-07-06
 
 New Technicians module — coordinate field technicians across projects with a request → approve → assign workflow.
