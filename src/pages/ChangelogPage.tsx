@@ -17,6 +17,22 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.8.1",
+    date: "2026-07-07",
+    type: "patch",
+    summary:
+      "Consistency pass — tickets, documents and delivery notes now share the same empty-state and loading treatment.",
+    sections: [
+      {
+        title: "Consistency",
+        items: [
+          "Tickets, Documents and Delivery Notes now use the shared EmptyState, so 'nothing here yet' and 'no results' look identical everywhere",
+          "Standardised loading indicators on the shared Spinner across the Documents page (list and action buttons)",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.8.0",
     date: "2026-07-07",
     type: "minor",

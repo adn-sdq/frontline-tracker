@@ -2,6 +2,17 @@
 
 ---
 
+## v2.8.1 — 2026-07-07
+
+Consistency pass adopting the new v2.8.0 primitives across the list pages.
+
+### Consistency
+
+- Tickets, Documents and Delivery Notes now render the shared `EmptyState` for both "nothing yet" and "no results" cases
+- Documents page loading indicators standardised on the shared `Spinner` (list and inline action buttons)
+
+---
+
 ## v2.8.0 — 2026-07-07
 
 Foundations & polish — the first phase of the broader UI overhaul. Introduces shared building blocks (loading, empty states, confirmations), a real 404 page, and tighter control proportions that later phases build on.

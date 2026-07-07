@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select"
 
 import { ActionButton } from "@/components/shell/ActionButton"
+import { EmptyState } from "@/components/ui/empty-state"
 import { PageHeader } from "@/components/PageHeader"
 import { useTickets } from "@/hooks/useTickets"
 import { useAllProfiles } from "@/hooks/useAdmin"
@@ -172,26 +173,22 @@ export default function TicketsPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border bg-card py-16 text-center">
-          <div className="flex size-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-            <TicketIcon className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              {tickets.length === 0 ? "No tickets yet" : "No tickets matched your search"}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {tickets.length === 0
-                ? "Create the first ticket to start tracking issues."
-                : "Try adjusting the filters or search term."}
-            </p>
-          </div>
-          {tickets.length === 0 && (
-            <Button size="sm" onClick={openNew} className="mt-1">
-              <Plus className="h-3.5 w-3.5" /> New ticket
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={TicketIcon}
+          title={tickets.length === 0 ? "No tickets yet" : "No tickets matched your search"}
+          description={
+            tickets.length === 0
+              ? "Create the first ticket to start tracking issues."
+              : "Try adjusting the filters or search term."
+          }
+          action={
+            tickets.length === 0 && (
+              <Button onClick={openNew}>
+                <Plus className="h-3.5 w-3.5" /> New ticket
+              </Button>
+            )
+          }
+        />
       ) : (
         <div className="divide-y overflow-hidden rounded-lg border bg-card">
           {filtered.map((t) => (

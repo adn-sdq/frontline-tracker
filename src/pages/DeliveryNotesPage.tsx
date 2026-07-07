@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { EmptyState } from "@/components/ui/empty-state"
 import { DatePicker } from "@/components/DatePicker"
 import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
@@ -176,21 +177,15 @@ export default function DeliveryNotesPage() {
       {isLoading ? (
         <DNSkeleton />
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-xl border bg-card py-16 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <FileText className="size-6 text-muted-foreground" />
-          </div>
-          <div>
-            <p className="font-medium">
-              {notes.length === 0 ? "No delivery notes yet" : "No results"}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {notes.length === 0
-                ? "Create one manually or generate from the Procurement page."
-                : "Try adjusting your search or date range."}
-            </p>
-          </div>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title={notes.length === 0 ? "No delivery notes yet" : "No results"}
+          description={
+            notes.length === 0
+              ? "Create one manually or generate from the Procurement page."
+              : "Try adjusting your search or date range."
+          }
+        />
       ) : (
         <div className="flex flex-col gap-2">
           {filtered.map((note) => (

@@ -3,7 +3,6 @@ import { formatDistanceToNow } from "date-fns"
 import {
   CheckSquare,
   FileText,
-  Loader2,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -37,6 +36,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Spinner } from "@/components/ui/spinner"
+import { EmptyState } from "@/components/ui/empty-state"
 import { DocStatusBadge, DocStatusSelect } from "@/components/DocStatus"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { DocumentDialog } from "@/components/DocumentDialog"
@@ -199,9 +200,7 @@ export default function DocumentsPage() {
               disabled={!selected.size || bulkBusy}
               onClick={applyBulkStatus}
             >
-              {bulkBusy ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : null}
+              {bulkBusy ? <Spinner className="size-4 text-current" /> : null}
               Apply
             </Button>
           </div>
@@ -280,13 +279,18 @@ export default function DocumentsPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+          <Spinner className="size-6" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border bg-card py-16 text-center text-sm text-muted-foreground">
-          No documents yet. Click <strong>Add document</strong> to start tracking
-          a submittal.
-        </div>
+        <EmptyState
+          icon={FileText}
+          title={docs.length === 0 ? "No documents yet" : "No documents matched your search"}
+          description={
+            docs.length === 0
+              ? "Add your first document to start tracking a submittal."
+              : "Try adjusting the filters or search term."
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {filtered.map((d) => {
@@ -408,7 +412,7 @@ export default function DocumentsPage() {
               onClick={confirmDelete}
               disabled={del.isPending}
             >
-              {del.isPending && <Loader2 className="size-4 animate-spin" />}
+              {del.isPending && <Spinner className="size-4 text-current" />}
               Delete
             </Button>
           </DialogFooter>
