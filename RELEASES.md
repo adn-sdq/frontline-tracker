@@ -2,6 +2,27 @@
 
 ---
 
+## v2.5.0 — 2026-07-06
+
+New Technicians module — coordinate field technicians across projects with a request → approve → assign workflow.
+
+### Technicians
+- **Roster:** a technicians manager can create, edit and delete technicians with Iqama number + expiry (with expiry warnings), trade, phone, nationality and notes
+- **Requests:** any member can request technicians for their project's upcoming work — flexible date-to-date and time-to-time ranges, a quantity, free-text notes, and quick-select requirement tags (Ladder, Tools, Safety Vest, Harness, Scaffold, Drill/Power Tools, PPE, Access Card) so common gear needn't be spelled out
+- **Request inbox:** the manager sees all requests, filters by status, and responds — Approve & assign specific technicians (optionally on adjusted dates), Propose change, or Decline, each with a note back to the requester
+- **Schedule board:** per-technician view of where each person is assigned today and where they're headed next, plus ad-hoc direct assignments and one-click removal
+- **My requests:** members track their own requests and the manager's response, and can cancel while pending
+
+### Access & roles
+- New **Technicians manager** flag (`profiles.is_tech_manager`) — admins are managers by default; admins can grant the role to any member from their profile
+- Technicians is now an access-controlled page; First Fix users don't see it
+- Firstfix users are excluded from all technician data at the database (RLS) level
+
+### Database
+- Migration `0016_technicians.sql` — `technicians`, `technician_requests`, `technician_assignments` tables with RLS, stamping triggers and realtime; adds `profiles.is_tech_manager` and the `is_tech_manager()` helper
+
+---
+
 ## v2.4.2 — 2026-07-05
 
 Seven bugs identified by code review and fixed.

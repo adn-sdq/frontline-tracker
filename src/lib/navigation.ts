@@ -45,7 +45,7 @@ const SECTIONS: NavSection[] = [
     label: "Operations",
     items: [
       { to: "/tickets", label: "Tickets", icon: LifeBuoy, page: "tickets" },
-      { to: "/technicians", label: "Technicians", icon: UsersRound, soon: true },
+      { to: "/technicians", label: "Technicians", icon: UsersRound, page: "technicians" },
       { to: "/schematics", label: "Schematics", icon: PenTool, soon: true },
     ],
   },
@@ -61,10 +61,10 @@ const SECTIONS: NavSection[] = [
 
 export function allowedPagesFor(profile: Profile | null): Set<AppPage> {
   if (!profile) return new Set()
-  if (profile.is_admin) return new Set<AppPage>(["tracker", "documents", "dashboard", "tickets"])
+  if (profile.is_admin) return new Set<AppPage>(["tracker", "documents", "dashboard", "tickets", "technicians"])
   if (profile.org === "firstfix") return new Set<AppPage>(["documents"])
   if (!profile.allowed_pages || profile.allowed_pages.length === 0) {
-    return new Set<AppPage>(["tracker", "documents", "dashboard", "tickets"])
+    return new Set<AppPage>(["tracker", "documents", "dashboard", "tickets", "technicians"])
   }
   return new Set(profile.allowed_pages as AppPage[])
 }

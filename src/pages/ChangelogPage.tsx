@@ -17,6 +17,31 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.5.0",
+    date: "2026-07-06",
+    type: "minor",
+    summary: "New Technicians module — coordinate field technicians with a request → approve → assign workflow.",
+    sections: [
+      {
+        title: "Technicians",
+        items: [
+          "Roster: managers create, edit and delete technicians with Iqama number + expiry (with expiry warnings), trade, phone, nationality and notes",
+          "Requests: members request technicians for their project over flexible date-to-date and time-to-time ranges, with a quantity, notes and quick-select gear tags (Ladder, Tools, Safety Vest, Harness, Scaffold, Drill/Power Tools, PPE, Access Card)",
+          "Request inbox: managers filter by status and respond — Approve & assign specific technicians (optionally on adjusted dates), Propose change, or Decline, each with a note back",
+          "Schedule board: see where each technician is today and where they're headed next, plus ad-hoc direct assignments",
+          "My requests: members track their requests and the manager's response, and can cancel while pending",
+        ],
+      },
+      {
+        title: "Access & Roles",
+        items: [
+          "New Technicians manager role — admins are managers by default and can grant it to any member from their profile",
+          "Technicians is an access-controlled page; First Fix users are excluded from all technician data at the database level",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.4.2",
     date: "2026-07-05",
     type: "patch",

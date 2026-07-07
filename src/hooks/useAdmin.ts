@@ -138,7 +138,7 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: async (args: {
       id: string
-      patch: Partial<Pick<Profile, "org" | "is_admin" | "full_name" | "allowed_pages" | "avatar_url" | "role">>
+      patch: Partial<Pick<Profile, "org" | "is_admin" | "full_name" | "allowed_pages" | "avatar_url" | "role" | "is_tech_manager">>
     }) => {
       const { error } = await supabase
         .from("profiles")

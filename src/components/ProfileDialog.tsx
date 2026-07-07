@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import {
   Dialog,
@@ -199,6 +200,16 @@ export function ProfileDialog({ profile: profileUserOrNull, open, onClose, isAdm
     try {
       await updateProfile.mutateAsync({ id: profileUser.id, patch: { org } })
       toast.success("Organisation updated")
+    } catch (e) {
+      toast.error("Could not update", { description: e instanceof Error ? e.message : "Unknown error" })
+    }
+  }
+
+  // ── Tech-manager flag ──────────────────────────────────────────────────────
+  async function handleTechManagerToggle(on: boolean) {
+    try {
+      await updateProfile.mutateAsync({ id: profileUser.id, patch: { is_tech_manager: on } })
+      toast.success(on ? "Granted technicians management" : "Removed technicians management")
     } catch (e) {
       toast.error("Could not update", { description: e instanceof Error ? e.message : "Unknown error" })
     }
@@ -444,6 +455,29 @@ export function ProfileDialog({ profile: profileUserOrNull, open, onClose, isAdm
                     </Select>
                   ) : (
                     <p className="text-sm">{profileUser.org ? ORG_LABELS[profileUser.org] ?? profileUser.org : "—"}</p>
+                  )}
+                </div>
+
+                {/* Technicians management */}
+                <Separator />
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Technicians
+                  </h3>
+                  {profileUser.role === "admin" ? (
+                    <p className="text-xs text-muted-foreground">Admins manage technicians by default.</p>
+                  ) : isAdmin && !isSelf ? (
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={profileUser.is_tech_manager}
+                        onCheckedChange={(v) => handleTechManagerToggle(!!v)}
+                      />
+                      Technicians manager — run the roster, answer requests and schedule people
+                    </label>
+                  ) : (
+                    <p className="text-sm">
+                      {profileUser.is_tech_manager ? "Technicians manager" : "Not a technicians manager"}
+                    </p>
                   )}
                 </div>
 

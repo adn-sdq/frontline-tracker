@@ -16,6 +16,7 @@ import DeliveryNotesPage from "@/pages/DeliveryNotesPage"
 import ChangelogPage from "@/pages/ChangelogPage"
 import DocsPage from "@/pages/DocsPage"
 import TicketsPage from "@/pages/TicketsPage"
+import TechniciansPage from "@/pages/TechniciansPage"
 import { AppLayout } from "@/components/AppLayout"
 
 function FullScreen({ children }: { children: ReactNode }) {
@@ -163,6 +164,20 @@ export default function App() {
           ) : (
             <AppLayout>
               <TicketsPage />
+            </AppLayout>
+          )
+        }
+      />
+      <Route
+        path="/technicians"
+        element={
+          !session ? (
+            <Navigate to="/login" replace />
+          ) : !canAccess("technicians") ? (
+            <Navigate to={homeRedirect} replace />
+          ) : (
+            <AppLayout>
+              <TechniciansPage />
             </AppLayout>
           )
         }
