@@ -31,7 +31,6 @@ export function ActionButton({
           type="button"
           size="icon"
           variant={active ? "secondary" : primary ? "default" : "outline"}
-          className="size-9"
           onClick={onClick}
           disabled={disabled}
           aria-label={label}

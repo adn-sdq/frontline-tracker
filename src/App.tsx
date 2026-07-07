@@ -18,6 +18,7 @@ import DocsPage from "@/pages/DocsPage"
 import TicketsPage from "@/pages/TicketsPage"
 import TechniciansPage from "@/pages/TechniciansPage"
 import UpdatesPage from "@/pages/UpdatesPage"
+import NotFoundPage from "@/pages/NotFoundPage"
 import { AppLayout } from "@/components/AppLayout"
 
 function FullScreen({ children }: { children: ReactNode }) {
@@ -197,7 +198,7 @@ export default function App() {
       />
       <Route path="/changelog" element={<ChangelogPage />} />
       <Route path="/docs" element={<DocsPage />} />
-      <Route path="*" element={<Navigate to={homeRedirect} replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }

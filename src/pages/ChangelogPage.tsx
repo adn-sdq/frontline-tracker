@@ -17,6 +17,30 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.8.0",
+    date: "2026-07-07",
+    type: "minor",
+    summary:
+      "Foundations & polish — shared loading, empty-state and confirmation building blocks, a proper 404 page, and tighter control proportions.",
+    sections: [
+      {
+        title: "New building blocks",
+        items: [
+          "Added a shared Spinner and a consistent EmptyState used across list views, so loading and 'nothing here yet' states look the same everywhere",
+          "Added a reusable confirmation dialog — destructive actions now ask before they act (starting with removing item attachments)",
+          "Added a friendly 404 page for unknown links, with quick ways back home or to the previous page",
+        ],
+      },
+      {
+        title: "Polish",
+        items: [
+          "Fixed the add / action button proportions so they line up cleanly with search boxes and dropdowns in every filter row (matched the 32px control height and softened the square look)",
+          "Bulletproofed the collapsed sidebar rail so every icon centres on one axis regardless of scrolling, and softened the project switcher from a hard-bordered square",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.7.1",
     date: "2026-07-07",
     type: "patch",

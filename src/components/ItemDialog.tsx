@@ -41,6 +41,7 @@ import {
   useItemFilesRealtime,
   useUploadItemFile,
 } from "@/hooks/useItemFiles"
+import { useConfirm } from "@/components/ui/confirm-dialog"
 import { useSystems } from "@/hooks/useSystems"
 import { useAuth } from "@/contexts/AuthContext"
 import { useProject } from "@/contexts/ProjectContext"
@@ -65,6 +66,7 @@ function ItemAttachments({ itemId }: { itemId: string }) {
   const files = useItemFiles(itemId)
   const uploadFile = useUploadItemFile()
   const deleteFile = useDeleteItemFile()
+  const confirm = useConfirm()
   const fileInput = useRef<HTMLInputElement>(null)
   const [note, setNote] = useState("")
   const [downloading, setDownloading] = useState<string | null>(null)
@@ -106,6 +108,13 @@ function ItemAttachments({ itemId }: { itemId: string }) {
   }
 
   async function remove(id: string, storagePath: string) {
+    const ok = await confirm({
+      title: "Remove attachment?",
+      description: "This permanently deletes the file. This can't be undone.",
+      confirmText: "Remove",
+      destructive: true,
+    })
+    if (!ok) return
     try {
       await deleteFile.mutateAsync({ id, itemId, storagePath })
       toast.success("File removed")

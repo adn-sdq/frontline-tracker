@@ -2,6 +2,23 @@
 
 ---
 
+## v2.8.0 — 2026-07-07
+
+Foundations & polish — the first phase of the broader UI overhaul. Introduces shared building blocks (loading, empty states, confirmations), a real 404 page, and tighter control proportions that later phases build on.
+
+### New building blocks
+
+- Shared `Spinner` and a consistent `EmptyState` component adopted across list views for uniform loading and empty presentation
+- Reusable, imperative confirmation dialog (`useConfirm`) so destructive/irreversible actions are gated behind a dialog — wired first into item attachment removal
+- Friendly 404 page for unknown routes with "Go back" and "Go home" actions
+
+### Polish
+
+- Fixed action/add button proportions to match the 32px control height and `rounded-sm` radius of inputs and selects, so they align cleanly in every filter row; softened the square-button look
+- Hardened the collapsed sidebar rail — every section is an explicit full-width centered column so icons share one axis regardless of scroll gutter; softened the project switcher from a hard-bordered square
+
+---
+
 ## v2.7.1 — 2026-07-07
 
 Shell polish following the v2.7.0 redesign — collapsed-rail alignment, inline page actions, and a tidier sidebar footer.
