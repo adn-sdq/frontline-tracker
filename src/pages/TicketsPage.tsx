@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+import { PageActions } from "@/contexts/PageActionsContext"
 import { PageHeader } from "@/components/PageHeader"
 import { useTickets } from "@/hooks/useTickets"
 import { useAllProfiles } from "@/hooks/useAdmin"
@@ -92,7 +93,12 @@ export default function TicketsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Header */}
+      <PageActions>
+        <Button size="sm" onClick={openNew}>
+          <Plus className="size-4" /> New ticket
+        </Button>
+      </PageActions>
+
       <PageHeader
         eyebrow="Support"
         title="Support Tickets"
@@ -107,11 +113,7 @@ export default function TicketsPage() {
             "Internal issue tracking across all projects"
           )
         }
-      >
-        <Button onClick={openNew} className="shrink-0">
-          <Plus className="h-4 w-4 mr-1" /> New ticket
-        </Button>
-      </PageHeader>
+      />
 
       {/* Filters */}
       <div className="flex flex-col gap-2">

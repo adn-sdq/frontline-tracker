@@ -38,6 +38,7 @@ import {
   type TechnicianRequest,
   type TechRequestStatus,
 } from "@/lib/types"
+import { PageActions } from "@/contexts/PageActionsContext"
 import { PageHeader } from "@/components/PageHeader"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -528,6 +529,12 @@ export default function TechniciansPage() {
 
   return (
     <div className="flex flex-col gap-5">
+      <PageActions>
+        <Button size="sm" onClick={() => setRequestOpen(true)}>
+          <Plus className="size-4" /> Request technicians
+        </Button>
+      </PageActions>
+
       <PageHeader
         eyebrow="Operations"
         title="Technicians"
@@ -536,11 +543,7 @@ export default function TechniciansPage() {
             ? "Manage the roster, answer requests and schedule people across projects."
             : "Request technicians for your project and track responses."
         }
-      >
-        <Button onClick={() => setRequestOpen(true)} className="shrink-0">
-          <Plus className="size-4" /> Request technicians
-        </Button>
-      </PageHeader>
+      />
 
       {isManager ? (
         <Tabs defaultValue="requests">

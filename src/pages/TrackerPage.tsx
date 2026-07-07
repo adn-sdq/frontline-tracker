@@ -40,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Loader2 } from "lucide-react"
+import { PageActions } from "@/contexts/PageActionsContext"
 import { PageHeader } from "@/components/PageHeader"
 import { ItemsTable, ItemsTableSkeleton } from "@/components/ItemsTable"
 import { ItemsCards, ItemsCardsSkeleton } from "@/components/ItemsCards"
@@ -225,47 +226,38 @@ export default function TrackerPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <PageActions>
+        <Button
+          variant={dnMode ? "secondary" : "outline"}
+          size="sm"
+          onClick={() => (dnMode ? exitDnMode() : enterDnMode())}
+        >
+          <Truck className="size-4" />
+          {dnMode ? "Cancel" : "Delivery note"}
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+          <Upload className="size-4" /> Import
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => exportItemsCsv(filtered)}
+          disabled={filtered.length === 0}
+          title={exportLabel}
+        >
+          <Download className="size-4" /> Export
+        </Button>
+        <Button size="sm" onClick={openAdd}>
+          <Plus className="size-4" /> Add item
+        </Button>
+      </PageActions>
+
       {/* ── Header ── */}
       <PageHeader
         eyebrow="Procurement"
         title="Procurement Tracker"
         subtitle="Line-by-line delivery & installation status."
-      >
-        {/* Desktop actions */}
-        <div className="hidden flex-wrap items-center gap-2 sm:flex">
-          <Button
-            variant={dnMode ? "secondary" : "outline"}
-            size="sm"
-            onClick={() => (dnMode ? exitDnMode() : enterDnMode())}
-          >
-            <Truck className="size-4" />
-            {dnMode ? "Cancel delivery" : "Delivery note"}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-            <Upload className="size-4" /> Import
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => exportItemsCsv(filtered)}
-            disabled={filtered.length === 0}
-            title={exportLabel}
-          >
-            <Download className="size-4" />
-            <span className="hidden lg:inline">{exportLabel}</span>
-            <span className="lg:hidden">Export</span>
-          </Button>
-          <Button size="sm" onClick={openAdd}>
-            <Plus className="size-4" /> Add item
-          </Button>
-        </div>
-        {/* Mobile: just Add + overflow menu */}
-        <div className="flex items-center gap-2 sm:hidden">
-          <Button size="sm" onClick={openAdd}>
-            <Plus className="size-4" /> Add
-          </Button>
-        </div>
-      </PageHeader>
+      />
 
       {/* ── DN mode sticky banner (desktop + mobile) ── */}
       {dnMode && (

@@ -59,6 +59,7 @@ import {
   type DocStatus,
   type DocumentRow,
 } from "@/lib/types"
+import { PageActions } from "@/contexts/PageActionsContext"
 import { PageHeader } from "@/components/PageHeader"
 
 export default function DocumentsPage() {
@@ -166,33 +167,33 @@ export default function DocumentsPage() {
 
   return (
     <div className="flex flex-col gap-5">
+      <PageActions>
+        <Button
+          size="sm"
+          variant={selectMode ? "secondary" : "outline"}
+          onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+        >
+          <CheckSquare className="size-4" />
+          {selectMode ? "Cancel" : "Select"}
+        </Button>
+        {!selectMode && (
+          <Button
+            size="sm"
+            onClick={() => {
+              setEditDoc(null)
+              setDialogOpen(true)
+            }}
+          >
+            <Plus className="size-4" /> Add document
+          </Button>
+        )}
+      </PageActions>
+
       <PageHeader
         eyebrow="Register"
         title="Documents"
         subtitle="Submittals & reviews between Frontline and First Fix."
-      >
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant={selectMode ? "secondary" : "outline"}
-            onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
-          >
-            <CheckSquare className="size-4" />
-            {selectMode ? "Cancel" : "Select"}
-          </Button>
-          {!selectMode && (
-            <Button
-              size="sm"
-              onClick={() => {
-                setEditDoc(null)
-                setDialogOpen(true)
-              }}
-            >
-              <Plus className="size-4" /> Add document
-            </Button>
-          )}
-        </div>
-      </PageHeader>
+      />
 
       {/* Bulk action bar */}
       {selectMode && (

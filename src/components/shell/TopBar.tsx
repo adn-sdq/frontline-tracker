@@ -1,18 +1,16 @@
 import { useEffect, useState } from "react"
 import { useLocation } from "react-router-dom"
-import { ChevronRight, LogOut, Menu, Moon, Search, Sun, UserCircle } from "lucide-react"
+import { ChevronRight, LogOut, Menu, Search, UserCircle } from "lucide-react"
 import { toast } from "sonner"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { useProject } from "@/contexts/ProjectContext"
-import { useTheme } from "@/hooks/useTheme"
 import { pageLabelFor } from "@/lib/navigation"
 import { ORG_LABELS, ROLE_LABELS } from "@/lib/types"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,27 +54,30 @@ function UserMenu() {
             <span className="truncate">{name}</span>
             <div className="flex flex-wrap items-center gap-1">
               {profile?.org && (
-                <Badge variant="outline" className="w-fit text-[10px] font-normal h-4 px-1.5">
+                <Badge variant="outline" className="h-4 w-fit px-1.5 text-[10px] font-normal">
                   {ORG_LABELS[profile.org] ?? profile.org}
                 </Badge>
               )}
               {profile?.role && (
-                <Badge variant="secondary" className="w-fit text-[10px] font-normal h-4 px-1.5">
+                <Badge variant="secondary" className="h-4 w-fit px-1.5 text-[10px] font-normal">
                   {ROLE_LABELS[profile.role] ?? profile.role}
                 </Badge>
               )}
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setProfileOpen(true)}>
+          <DropdownMenuItem
+            onClick={() => {
+              // Defer until the dropdown has fully unmounted to avoid
+              // Radix focus-trap conflicts between Dialog and DropdownMenu.
+              setTimeout(() => setProfileOpen(true), 0)
+            }}
+          >
             <UserCircle className="size-4" /> My profile
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={() => {
-              toast.success("Signed out")
-              void signOut()
-            }}
+            onClick={() => { toast.success("Signed out"); void signOut() }}
             className="text-destructive focus:text-destructive"
           >
             <LogOut className="size-4" /> Sign out
@@ -90,16 +91,20 @@ function UserMenu() {
           open={profileOpen}
           onClose={() => setProfileOpen(false)}
           canEditSelf
+          isAdmin={profile.is_admin}
         />
       )}
     </>
   )
 }
 
-export function TopBar() {
+export function TopBar({
+  actionsContainerRef,
+}: {
+  actionsContainerRef?: ((el: HTMLDivElement | null) => void) | null
+}) {
   const { pathname } = useLocation()
   const { currentProject } = useProject()
-  const { dark, toggle } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const pageLabel = pageLabelFor(pathname)
@@ -119,7 +124,12 @@ export function TopBar() {
     <>
       <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-background px-3 md:px-4">
         {/* Mobile menu */}
-        <Button variant="ghost" size="icon" className="size-8 md:hidden" onClick={() => setMobileOpen(true)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 md:hidden"
+          onClick={() => setMobileOpen(true)}
+        >
           <Menu className="size-5" />
         </Button>
 
@@ -128,7 +138,9 @@ export function TopBar() {
           {currentProject && (
             <>
               <span className="max-w-40 truncate text-muted-foreground">{currentProject.name}</span>
-              {pageLabel && <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/60" />}
+              {pageLabel && (
+                <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/60" />
+              )}
             </>
           )}
           {pageLabel && <span className="truncate font-medium">{pageLabel}</span>}
@@ -147,16 +159,11 @@ export function TopBar() {
           </button>
         </div>
 
-        {/* Right cluster */}
-        <div className="flex shrink-0 items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8 text-muted-foreground" onClick={toggle}>
-                {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{dark ? "Switch to light mode" : "Switch to dark mode"}</TooltipContent>
-          </Tooltip>
+        {/* Right cluster: page actions + user */}
+        <div className="flex shrink-0 items-center gap-2">
+          {/* Page-specific action buttons, injected per-page via <PageActions> portal */}
+          <div ref={actionsContainerRef} className="flex items-center gap-1.5" />
+          <div className="h-4 w-px bg-border/60" />
           <UserMenu />
         </div>
       </header>

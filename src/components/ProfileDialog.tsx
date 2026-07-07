@@ -110,13 +110,7 @@ export function ProfileDialog({ profile: profileUserOrNull, open, onClose, isAdm
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // All hooks must be called before this guard (React rules).
-  if (!profileUserOrNull) return null
-  const profileUser = profileUserOrNull
-
-  const isSelf = profileUser.id === user?.id
-
-  // Sync fields when profile changes
+  // Sync fields when the viewed profile changes — MUST be before the null guard.
   useEffect(() => {
     if (!profileUserOrNull) return
     setEditName(profileUserOrNull.full_name ?? "")
@@ -129,6 +123,12 @@ export function ProfileDialog({ profile: profileUserOrNull, open, onClose, isAdm
     setConfirmDelete(false)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileUserOrNull?.id])
+
+  // Guard must come after ALL hooks (React rules of hooks).
+  if (!profileUserOrNull) return null
+  const profileUser = profileUserOrNull
+
+  const isSelf = profileUser.id === user?.id
 
   const displayName = profileUser.full_name ?? profileUser.username ?? "Unknown"
   const assignedProjects = projects.filter((pr) =>

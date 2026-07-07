@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Link, NavLink, useNavigate } from "react-router-dom"
 import {
   Check,
@@ -7,17 +8,17 @@ import {
   FolderOpen,
   LayoutGrid,
   LifeBuoy,
+  Moon,
   Newspaper,
   Plus,
+  Sun,
+  UserCircle,
 } from "lucide-react"
 import { toast } from "sonner"
 
 import { FitLogo } from "@/components/FitLogo"
-import { useAuth } from "@/contexts/AuthContext"
-import { useProject } from "@/contexts/ProjectContext"
-import { navSectionsFor, type NavItem } from "@/lib/navigation"
-import { APP_VERSION } from "@/lib/version"
-import { cn } from "@/lib/utils"
+import { ProfileDialog } from "@/components/ProfileDialog"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
@@ -27,8 +28,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/contexts/AuthContext"
+import { useProject } from "@/contexts/ProjectContext"
+import { useTheme } from "@/hooks/useTheme"
+import { navSectionsFor, type NavItem } from "@/lib/navigation"
+import { APP_VERSION } from "@/lib/version"
+import { cn } from "@/lib/utils"
 
-// ── Project switcher (workspace-style, full-width) ───────────────────────────
+function initials(name?: string | null) {
+  if (!name) return "?"
+  const parts = name.trim().split(/\s+/)
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase()
+}
+
+// ── Project switcher ──────────────────────────────────────────────────────────
 
 function ProjectSwitcher() {
   const { projects, currentProject, currentProjectId, setCurrentProject } = useProject()
@@ -117,7 +130,7 @@ function NewMenu({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
-// ── Nav rows ──────────────────────────────────────────────────────────────────
+// ── Nav row ───────────────────────────────────────────────────────────────────
 
 function NavRow({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const Icon = item.icon
@@ -126,7 +139,10 @@ function NavRow({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }
       <div className="flex cursor-default items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground/45">
         <Icon className="size-4 shrink-0" />
         <span className="flex-1 truncate">{item.label}</span>
-        <Badge variant="outline" className="h-4 px-1.5 text-[10px] font-normal text-muted-foreground">
+        <Badge
+          variant="outline"
+          className="h-4 px-1.5 text-[10px] font-normal text-muted-foreground"
+        >
           Soon
         </Badge>
       </div>
@@ -154,73 +170,140 @@ function NavRow({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }
 
 // ── Sidebar content (shared by desktop rail and mobile sheet) ─────────────────
 
-export function SidebarContent({
-  onNavigate,
-}: {
-  onNavigate?: () => void
-}) {
+export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { profile } = useAuth()
+  const { dark, toggle } = useTheme()
+  const [profileOpen, setProfileOpen] = useState(false)
   const sections = navSectionsFor(profile)
 
+  const displayName = profile?.full_name ?? profile?.username ?? "Me"
+
   return (
-    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      {/* Brand */}
-      <div className="flex h-14 shrink-0 items-center gap-2.5 px-4">
-        <FitLogo size={30} />
-        <div className="leading-tight">
-          <div className="text-sm font-semibold">FIT</div>
-          <div className="text-[10px] text-muted-foreground">Frontline Tracker</div>
-        </div>
-      </div>
-
-      {/* Project + quick create */}
-      <div className="flex flex-col gap-2 px-3 pb-2">
-        <ProjectSwitcher />
-        <NewMenu onNavigate={onNavigate} />
-      </div>
-
-      {/* Nav sections */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2">
-        {sections.map((section, i) => (
-          <div key={section.label ?? i} className={cn(i > 0 && "mt-4")}>
-            {section.label && (
-              <p className="mb-1 px-2.5 text-xs font-normal text-muted-foreground">
-                {section.label}
-              </p>
-            )}
-            <div className="flex flex-col gap-0.5">
-              {section.items.map((item) => (
-                <NavRow key={item.to} item={item} onNavigate={onNavigate} />
-              ))}
-            </div>
+    <>
+      <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
+        {/* Brand */}
+        <div className="flex h-14 shrink-0 items-center gap-2.5 px-4">
+          <FitLogo size={30} />
+          <div className="leading-tight">
+            <div className="text-sm font-semibold">FIT</div>
+            <div className="text-[10px] text-muted-foreground">Frontline Tracker</div>
           </div>
-        ))}
-      </nav>
+        </div>
 
-      {/* Footer */}
-      <div className="shrink-0 border-t border-sidebar-border px-3 py-3">
-        <NavLink
-          to="/updates"
-          onClick={onNavigate}
-          className={({ isActive }) =>
-            cn(
-              "mb-1 flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors",
-              isActive
-                ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
-                : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-            )
-          }
-        >
-          <Newspaper className="size-4" /> Updates
-        </NavLink>
-        <div className="flex items-center gap-2 px-2.5 text-[11px] text-muted-foreground">
-          <Link to="/docs" onClick={onNavigate} className="transition-colors hover:text-foreground">
-            Docs
-          </Link>
-          <span className="ml-auto font-mono">{APP_VERSION}</span>
+        {/* Project + quick create */}
+        <div className="flex flex-col gap-2 px-3 pb-2">
+          <ProjectSwitcher />
+          <NewMenu onNavigate={onNavigate} />
+        </div>
+
+        {/* Nav sections */}
+        <nav className="flex-1 overflow-y-auto px-3 py-2">
+          {sections.map((section, i) => (
+            <div key={section.label ?? i} className={cn(i > 0 && "mt-4")}>
+              {section.label && (
+                <p className="mb-1 px-2.5 text-xs font-normal text-muted-foreground">
+                  {section.label}
+                </p>
+              )}
+              <div className="flex flex-col gap-0.5">
+                {section.items.map((item) => (
+                  <NavRow key={item.to} item={item} onNavigate={onNavigate} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className="shrink-0 space-y-0.5 border-t border-sidebar-border px-3 py-2.5">
+          {/* Profile row */}
+          {profile && (
+            <button
+              type="button"
+              onClick={() => setProfileOpen(true)}
+              className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left transition-colors hover:bg-sidebar-accent/50"
+            >
+              <Avatar className="size-6 shrink-0">
+                {profile.avatar_url && (
+                  <AvatarImage
+                    src={profile.avatar_url}
+                    alt={displayName}
+                    className="object-cover"
+                  />
+                )}
+                <AvatarFallback className="bg-primary/10 text-[10px] font-semibold uppercase text-primary">
+                  {initials(displayName)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1 leading-tight">
+                <div className="truncate text-xs font-semibold text-sidebar-foreground">
+                  {displayName}
+                </div>
+                {profile.username && (
+                  <div className="truncate text-[10px] text-muted-foreground">
+                    @{profile.username}
+                  </div>
+                )}
+              </div>
+              <UserCircle className="size-3.5 shrink-0 text-muted-foreground/50" />
+            </button>
+          )}
+
+          {/* Theme toggle */}
+          <button
+            type="button"
+            onClick={toggle}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+          >
+            {dark ? (
+              <Sun className="size-4 shrink-0" />
+            ) : (
+              <Moon className="size-4 shrink-0" />
+            )}
+            <span className="text-sm">{dark ? "Light mode" : "Dark mode"}</span>
+          </button>
+
+          {/* Updates */}
+          <NavLink
+            to="/updates"
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+                isActive
+                  ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+              )
+            }
+          >
+            <Newspaper className="size-4 shrink-0" /> Updates
+          </NavLink>
+
+          {/* Docs + version */}
+          <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] text-muted-foreground">
+            <Link
+              to="/docs"
+              onClick={onNavigate}
+              className="transition-colors hover:text-foreground"
+            >
+              Docs
+            </Link>
+            <span className="ml-auto font-mono">{APP_VERSION}</span>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Profile dialog — rendered outside the sidebar div to avoid stacking context issues */}
+      {profile && (
+        <ProfileDialog
+          profile={profile}
+          open={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          canEditSelf
+          isAdmin={profile.is_admin}
+        />
+      )}
+    </>
   )
 }
 

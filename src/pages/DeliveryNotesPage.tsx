@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DatePicker } from "@/components/DatePicker"
+import { PageActions } from "@/contexts/PageActionsContext"
 import { PageHeader } from "@/components/PageHeader"
 import {
   Dialog,
@@ -111,17 +112,17 @@ export default function DeliveryNotesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <PageHeader
-          eyebrow="Logistics"
-          title="Delivery Notes"
-          subtitle={`${notes.length} note${notes.length !== 1 ? "s" : ""} for ${currentProject?.name ?? "this project"}`}
-        />
-        <Button className="shrink-0 mt-1" onClick={() => setCreateOpen(true)}>
+      <PageActions>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
           <Plus className="size-4" /> New delivery note
         </Button>
-      </div>
+      </PageActions>
+
+      <PageHeader
+        eyebrow="Logistics"
+        title="Delivery Notes"
+        subtitle={`${notes.length} note${notes.length !== 1 ? "s" : ""} for ${currentProject?.name ?? "this project"}`}
+      />
 
       {/* Filters */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
