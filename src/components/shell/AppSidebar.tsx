@@ -79,9 +79,9 @@ function ProjectSwitcher({ collapsed }: { collapsed?: boolean }) {
           <button
             type="button"
             aria-label={currentProject?.name ?? "Select project"}
-            className="grid size-9 place-items-center rounded-sm border border-input bg-background transition-colors hover:bg-accent"
+            className="grid size-9 place-items-center rounded-lg text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
           >
-            <FolderOpen className="size-4 text-muted-foreground" />
+            <FolderOpen className="size-4.5" />
           </button>
         </DropdownMenuTrigger>
         {menu}
@@ -128,9 +128,9 @@ function NewMenu({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: 
           <button
             type="button"
             aria-label="New"
-            className="grid size-9 place-items-center rounded-md bg-brand-muted text-brand-muted-foreground transition-colors hover:bg-brand/15"
+            className="grid size-9 place-items-center rounded-lg bg-brand-muted text-brand-muted-foreground transition-colors hover:bg-brand/15"
           >
-            <Plus className="size-4" />
+            <Plus className="size-4.5" />
           </button>
         ) : (
           <button
@@ -202,7 +202,7 @@ function NavRow({
             onClick={onNavigate}
             className={({ isActive }) =>
               cn(
-                "grid size-9 place-items-center rounded-md transition-colors",
+                "grid size-9 place-items-center rounded-lg transition-colors",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -399,7 +399,7 @@ export function SidebarContent({
       )}
 
       {/* Project + quick create */}
-      <div className={cn("flex flex-col gap-2 pb-2", collapsed ? "items-center px-0" : "px-3")}>
+      <div className={cn("flex flex-col gap-2 pb-2", collapsed ? "w-full items-center px-0" : "px-3")}>
         <ProjectSwitcher collapsed={collapsed} />
         <NewMenu collapsed={collapsed} onNavigate={onNavigate} />
       </div>
@@ -408,11 +408,14 @@ export function SidebarContent({
       <nav
         className={cn(
           "flex-1 overflow-y-auto py-2",
-          collapsed ? "scrollbar-none flex flex-col items-center" : "px-3"
+          collapsed ? "scrollbar-none flex w-full flex-col items-center" : "px-3"
         )}
       >
         {sections.map((section, i) => (
-          <div key={section.label ?? i} className={cn(i > 0 && "mt-4")}>
+          <div
+            key={section.label ?? i}
+            className={cn(i > 0 && "mt-4", collapsed && "flex w-full flex-col items-center")}
+          >
             {section.label && !collapsed && (
               <p className="mb-1 px-2.5 text-xs font-normal text-muted-foreground">
                 {section.label}
@@ -439,7 +442,7 @@ export function SidebarContent({
       <div
         className={cn(
           "shrink-0 border-t border-sidebar-border py-2.5",
-          collapsed ? "flex flex-col items-center gap-1 px-0" : "space-y-0.5 px-3"
+          collapsed ? "flex w-full flex-col items-center gap-1 px-0" : "space-y-0.5 px-3"
         )}
       >
         <FooterProfile collapsed={collapsed} />
@@ -454,7 +457,7 @@ export function SidebarContent({
                   onClick={onNavigate}
                   className={({ isActive }) =>
                     cn(
-                      "grid size-9 place-items-center rounded-md transition-colors",
+                      "grid size-9 place-items-center rounded-lg transition-colors",
                       isActive
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
                         : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
