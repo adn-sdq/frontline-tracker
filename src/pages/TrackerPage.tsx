@@ -511,7 +511,6 @@ export default function TrackerPage() {
       />
       <HistoryDrawer
         item={historyItem}
-        profiles={profiles}
         onClose={() => setHistoryItem(null)}
       />
       <Dialog open={!!deleteItem} onOpenChange={(o) => !o && setDeleteItem(null)}>

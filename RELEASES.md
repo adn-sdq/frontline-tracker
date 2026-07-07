@@ -2,6 +2,22 @@
 
 ---
 
+## v2.9.0 — 2026-07-07
+
+Phase 2 begins — the item detail is now tabbed, and more destructive actions are confirmed.
+
+### Item detail
+
+- The item dialog is now organised into **Details · Serials · Attachments · History** tabs (when editing an existing item); adding a new item still shows the single form
+- New **History** tab renders the full edit timeline inside the item view
+- Extracted a shared `ItemHistoryList` used by both the item History tab and the `HistoryDrawer` (removes duplicated timeline rendering)
+
+### Confirmations
+
+- Technician request deletion and schedule assignment removal now go through the shared `useConfirm` dialog
+
+---
+
 ## v2.8.2 — 2026-07-07
 
 Continued Phase 1 polish — avatars, item-detail density, and confirmation consistency.

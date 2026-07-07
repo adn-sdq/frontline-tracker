@@ -17,6 +17,29 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.9.0",
+    date: "2026-07-07",
+    type: "minor",
+    summary:
+      "Tabbed item detail — the item view is now organised into Details, Serials, Attachments and History tabs; plus more delete confirmations.",
+    sections: [
+      {
+        title: "Item detail",
+        items: [
+          "Opening an item now shows tabs — Details, Serials, Attachments and History — so the form is far less crowded and its full record is easy to browse",
+          "Added a History tab showing the full change timeline (who changed what, and when) right inside the item view",
+          "Reused one shared history timeline for both the item tab and the side drawer",
+        ],
+      },
+      {
+        title: "Confirmations",
+        items: [
+          "Deleting a technician request or removing a schedule assignment now asks for confirmation first",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.8.2",
     date: "2026-07-07",
     type: "patch",

@@ -39,6 +39,7 @@ import {
   type TechRequestStatus,
 } from "@/lib/types"
 import { ActionButton } from "@/components/shell/ActionButton"
+import { useConfirm } from "@/components/ui/confirm-dialog"
 import { PageHeader } from "@/components/PageHeader"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -136,6 +137,7 @@ function RequestCard({
 function RequestsInbox({ nameFor }: { nameFor: (id: string | null) => string | null }) {
   const { data: requests = [] } = useTechRequests()
   const deleteReq = useDeleteTechRequest()
+  const confirm = useConfirm()
   const [statusFilter, setStatusFilter] = useState<TechRequestStatus | "ALL">("ALL")
   const [responding, setResponding] = useState<TechnicianRequest | null>(null)
 
@@ -145,6 +147,13 @@ function RequestsInbox({ nameFor }: { nameFor: (id: string | null) => string | n
   )
 
   async function remove(id: string) {
+    const ok = await confirm({
+      title: "Delete request?",
+      description: "This removes the technician request. This can't be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    })
+    if (!ok) return
     try {
       await deleteReq.mutateAsync(id)
       toast.success("Request deleted")
@@ -197,6 +206,7 @@ function ScheduleBoard() {
   const { data: technicians = [] } = useTechnicians()
   const { data: assignments = [] } = useTechAssignments()
   const deleteAssignment = useDeleteAssignment()
+  const confirm = useConfirm()
   const [assignOpen, setAssignOpen] = useState(false)
   const [assignTech, setAssignTech] = useState<string | undefined>()
 
@@ -209,6 +219,13 @@ function ScheduleBoard() {
   }
 
   async function removeAssignment(id: string) {
+    const ok = await confirm({
+      title: "Remove assignment?",
+      description: "This unschedules the technician from this placement.",
+      confirmText: "Remove",
+      destructive: true,
+    })
+    if (!ok) return
     try {
       await deleteAssignment.mutateAsync(id)
       toast.success("Assignment removed")
