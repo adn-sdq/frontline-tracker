@@ -2,6 +2,26 @@
 
 ---
 
+## v2.8.2 — 2026-07-07
+
+Continued Phase 1 polish — avatars, item-detail density, and confirmation consistency.
+
+### Avatars & profile
+
+- New shared `UserAvatar` with deterministic colour-coded initials fallbacks (stable per user id); adopted in the sidebar profile and the profile view large avatar
+- Removed the duplicated `initials()` helpers in favour of the shared component
+
+### Item detail
+
+- Redesigned the Quantities block (Required / Ordered / Delivered / Installed) into a single compact, lower-emphasis grouped control (`QtyInput`)
+- Added `Separator`s between property groups (specs · status · schedule) for scannability
+
+### Confirmations
+
+- Delivery-note deletion migrated to the shared `useConfirm` dialog; removed the bespoke dialog and its placeholder emoji spinner
+
+---
+
 ## v2.8.1 — 2026-07-07
 
 Consistency pass adopting the new v2.8.0 primitives across the list pages.

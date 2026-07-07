@@ -21,7 +21,7 @@ import { toast } from "sonner"
 
 import { FitLogo } from "@/components/FitLogo"
 import { ProfileDialog } from "@/components/ProfileDialog"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/UserAvatar"
 import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
@@ -40,12 +40,6 @@ import { APP_VERSION } from "@/lib/version"
 import { cn } from "@/lib/utils"
 
 const COLLAPSE_KEY = "sidebar_collapsed"
-
-function initials(name?: string | null) {
-  if (!name) return "?"
-  const parts = name.trim().split(/\s+/)
-  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase()
-}
 
 // ── Project switcher ──────────────────────────────────────────────────────────
 
@@ -261,14 +255,13 @@ function FooterProfile({ collapsed }: { collapsed?: boolean }) {
   const displayName = profile.full_name ?? profile.username ?? "Me"
 
   const avatar = (
-    <Avatar className="size-7 shrink-0">
-      {profile.avatar_url && (
-        <AvatarImage src={profile.avatar_url} alt={displayName} className="object-cover" />
-      )}
-      <AvatarFallback className="bg-primary/10 text-[10px] font-semibold uppercase text-primary">
-        {initials(displayName)}
-      </AvatarFallback>
-    </Avatar>
+    <UserAvatar
+      name={displayName}
+      src={profile.avatar_url}
+      seed={profile.id}
+      className="size-7 shrink-0"
+      fallbackClassName="text-[10px]"
+    />
   )
 
   return (

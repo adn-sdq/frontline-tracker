@@ -11,14 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { DatePicker } from "@/components/DatePicker"
 import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { useConfirm } from "@/components/ui/confirm-dialog"
 import { Label } from "@/components/ui/label"
 import { useProject } from "@/contexts/ProjectContext"
 import {
@@ -57,12 +50,12 @@ export default function DeliveryNotesPage() {
   const { data: notes = [], isLoading } = useDeliveryNotes()
   const { data: profiles = {} } = useProfiles()
   const deleteNote = useDeleteDeliveryNote()
+  const confirm = useConfirm()
 
   const [search, setSearch] = useState("")
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
   const [createOpen, setCreateOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<DeliveryNote | null>(null)
 
   function who(id: string | null) {
     if (!id) return "—"
@@ -95,17 +88,21 @@ export default function DeliveryNotesPage() {
     })
   }
 
-  async function confirmDelete() {
-    if (!deleteTarget) return
+  async function askDelete(note: DeliveryNote) {
+    const ok = await confirm({
+      title: "Delete delivery note?",
+      description: `${note.dn_number} will be permanently removed. This can't be undone.`,
+      confirmText: "Delete",
+      destructive: true,
+    })
+    if (!ok) return
     try {
-      await deleteNote.mutateAsync(deleteTarget.id)
+      await deleteNote.mutateAsync(note.id)
       toast.success("Delivery note deleted")
     } catch (e) {
       toast.error("Could not delete", {
         description: e instanceof Error ? e.message : "Unknown error",
       })
-    } finally {
-      setDeleteTarget(null)
     }
   }
 
@@ -262,7 +259,7 @@ export default function DeliveryNotesPage() {
                       variant="ghost"
                       size="icon"
                       className="size-8 text-destructive opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
-                      onClick={() => setDeleteTarget(note)}
+                      onClick={() => askDelete(note)}
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -282,36 +279,6 @@ export default function DeliveryNotesPage() {
         initialLines={[]}
       />
 
-      {/* Delete confirm */}
-      <Dialog
-        open={!!deleteTarget}
-        onOpenChange={(o) => !o && setDeleteTarget(null)}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Delete delivery note?</DialogTitle>
-            <DialogDescription>
-              {deleteTarget?.dn_number} will be permanently removed. This
-              cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmDelete}
-              disabled={deleteNote.isPending}
-            >
-              {deleteNote.isPending && (
-                <span className="size-4 animate-spin">⏳</span>
-              )}
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

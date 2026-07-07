@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import {
+  Boxes,
   Download,
   FileText,
   Loader2,
@@ -422,20 +423,7 @@ export function ItemDialog({
           />
         </Field>
 
-        <div className="grid grid-cols-4 gap-3">
-          <Field label="Required">
-            <Input type="number" value={form.qty_required} onChange={(e) => set("qty_required", e.target.value)} />
-          </Field>
-          <Field label="Ordered">
-            <Input type="number" value={form.qty_ordered} onChange={(e) => set("qty_ordered", e.target.value)} />
-          </Field>
-          <Field label="Delivered">
-            <Input type="number" value={form.qty_delivered} onChange={(e) => set("qty_delivered", e.target.value)} />
-          </Field>
-          <Field label="Installed">
-            <Input type="number" value={form.qty_installed} onChange={(e) => set("qty_installed", e.target.value)} />
-          </Field>
-        </div>
+        <Separator />
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Field label="Procurement">
@@ -448,6 +436,21 @@ export function ItemDialog({
             <StatusPicker value={form.installation_status} options={INSTALLATION_STATUSES} onChange={(v) => set("installation_status", v)} />
           </Field>
         </div>
+
+        {/* Quantities — secondary "mid" info, grouped compactly */}
+        <div className="rounded-lg border bg-muted/30 px-3 py-2.5">
+          <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <Boxes className="size-3.5" /> Quantities
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            <QtyInput label="Req" value={form.qty_required} onChange={(v) => set("qty_required", v)} />
+            <QtyInput label="Ord" value={form.qty_ordered} onChange={(v) => set("qty_ordered", v)} />
+            <QtyInput label="Del" value={form.qty_delivered} onChange={(v) => set("qty_delivered", v)} />
+            <QtyInput label="Inst" value={form.qty_installed} onChange={(v) => set("qty_installed", v)} />
+          </div>
+        </div>
+
+        <Separator />
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="ETA">
@@ -561,6 +564,31 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div className="grid gap-1.5">
       <Label className="text-xs text-muted-foreground">{label}</Label>
       {children}
+    </div>
+  )
+}
+
+function QtyInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+}) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </Label>
+      <Input
+        type="number"
+        min={0}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-8 px-2 text-center tabular-nums"
+      />
     </div>
   )
 }

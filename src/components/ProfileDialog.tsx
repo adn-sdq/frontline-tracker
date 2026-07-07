@@ -30,6 +30,8 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
+import { avatarColor, initials } from "@/components/UserAvatar"
+import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -57,12 +59,6 @@ import {
   ROLES,
   type Role,
 } from "@/lib/types"
-
-function initials(name?: string | null) {
-  if (!name) return "?"
-  const parts = name.trim().split(/\s+/)
-  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase()
-}
 
 const ROLE_BADGE_CLASS: Record<Role, string> = {
   admin: "bg-blue-100 text-blue-800 border-transparent dark:bg-blue-900/30 dark:text-blue-300",
@@ -294,7 +290,12 @@ export function ProfileDialog({ profile: profileUserOrNull, open, onClose, isAdm
                         className="size-full object-cover"
                       />
                     ) : (
-                      <div className="flex size-full items-center justify-center text-2xl font-semibold text-muted-foreground">
+                      <div
+                        className={cn(
+                          "flex size-full items-center justify-center text-2xl font-semibold uppercase",
+                          avatarColor(profileUser.id)
+                        )}
+                      >
                         {initials(displayName)}
                       </div>
                     )}

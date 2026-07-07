@@ -17,6 +17,35 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.8.2",
+    date: "2026-07-07",
+    type: "patch",
+    summary:
+      "Avatar, item-detail and confirmation polish — coloured avatars, a compact quantities block, and a standardised delete dialog.",
+    sections: [
+      {
+        title: "Avatars & profile",
+        items: [
+          "People without a profile photo now get consistent, colour-coded initials instead of a uniform grey circle — the colour stays stable per person across the app",
+          "Unified the avatar into one shared component (sidebar + profile view) so it always looks and behaves the same",
+        ],
+      },
+      {
+        title: "Item detail",
+        items: [
+          "Redesigned the Quantities (Required / Ordered / Delivered / Installed) into a single compact, lower-emphasis group so it no longer dominates the item form",
+          "Added separators between property groups (specs · status · schedule) to make the item detail easier to scan",
+        ],
+      },
+      {
+        title: "Confirmations",
+        items: [
+          "Deleting a delivery note now uses the shared confirmation dialog (with a proper spinner) instead of a one-off dialog",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.8.1",
     date: "2026-07-07",
     type: "patch",
