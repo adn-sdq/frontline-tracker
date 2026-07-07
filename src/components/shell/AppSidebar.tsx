@@ -408,7 +408,7 @@ export function SidebarContent({
       <nav
         className={cn(
           "flex-1 overflow-y-auto py-2",
-          collapsed ? "scrollbar-none px-0" : "px-3"
+          collapsed ? "scrollbar-none flex flex-col items-center" : "px-3"
         )}
       >
         {sections.map((section, i) => (
@@ -438,8 +438,8 @@ export function SidebarContent({
       {/* Footer */}
       <div
         className={cn(
-          "shrink-0 space-y-0.5 border-t border-sidebar-border py-2.5",
-          collapsed ? "flex flex-col items-center gap-0.5 px-0" : "px-3"
+          "shrink-0 border-t border-sidebar-border py-2.5",
+          collapsed ? "flex flex-col items-center gap-1 px-0" : "space-y-0.5 px-3"
         )}
       >
         <FooterProfile collapsed={collapsed} />
