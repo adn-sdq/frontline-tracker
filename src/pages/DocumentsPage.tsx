@@ -60,6 +60,7 @@ import {
   type DocumentRow,
 } from "@/lib/types"
 import { PageActions } from "@/contexts/PageActionsContext"
+import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
 
 export default function DocumentsPage() {
@@ -168,29 +169,26 @@ export default function DocumentsPage() {
   return (
     <div className="flex flex-col gap-5">
       <PageActions>
-        <Button
-          size="sm"
-          variant={selectMode ? "secondary" : "outline"}
+        <ActionButton
+          icon={CheckSquare}
+          label={selectMode ? "Cancel selection" : "Select"}
+          active={selectMode}
           onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
-        >
-          <CheckSquare className="size-4" />
-          {selectMode ? "Cancel" : "Select"}
-        </Button>
+        />
         {!selectMode && (
-          <Button
-            size="sm"
+          <ActionButton
+            icon={Plus}
+            label="Add document"
+            primary
             onClick={() => {
               setEditDoc(null)
               setDialogOpen(true)
             }}
-          >
-            <Plus className="size-4" /> Add document
-          </Button>
+          />
         )}
       </PageActions>
 
       <PageHeader
-        eyebrow="Register"
         title="Documents"
         subtitle="Submittals & reviews between Frontline and First Fix."
       />

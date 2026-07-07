@@ -17,6 +17,38 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.7.0",
+    date: "2026-07-07",
+    type: "minor",
+    summary: "App-shell redesign — collapsible sidebar, cleaner top bar, and consistent icon action buttons across pages.",
+    sections: [
+      {
+        title: "Sidebar",
+        items: [
+          "Collapse the sidebar to an icon-only rail (and expand it back) to give the main content more room — your preference is remembered across sessions",
+          "Collapsed rail shows tooltips on hover so every nav item stays discoverable",
+          "Profile moved into a dropdown at the bottom of the sidebar — open your profile or sign out from one place",
+          "Theme toggle is now a minimal icon alongside Docs + version, instead of a full row",
+        ],
+      },
+      {
+        title: "Top Bar",
+        items: [
+          "Removed the account avatar and breadcrumb from the top bar — the account now lives in the sidebar and breadcrumbs sit just above each page title",
+          "Search box is now a fixed width so it no longer resizes as page actions change — consistent on every page",
+          "Page action buttons are compact icon buttons with tooltips; secondary actions (like Import / Export) collapse into an overflow menu to reduce clutter",
+        ],
+      },
+      {
+        title: "Pages",
+        items: [
+          "Removed the coloured category labels (Register, Support, Logistics, …) above page titles for a cleaner header",
+          "Removed the lightbulb Feature Inbox from the Admin page — feature requests are managed on the Updates page now",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.6.1",
     date: "2026-07-07",
     type: "patch",

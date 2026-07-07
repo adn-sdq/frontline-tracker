@@ -2,6 +2,31 @@
 
 ---
 
+## v2.7.0 — 2026-07-07
+
+App-shell redesign — collapsible sidebar, a cleaner top bar, and consistent icon action buttons across every page.
+
+### Sidebar
+
+- **Collapsible rail:** collapse the sidebar to an icon-only rail (and expand it back) for a wider view of the main content; the state persists across sessions
+- Collapsed rail shows tooltips on hover so nav items stay discoverable
+- **Profile dropdown:** the profile row at the bottom now opens a menu with "My profile" and "Sign out" — the account no longer lives in the top bar
+- **Minimal theme toggle:** dark/light switch is now a small icon next to Docs + version, not a full row
+
+### Top Bar
+
+- Removed the account avatar and the breadcrumb from the top bar
+- **Fixed-width search:** the search box no longer resizes as page actions change — it stays consistent on every page
+- **Icon action buttons:** each page's actions are now compact icon buttons with tooltips; secondary actions (Import / Export) collapse into an overflow menu to reduce clutter
+
+### Pages
+
+- Breadcrumbs now sit just above each page title instead of in the top bar
+- Removed the coloured category eyebrows (Register, Support, Logistics, …) above page titles
+- Removed the lightbulb Feature Inbox from the Admin page — feature requests live on the Updates page now
+
+---
+
 ## v2.6.1 — 2026-07-07
 
 Shell UX polish — profile access in sidebar, theme toggle relocated, and page action buttons promoted to the top bar.

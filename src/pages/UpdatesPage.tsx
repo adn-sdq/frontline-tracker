@@ -401,7 +401,7 @@ function FeatureRequestsTab() {
 export default function UpdatesPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader eyebrow="Platform" title="Updates" />
+      <PageHeader title="Updates" />
 
       <Tabs defaultValue="whats-new" className="mt-6">
         <TabsList className="mb-6">

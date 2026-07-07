@@ -39,6 +39,7 @@ import {
   type TechRequestStatus,
 } from "@/lib/types"
 import { PageActions } from "@/contexts/PageActionsContext"
+import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -530,13 +531,15 @@ export default function TechniciansPage() {
   return (
     <div className="flex flex-col gap-5">
       <PageActions>
-        <Button size="sm" onClick={() => setRequestOpen(true)}>
-          <Plus className="size-4" /> Request technicians
-        </Button>
+        <ActionButton
+          icon={Plus}
+          label="Request technicians"
+          primary
+          onClick={() => setRequestOpen(true)}
+        />
       </PageActions>
 
       <PageHeader
-        eyebrow="Operations"
         title="Technicians"
         subtitle={
           isManager

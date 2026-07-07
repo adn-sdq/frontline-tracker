@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select"
 
 import { PageActions } from "@/contexts/PageActionsContext"
+import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
 import { useTickets } from "@/hooks/useTickets"
 import { useAllProfiles } from "@/hooks/useAdmin"
@@ -94,13 +95,10 @@ export default function TicketsPage() {
   return (
     <div className="flex flex-col gap-5">
       <PageActions>
-        <Button size="sm" onClick={openNew}>
-          <Plus className="size-4" /> New ticket
-        </Button>
+        <ActionButton icon={Plus} label="New ticket" primary onClick={openNew} />
       </PageActions>
 
       <PageHeader
-        eyebrow="Support"
         title="Support Tickets"
         subtitle={
           openCount > 0 || inProgressCount > 0 ? (

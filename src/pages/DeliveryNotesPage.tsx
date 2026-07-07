@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DatePicker } from "@/components/DatePicker"
 import { PageActions } from "@/contexts/PageActionsContext"
+import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
 import {
   Dialog,
@@ -113,13 +114,15 @@ export default function DeliveryNotesPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageActions>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <Plus className="size-4" /> New delivery note
-        </Button>
+        <ActionButton
+          icon={Plus}
+          label="New delivery note"
+          primary
+          onClick={() => setCreateOpen(true)}
+        />
       </PageActions>
 
       <PageHeader
-        eyebrow="Logistics"
         title="Delivery Notes"
         subtitle={`${notes.length} note${notes.length !== 1 ? "s" : ""} for ${currentProject?.name ?? "this project"}`}
       />
