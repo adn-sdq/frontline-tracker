@@ -2,6 +2,28 @@
 
 ---
 
+## v2.6.1 — 2026-07-07
+
+Shell UX polish — profile access in sidebar, theme toggle relocated, and page action buttons promoted to the top bar.
+
+### Sidebar
+
+- **Profile row:** avatar + name + @username at the bottom of the sidebar; click to open your profile dialog directly
+- **Theme toggle:** dark/light mode switch moved from the top bar into the sidebar footer (below the profile row), now with a text label
+- Theme toggle and profile row sit above the Updates link for a consistent footer ordering
+
+### Top Bar
+
+- **Page action buttons:** each page's primary CTA buttons (Add, Import, Export, New, Request…) now appear in the top-right corner of the top bar via a React portal — keeps the page body clean and matches the professional app-shell pattern
+- Separator between page actions and the user avatar for visual grouping
+- "My profile" dropdown item now opens reliably on first click (fixed Radix Dialog + DropdownMenu focus-trap race condition)
+
+### Bug Fix
+
+- Fixed a React hooks ordering violation in `ProfileDialog` where a `useEffect` appeared after a conditional return — caused "view profile" to silently fail on the first click
+
+---
+
 ## v2.6.0 — 2026-07-07
 
 Dedicated Updates page — changelog and feature requests now live inside the app as a first-class experience.

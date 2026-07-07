@@ -17,6 +17,36 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.6.1",
+    date: "2026-07-07",
+    type: "patch",
+    summary: "Shell UX polish — sidebar profile row, theme toggle relocated, and per-page action buttons in the top bar.",
+    sections: [
+      {
+        title: "Sidebar",
+        items: [
+          "Profile row at the bottom of the sidebar — shows your avatar, name and @username; click to open your profile dialog",
+          "Theme toggle (dark/light mode) moved from the top bar into the sidebar footer with a text label",
+          "Profile row and theme toggle sit above the Updates link for a clean footer hierarchy",
+        ],
+      },
+      {
+        title: "Top Bar",
+        items: [
+          "Page action buttons (Add item, Import, Export, New delivery note, New ticket, Request technicians, etc.) now appear in the top-right of the top bar — keeps page bodies clean",
+          "Visual separator between page actions and the user avatar",
+          "\"My profile\" now opens on first click — fixed a Radix Dialog + DropdownMenu focus-trap race condition",
+        ],
+      },
+      {
+        title: "Bug Fixes",
+        items: [
+          "Fixed a React hooks ordering violation in ProfileDialog that caused \"view profile\" to silently fail on the first click",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.6.0",
     date: "2026-07-07",
     type: "minor",
