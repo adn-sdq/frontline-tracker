@@ -2,6 +2,18 @@
 
 ---
 
+## v2.11.0 — 2026-07-09
+
+Phase 2 — reusable data grid, first applied to Documents.
+
+### Tables
+
+- New reusable `DataTable` (`src/components/ui/data-table.tsx`) built on `@tanstack/react-table` + the shared Table primitives: sortable columns, global filter, and client-side pagination
+- **Documents** gains a cards/table view toggle; the table sorts by column, filters, paginates, and opens the document drawer on row click
+- Note: server-side pagination for the Tracker is intentionally deferred — the tracker relies on the full dataset for system-grouping and delivery-note multi-select; revisiting once dataset sizes warrant it
+
+---
+
 ## v2.10.1 — 2026-07-09
 
 Calendar consistency pass.

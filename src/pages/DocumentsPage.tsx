@@ -3,13 +3,16 @@ import { formatDistanceToNow } from "date-fns"
 import {
   CheckSquare,
   FileText,
+  LayoutGrid,
   MoreHorizontal,
   Pencil,
   Plus,
   Search,
   Square,
+  Table2,
   Trash2,
 } from "lucide-react"
+import type { ColumnDef } from "@tanstack/react-table"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -42,6 +45,8 @@ import { DocStatusBadge, DocStatusSelect } from "@/components/DocStatus"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { DocumentDialog } from "@/components/DocumentDialog"
 import { DocumentDrawer } from "@/components/DocumentDrawer"
+import { DataTable } from "@/components/ui/data-table"
+import { cn } from "@/lib/utils"
 import {
   useDeleteDocument,
   useDocuments,
@@ -73,6 +78,7 @@ export default function DocumentsPage() {
   const del = useDeleteDocument()
   const updateDoc = useUpdateDocument()
 
+  const [view, setView] = useState<"cards" | "table">("cards")
   const [search, setSearch] = useState("")
   const [system, setSystem] = useState("ALL")
   const [status, setStatus] = useState("ALL")
@@ -100,6 +106,50 @@ export default function DocumentsPage() {
         .some((v) => (v as string).toLowerCase().includes(q))
     })
   }, [docs, search, system, status, docType])
+
+  const columns = useMemo<ColumnDef<DocumentRow, unknown>[]>(
+    () => [
+      {
+        accessorKey: "title",
+        header: "Document",
+        cell: ({ row }) => {
+          const d = row.original
+          const meta = [d.doc_number, d.revision].filter(Boolean).join(" · ")
+          return (
+            <div className="min-w-0">
+              <div className="truncate font-medium">{d.title}</div>
+              {meta && <div className="truncate text-xs text-muted-foreground">{meta}</div>}
+            </div>
+          )
+        },
+      },
+      {
+        id: "doc_type",
+        accessorFn: (d) => (d.doc_type ? DOC_TYPE_LABELS[d.doc_type] : "—"),
+        header: "Type",
+      },
+      {
+        id: "system",
+        accessorFn: (d) => labelFor(d.system) || "—",
+        header: "System",
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => <DocStatusBadge status={row.original.status} />,
+      },
+      {
+        accessorKey: "updated_at",
+        header: "Updated",
+        cell: ({ row }) => (
+          <span className="whitespace-nowrap text-muted-foreground">
+            {formatDistanceToNow(new Date(row.original.updated_at), { addSuffix: true })}
+          </span>
+        ),
+      },
+    ],
+    [labelFor]
+  )
 
   // Keep the drawer's document in sync with refreshed data.
   const liveOpenDoc = openDoc ? docs.find((d) => d.id === openDoc.id) ?? openDoc : null
@@ -257,6 +307,30 @@ export default function DocumentsPage() {
           </SelectContent>
         </Select>
         <div className="flex items-center gap-2 sm:ml-auto">
+          <div className="flex rounded-sm border border-input p-0.5">
+            <button
+              type="button"
+              aria-label="Card view"
+              onClick={() => setView("cards")}
+              className={cn(
+                "grid size-7 place-items-center rounded-[3px] transition-colors",
+                view === "cards" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <LayoutGrid className="size-4" />
+            </button>
+            <button
+              type="button"
+              aria-label="Table view"
+              onClick={() => setView("table")}
+              className={cn(
+                "grid size-7 place-items-center rounded-[3px] transition-colors",
+                view === "table" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Table2 className="size-4" />
+            </button>
+          </div>
           <ActionButton
             icon={CheckSquare}
             label={selectMode ? "Cancel selection" : "Select"}
@@ -290,6 +364,13 @@ export default function DocumentsPage() {
               ? "Add your first document to start tracking a submittal."
               : "Try adjusting the filters or search term."
           }
+        />
+      ) : view === "table" ? (
+        <DataTable
+          columns={columns}
+          data={filtered}
+          onRowClick={(d) => setOpenDoc(d)}
+          emptyMessage="No documents match your filters."
         />
       ) : (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">

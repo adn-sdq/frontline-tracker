@@ -17,6 +17,21 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.11.0",
+    date: "2026-07-09",
+    type: "minor",
+    summary: "Data grids — a sortable, paginated table view for Documents, on a reusable grid foundation.",
+    sections: [
+      {
+        title: "Tables",
+        items: [
+          "Documents now has a Table view — toggle between cards and a table, sort any column, and page through large lists",
+          "Built on a new reusable data-grid component so more lists can gain the same table view over time",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.10.1",
     date: "2026-07-09",
     type: "patch",
