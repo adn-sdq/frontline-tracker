@@ -17,6 +17,25 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.13.0",
+    date: "2026-07-09",
+    type: "minor",
+    summary: "Technician schedule board overhaul — global project Kanban.",
+    sections: [
+      {
+        title: "Schedule board",
+        items: [
+          "Kanban is now the default view for the Schedule tab",
+          "Cards are technicians (one per person) — a tech's column is their current or next upcoming assignment's project",
+          "Columns show all projects in the system plus a permanent Unassigned column, regardless of whether anyone is placed there",
+          "Drag to a project: updates existing assignment or opens the assign dialog pre-filled with that project",
+          "Drag to Unassigned: confirms then removes the current placement",
+          "Each card shows trade and assignment date range, or 'Available' if unscheduled",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.12.2",
     date: "2026-07-09",
     type: "patch",

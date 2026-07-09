@@ -2,6 +2,22 @@
 
 ---
 
+## v2.13.0 — 2026-07-09
+
+Technician schedule board overhaul — global project Kanban.
+
+### Schedule board
+
+- Board is now the default view (replaces the list-first layout)
+- Items are **technicians** (one card per person), not individual assignments — a tech's column is their current or next upcoming assignment's project
+- Columns are all projects in the system (not just ones that already have assignments), plus a permanent **Unassigned** column at the left
+- Drag a tech to a project column: if they have an existing assignment, the project is updated in place; if they're unassigned, the assign dialog opens pre-filled with that project and technician
+- Drag a tech to Unassigned: confirms then removes their current placement, returning them to the pool
+- Each card shows the tech's trade and their assignment date range (or "Available" if none)
+- `AssignTechnicianDialog` now accepts a `projectId` prop so drop-to-assign pre-fills the project picker
+
+---
+
 ## v2.12.2 — 2026-07-09
 
 Collapsed sidebar icon centering — definitive fix.

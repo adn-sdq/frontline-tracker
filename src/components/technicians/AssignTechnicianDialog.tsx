@@ -33,11 +33,14 @@ export function AssignTechnicianDialog({
   open,
   onOpenChange,
   technicianId,
+  projectId: initialProjectId,
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
   /** Pre-select a technician (from the schedule board). */
   technicianId?: string
+  /** Pre-select a project (from the Kanban drop target). */
+  projectId?: string
 }) {
   const { projects, currentProjectId } = useProject()
   const { data: technicians = [] } = useTechnicians()
@@ -56,14 +59,14 @@ export function AssignTechnicianDialog({
   useEffect(() => {
     if (!open) return
     setTechId(technicianId ?? "")
-    setProjectId(currentProjectId ?? projects[0]?.id ?? "")
+    setProjectId(initialProjectId ?? currentProjectId ?? projects[0]?.id ?? "")
     setStartDate(today())
     setEndDate(today())
     setAllDay(true)
     setStartTime("08:00")
     setEndTime("17:00")
     setNotes("")
-  }, [open, technicianId, currentProjectId, projects])
+  }, [open, technicianId, initialProjectId, currentProjectId, projects])
 
   const activeTechs = technicians.filter((t) => t.active)
 

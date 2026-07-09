@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner"
 
 import { useAuth } from "@/contexts/AuthContext"
+import { useProject } from "@/contexts/ProjectContext"
 import { useAllProfiles } from "@/hooks/useAdmin"
 import {
   useCancelTechRequest,
@@ -210,20 +211,16 @@ function RequestsInbox({ nameFor }: { nameFor: (id: string | null) => string | n
 function ScheduleBoard() {
   const { data: technicians = [] } = useTechnicians()
   const { data: assignments = [] } = useTechAssignments()
+  const { projects } = useProject()
   const deleteAssignment = useDeleteAssignment()
   const updateAssignment = useUpdateAssignment()
   const confirm = useConfirm()
-  const [view, setView] = useState<"roster" | "places">("roster")
+  const [view, setView] = useState<"roster" | "places">("places")
   const [assignOpen, setAssignOpen] = useState(false)
   const [assignTech, setAssignTech] = useState<string | undefined>()
+  const [assignProjectId, setAssignProjectId] = useState<string | undefined>()
 
   const activeTechs = technicians.filter((t) => t.active)
-
-  const techName = useMemo(() => {
-    const m = new Map<string, string>()
-    technicians.forEach((t) => m.set(t.id, t.full_name))
-    return m
-  }, [technicians])
 
   function assignmentsFor(techId: string) {
     return assignments
@@ -231,23 +228,65 @@ function ScheduleBoard() {
       .sort((a, b) => a.start_date.localeCompare(b.start_date))
   }
 
-  const NO_PLACE = "__none__"
-  const placeColumns: KanbanColumn<string>[] = useMemo(() => {
-    const m = new Map<string, string>()
-    assignments.forEach((a) => m.set(a.project_id ?? NO_PLACE, a.project_name || "Unassigned"))
-    return [...m.entries()].map(([id, label]) => ({ id, label, accentClass: "bg-primary/60" }))
-  }, [assignments])
+  // Primary assignment = currently active today, falling back to next upcoming
+  function getPrimaryAssignment(techId: string): TechnicianAssignment | null {
+    const tas = assignments.filter((a) => a.technician_id === techId)
+    const current = tas.find((a) => a.start_date <= TODAY && a.end_date >= TODAY)
+    if (current) return current
+    const sorted = tas.filter((a) => a.start_date > TODAY).sort((a, b) => a.start_date.localeCompare(b.start_date))
+    return sorted[0] ?? null
+  }
 
-  async function moveToPlace(assignmentId: string, colId: string) {
-    const label = placeColumns.find((c) => c.id === colId)?.label ?? ""
-    try {
-      await updateAssignment.mutateAsync({
-        id: assignmentId,
-        patch: { project_id: colId === NO_PLACE ? null : colId, project_name: label },
+  const NO_PLACE = "__none__"
+
+  // Columns: Unassigned + every project (regardless of whether anyone is there)
+  const placeColumns = useMemo<KanbanColumn<string>[]>(
+    () => [
+      { id: NO_PLACE, label: "Unassigned" },
+      ...projects.map((p) => ({ id: p.id, label: p.name, accentClass: "bg-primary/60" })),
+    ],
+    [projects],
+  )
+
+  function getTechColumn(tech: Technician): string {
+    return getPrimaryAssignment(tech.id)?.project_id ?? NO_PLACE
+  }
+
+  async function moveTech(techId: string, colId: string) {
+    const existing = getPrimaryAssignment(techId)
+    if (colId === NO_PLACE) {
+      // Dropped on Unassigned → remove current assignment
+      if (!existing) return
+      const ok = await confirm({
+        title: "Remove assignment?",
+        description: "This will unschedule the technician.",
+        confirmText: "Remove",
+        destructive: true,
       })
-      toast.success(`Moved to ${label}`)
-    } catch (e) {
-      toast.error("Could not move", { description: e instanceof Error ? e.message : "Unknown error" })
+      if (!ok) return
+      try {
+        await deleteAssignment.mutateAsync(existing.id)
+        toast.success("Moved to unassigned")
+      } catch (e) {
+        toast.error("Could not remove", { description: e instanceof Error ? e.message : "Unknown error" })
+      }
+    } else if (existing) {
+      // Already has assignment → update project
+      const project = projects.find((p) => p.id === colId)
+      try {
+        await updateAssignment.mutateAsync({
+          id: existing.id,
+          patch: { project_id: colId, project_name: project?.name ?? "" },
+        })
+        toast.success(`Moved to ${project?.name ?? colId}`)
+      } catch (e) {
+        toast.error("Could not move", { description: e instanceof Error ? e.message : "Unknown error" })
+      }
+    } else {
+      // Unassigned → project: open dialog pre-filled
+      setAssignTech(techId)
+      setAssignProjectId(colId)
+      setAssignOpen(true)
     }
   }
 
@@ -267,40 +306,39 @@ function ScheduleBoard() {
     }
   }
 
-  function openAssign(techId?: string) {
+  function openAssign(techId?: string, projectId?: string) {
     setAssignTech(techId)
+    setAssignProjectId(projectId)
     setAssignOpen(true)
   }
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-end gap-1.5">
-        {assignments.length > 0 && (
-          <div className="mr-auto flex rounded-sm border border-input p-0.5">
-            <button
-              type="button"
-              aria-label="By technician"
-              onClick={() => setView("roster")}
-              className={cn(
-                "grid size-7 place-items-center rounded-[3px] transition-colors",
-                view === "roster" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <LayoutList className="size-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="By place"
-              onClick={() => setView("places")}
-              className={cn(
-                "grid size-7 place-items-center rounded-[3px] transition-colors",
-                view === "places" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Columns3 className="size-4" />
-            </button>
-          </div>
-        )}
+        <div className="mr-auto flex rounded-sm border border-input p-0.5">
+          <button
+            type="button"
+            aria-label="By technician"
+            onClick={() => setView("roster")}
+            className={cn(
+              "grid size-7 place-items-center rounded-[3px] transition-colors",
+              view === "roster" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <LayoutList className="size-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="By project"
+            onClick={() => setView("places")}
+            className={cn(
+              "grid size-7 place-items-center rounded-[3px] transition-colors",
+              view === "places" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Columns3 className="size-4" />
+          </button>
+        </div>
         <Button size="sm" onClick={() => openAssign()}>
           <CalendarPlus className="size-4" /> New assignment
         </Button>
@@ -311,32 +349,51 @@ function ScheduleBoard() {
       ) : view === "places" ? (
         <>
           <p className="text-xs text-muted-foreground">
-            Drag a technician between sites to reassign their placement.
+            Drag a technician to a project to assign them. Drop on Unassigned to remove their current placement.
           </p>
-          <KanbanBoard<TechnicianAssignment, string>
+          <KanbanBoard<Technician, string>
             columns={placeColumns}
-            items={assignments}
-            getId={(a) => a.id}
-            getColumn={(a) => a.project_id ?? NO_PLACE}
-            onMove={moveToPlace}
-            emptyLabel="No one here"
-            renderCard={(a) => (
-              <div className="flex items-start justify-between gap-2 p-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{techName.get(a.technician_id) ?? "Technician"}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{dateRange(a)}</p>
-                  <p className="text-xs text-muted-foreground">{timeLabel(a)}</p>
+            items={activeTechs}
+            getId={(t) => t.id}
+            getColumn={getTechColumn}
+            onMove={moveTech}
+            emptyLabel="No technicians"
+            renderCard={(t) => {
+              const assignment = getPrimaryAssignment(t.id)
+              return (
+                <div className="flex items-start justify-between gap-2 p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{t.full_name}</p>
+                    {t.trade && <p className="text-xs text-muted-foreground">{t.trade}</p>}
+                    {assignment ? (
+                      <p className="mt-1 text-xs text-muted-foreground">{dateRange(assignment)}</p>
+                    ) : (
+                      <p className="mt-1 text-xs text-muted-foreground/50">Available</p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => openAssign(t.id, assignment?.project_id ?? undefined)}
+                      className="text-muted-foreground/50 transition hover:text-foreground"
+                      title="Add assignment"
+                    >
+                      <Plus className="size-3.5" />
+                    </button>
+                    {assignment && (
+                      <button
+                        type="button"
+                        onClick={() => removeAssignment(assignment.id)}
+                        className="text-muted-foreground/50 transition hover:text-destructive"
+                        title="Remove assignment"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeAssignment(a.id)}
-                  className="shrink-0 text-muted-foreground/50 transition hover:text-destructive"
-                  title="Remove assignment"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
-              </div>
-            )}
+              )
+            }}
           />
         </>
       ) : (
@@ -383,7 +440,12 @@ function ScheduleBoard() {
         </div>
       )}
 
-      <AssignTechnicianDialog open={assignOpen} onOpenChange={setAssignOpen} technicianId={assignTech} />
+      <AssignTechnicianDialog
+        open={assignOpen}
+        onOpenChange={(v) => { setAssignOpen(v); if (!v) { setAssignTech(undefined); setAssignProjectId(undefined) } }}
+        technicianId={assignTech}
+        projectId={assignProjectId}
+      />
     </div>
   )
 }
