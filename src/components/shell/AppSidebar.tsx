@@ -129,9 +129,9 @@ function NewMenu({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: 
         ) : (
           <button
             type="button"
-            className="flex h-9 w-full items-center gap-2 rounded-md bg-brand-muted px-3 text-sm font-semibold text-brand-muted-foreground transition-colors hover:bg-brand/15"
+            className="flex h-8 w-full items-center gap-2 rounded-md px-2.5 text-sm text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
           >
-            <Plus className="size-4" /> New
+            <Plus className="size-4 shrink-0" /> New
           </button>
         )}
       </DropdownMenuTrigger>
@@ -433,6 +433,11 @@ export function SidebarContent({
         ))}
       </nav>
 
+      {/* New — above the footer separator in both modes */}
+      <div className={cn("pb-1.5", collapsed ? "px-3.5" : "px-3")}>
+        <NewMenu collapsed={collapsed} onNavigate={onNavigate} />
+      </div>
+
       {/* Footer */}
       <div
         className={cn(
@@ -440,13 +445,6 @@ export function SidebarContent({
           collapsed ? "flex flex-col gap-1 px-3.5" : "space-y-0.5 px-3"
         )}
       >
-        {/* New — sits at top of footer, above profile, in both modes */}
-        {collapsed ? (
-          <NewMenu collapsed onNavigate={onNavigate} />
-        ) : (
-          <NewMenu onNavigate={onNavigate} />
-        )}
-
         <FooterProfile collapsed={collapsed} />
 
         {collapsed ? (
