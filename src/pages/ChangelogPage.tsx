@@ -17,6 +17,26 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.12.1",
+    date: "2026-07-09",
+    type: "patch",
+    summary: "Calendar redesign and collapsed-sidebar polish.",
+    sections: [
+      {
+        title: "Calendar",
+        items: [
+          "Rebuilt the date-picker calendar so the weekday header and day grid line up, with tighter, evenly-sized cells and a cleaner selected/today style",
+        ],
+      },
+      {
+        title: "Sidebar",
+        items: [
+          "Standardised every collapsed-rail icon to the same size and rounding, and tidied the section dividers so the rail reads as one clean centred column",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.12.0",
     date: "2026-07-09",
     type: "minor",

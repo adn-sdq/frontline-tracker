@@ -2,6 +2,20 @@
 
 ---
 
+## v2.12.1 — 2026-07-09
+
+Calendar redesign + collapsed-sidebar polish.
+
+### Calendar
+
+- Rewrote `ui/calendar.tsx` classNames: fixed the weekday/day width mismatch (`week` was `flex w-full` while `weekdays` was `flex`, so header and grid didn't line up), tightened cell sizing to a uniform `size-9`, absolutely-positioned nav over the caption row, and cleaned the selected/today styles
+
+### Sidebar
+
+- Standardised all collapsed-rail icons to `size-4.5` + `rounded-lg` (the collapse toggle and theme toggle were `size-4`), simplified the section containers, and widened dividers to `w-8` so the rail reads as one centred column
+
+---
+
 ## v2.12.0 — 2026-07-09
 
 Phase 3 — technician scheduling board (third Kanban), using existing data (no migration).

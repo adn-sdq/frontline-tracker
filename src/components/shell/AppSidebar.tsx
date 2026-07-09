@@ -384,9 +384,9 @@ export function SidebarContent({
             type="button"
             onClick={onToggleCollapse}
             aria-label="Expand sidebar"
-            className="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-foreground"
+            className="grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-foreground"
           >
-            <PanelLeftOpen className="size-4" />
+            <PanelLeftOpen className="size-4.5" />
           </button>
         </div>
       )}
@@ -400,24 +400,24 @@ export function SidebarContent({
       {/* Nav sections */}
       <nav
         className={cn(
-          "flex-1 overflow-y-auto py-2",
-          collapsed ? "scrollbar-none flex w-full flex-col items-center" : "px-3"
+          "flex-1 overflow-y-auto overflow-x-hidden py-2",
+          collapsed ? "scrollbar-none flex flex-col items-center gap-1" : "px-3"
         )}
       >
         {sections.map((section, i) => (
           <div
             key={section.label ?? i}
-            className={cn(i > 0 && "mt-4", collapsed && "flex w-full flex-col items-center")}
+            className={cn(
+              collapsed ? "flex flex-col items-center gap-1" : i > 0 && "mt-4"
+            )}
           >
             {section.label && !collapsed && (
               <p className="mb-1 px-2.5 text-xs font-normal text-muted-foreground">
                 {section.label}
               </p>
             )}
-            {section.label && collapsed && i > 0 && (
-              <div className="mx-auto mb-2 h-px w-6 bg-sidebar-border" />
-            )}
-            <div className={cn("flex flex-col gap-0.5", collapsed && "items-center")}>
+            {collapsed && i > 0 && <div className="h-px w-8 bg-sidebar-border" />}
+            <div className={cn("flex flex-col gap-0.5", collapsed && "items-center gap-1")}>
               {section.items.map((item) => (
                 <NavRow
                   key={item.to}
@@ -470,9 +470,9 @@ export function SidebarContent({
                   type="button"
                   onClick={toggle}
                   aria-label={dark ? "Light mode" : "Dark mode"}
-                  className="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-foreground"
+                  className="grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-foreground"
                 >
-                  {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+                  {dark ? <Sun className="size-4.5" /> : <Moon className="size-4.5" />}
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">{dark ? "Light mode" : "Dark mode"}</TooltipContent>
