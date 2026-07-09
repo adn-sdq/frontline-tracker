@@ -2,6 +2,23 @@
 
 ---
 
+## v2.12.0 — 2026-07-09
+
+Phase 3 — technician scheduling board (third Kanban), using existing data (no migration).
+
+### Technicians
+
+- Schedule gains a **by-place board view**: columns are sites (projects), cards are technician placements (name · dates · times)
+- Managers drag a card to another site column to reassign the placement (`useUpdateAssignment`, gated by existing tech-manager RLS)
+- Toggle between the by-technician roster and the by-place board
+
+### Deferred (need a DB migration / can't be verified here)
+
+- **Manual PDF upload for delivery notes** — delivery notes are generated client-side; storing an uploaded PDF needs a new `storage_path` column + bucket + an upload/download round-trip that can't be verified without a live environment
+- **Server-side pagination for the Tracker** — the tracker relies on the full dataset for system-grouping and delivery-note multi-select; paginating server-side would break those flows and needs a UX rethink first (the new `DataTable` already gives client-side pagination for flatter lists like Documents)
+
+---
+
 ## v2.11.0 — 2026-07-09
 
 Phase 2 — reusable data grid, first applied to Documents.

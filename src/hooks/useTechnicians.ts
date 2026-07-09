@@ -250,6 +250,34 @@ export function useCreateAssignment() {
   })
 }
 
+export function useUpdateAssignment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string
+      patch: Partial<
+        Pick<
+          TechnicianAssignment,
+          "project_id" | "project_name" | "start_date" | "end_date" | "start_time" | "end_time" | "notes"
+        >
+      >
+    }) => {
+      const { data, error } = await supabase
+        .from("technician_assignments")
+        .update(patch)
+        .eq("id", id)
+        .select()
+        .single()
+      if (error) throw error
+      return data as TechnicianAssignment
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ASSIGNMENTS_KEY }),
+  })
+}
+
 export function useDeleteAssignment() {
   const qc = useQueryClient()
   return useMutation({

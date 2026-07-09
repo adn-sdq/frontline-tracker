@@ -5,7 +5,9 @@ import {
   CalendarDays,
   CalendarPlus,
   Clock,
+  Columns3,
   Inbox,
+  LayoutList,
   MapPin,
   Pencil,
   Phone,
@@ -28,6 +30,7 @@ import {
   useTechnicians,
   useTechniciansRealtime,
   useTechRequests,
+  useUpdateAssignment,
 } from "@/hooks/useTechnicians"
 import {
   TECH_REQUEST_STATUS_LABELS,
@@ -40,6 +43,8 @@ import {
 } from "@/lib/types"
 import { ActionButton } from "@/components/shell/ActionButton"
 import { useConfirm } from "@/components/ui/confirm-dialog"
+import { KanbanBoard, type KanbanColumn } from "@/components/kanban/KanbanBoard"
+import { cn } from "@/lib/utils"
 import { PageHeader } from "@/components/PageHeader"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -206,16 +211,44 @@ function ScheduleBoard() {
   const { data: technicians = [] } = useTechnicians()
   const { data: assignments = [] } = useTechAssignments()
   const deleteAssignment = useDeleteAssignment()
+  const updateAssignment = useUpdateAssignment()
   const confirm = useConfirm()
+  const [view, setView] = useState<"roster" | "places">("roster")
   const [assignOpen, setAssignOpen] = useState(false)
   const [assignTech, setAssignTech] = useState<string | undefined>()
 
   const activeTechs = technicians.filter((t) => t.active)
 
+  const techName = useMemo(() => {
+    const m = new Map<string, string>()
+    technicians.forEach((t) => m.set(t.id, t.full_name))
+    return m
+  }, [technicians])
+
   function assignmentsFor(techId: string) {
     return assignments
       .filter((a) => a.technician_id === techId)
       .sort((a, b) => a.start_date.localeCompare(b.start_date))
+  }
+
+  const NO_PLACE = "__none__"
+  const placeColumns: KanbanColumn<string>[] = useMemo(() => {
+    const m = new Map<string, string>()
+    assignments.forEach((a) => m.set(a.project_id ?? NO_PLACE, a.project_name || "Unassigned"))
+    return [...m.entries()].map(([id, label]) => ({ id, label, accentClass: "bg-primary/60" }))
+  }, [assignments])
+
+  async function moveToPlace(assignmentId: string, colId: string) {
+    const label = placeColumns.find((c) => c.id === colId)?.label ?? ""
+    try {
+      await updateAssignment.mutateAsync({
+        id: assignmentId,
+        patch: { project_id: colId === NO_PLACE ? null : colId, project_name: label },
+      })
+      toast.success(`Moved to ${label}`)
+    } catch (e) {
+      toast.error("Could not move", { description: e instanceof Error ? e.message : "Unknown error" })
+    }
   }
 
   async function removeAssignment(id: string) {
@@ -241,7 +274,33 @@ function ScheduleBoard() {
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-1.5">
+        {assignments.length > 0 && (
+          <div className="mr-auto flex rounded-sm border border-input p-0.5">
+            <button
+              type="button"
+              aria-label="By technician"
+              onClick={() => setView("roster")}
+              className={cn(
+                "grid size-7 place-items-center rounded-[3px] transition-colors",
+                view === "roster" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <LayoutList className="size-4" />
+            </button>
+            <button
+              type="button"
+              aria-label="By place"
+              onClick={() => setView("places")}
+              className={cn(
+                "grid size-7 place-items-center rounded-[3px] transition-colors",
+                view === "places" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Columns3 className="size-4" />
+            </button>
+          </div>
+        )}
         <Button size="sm" onClick={() => openAssign()}>
           <CalendarPlus className="size-4" /> New assignment
         </Button>
@@ -249,6 +308,37 @@ function ScheduleBoard() {
 
       {activeTechs.length === 0 ? (
         <EmptyState icon={UsersRound} title="No technicians yet" subtitle="Add technicians in the Roster tab to schedule them." />
+      ) : view === "places" ? (
+        <>
+          <p className="text-xs text-muted-foreground">
+            Drag a technician between sites to reassign their placement.
+          </p>
+          <KanbanBoard<TechnicianAssignment, string>
+            columns={placeColumns}
+            items={assignments}
+            getId={(a) => a.id}
+            getColumn={(a) => a.project_id ?? NO_PLACE}
+            onMove={moveToPlace}
+            emptyLabel="No one here"
+            renderCard={(a) => (
+              <div className="flex items-start justify-between gap-2 p-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{techName.get(a.technician_id) ?? "Technician"}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{dateRange(a)}</p>
+                  <p className="text-xs text-muted-foreground">{timeLabel(a)}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeAssignment(a.id)}
+                  className="shrink-0 text-muted-foreground/50 transition hover:text-destructive"
+                  title="Remove assignment"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
+            )}
+          />
+        </>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {activeTechs.map((t) => {

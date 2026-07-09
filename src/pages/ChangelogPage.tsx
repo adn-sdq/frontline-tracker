@@ -17,6 +17,22 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.12.0",
+    date: "2026-07-09",
+    type: "minor",
+    summary: "Scheduling board — see technicians by site and drag them to reassign placements.",
+    sections: [
+      {
+        title: "Technicians",
+        items: [
+          "The schedule now has a 'by place' board view — each site is a column showing who's assigned there",
+          "Managers can drag a technician's card to another site to reassign their placement",
+          "Switch between the by-technician and by-place views with the toggle",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.11.0",
     date: "2026-07-09",
     type: "minor",
