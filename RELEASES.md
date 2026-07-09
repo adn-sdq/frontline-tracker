@@ -2,6 +2,18 @@
 
 ---
 
+## v2.10.0 — 2026-07-07
+
+Phase 3 — Kanban boards for tickets and the feature roadmap.
+
+### Boards
+
+- New reusable `KanbanBoard` component (native HTML5 drag-and-drop, no new dependency) in `src/components/kanban/`
+- **Support Tickets**: list/board view toggle; drag tickets between status columns (open · in progress · pending · resolved · closed) to update status via `useUpdateTicket`
+- **Feature roadmap** (Updates → Feature requests): list/board toggle; admins drag requests across Pending · Planned · In Progress · Done · Rejected via `useUpdateFeatureRequest` (non-admins get a read-only board)
+
+---
+
 ## v2.9.0 — 2026-07-07
 
 Phase 2 begins — the item detail is now tabbed, and more destructive actions are confirmed.

@@ -1,6 +1,17 @@
 import { useState, useMemo } from "react"
-import { Plus, Search, Ticket as TicketIcon, X, MapPin, User, Clock } from "lucide-react"
+import {
+  Plus,
+  Search,
+  Ticket as TicketIcon,
+  X,
+  MapPin,
+  User,
+  Clock,
+  LayoutList,
+  Columns3,
+} from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,7 +27,9 @@ import {
 import { ActionButton } from "@/components/shell/ActionButton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { PageHeader } from "@/components/PageHeader"
-import { useTickets } from "@/hooks/useTickets"
+import { KanbanBoard, type KanbanColumn } from "@/components/kanban/KanbanBoard"
+import { cn } from "@/lib/utils"
+import { useTickets, useUpdateTicket } from "@/hooks/useTickets"
 import { useAllProfiles } from "@/hooks/useAdmin"
 import { TicketDialog } from "@/components/TicketDialog"
 import { TicketDetailSheet } from "@/components/TicketDetailSheet"
@@ -32,10 +45,20 @@ import {
   TICKET_CATEGORIES,
 } from "@/lib/types"
 
+const STATUS_DOT: Record<TicketStatus, string> = {
+  open: "bg-blue-500",
+  in_progress: "bg-amber-500",
+  pending: "bg-violet-500",
+  resolved: "bg-emerald-500",
+  closed: "bg-muted-foreground/40",
+}
+
 export default function TicketsPage() {
   const { data: tickets = [], isLoading } = useTickets()
   const { data: profiles = [] } = useAllProfiles()
+  const updateTicket = useUpdateTicket()
 
+  const [view, setView] = useState<"list" | "board">("list")
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<TicketStatus | "ALL">("ALL")
   const [priorityFilter, setPriorityFilter] = useState<TicketPriority | "ALL">("ALL")
@@ -87,6 +110,23 @@ export default function TicketsPage() {
     setSelectedTicket(null)
     setDialogOpen(true)
   }
+
+  async function moveTicket(id: string, status: TicketStatus) {
+    try {
+      await updateTicket.mutateAsync({ id, patch: { status } })
+      toast.success(`Moved to ${TICKET_STATUS_LABELS[status]}`)
+    } catch (e) {
+      toast.error("Could not move ticket", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      })
+    }
+  }
+
+  const boardColumns: KanbanColumn<TicketStatus>[] = TICKET_STATUSES.map((s) => ({
+    id: s,
+    label: TICKET_STATUS_LABELS[s],
+    accentClass: STATUS_DOT[s],
+  }))
 
   // Count by status for header summary
   const openCount = tickets.filter((t) => t.status === "open").length
@@ -161,7 +201,33 @@ export default function TicketsPage() {
               <X className="h-3.5 w-3.5" /> Clear ({activeFilters})
             </Button>
           )}
-          <ActionButton icon={Plus} label="New ticket" primary onClick={openNew} />
+          <div className="ml-auto flex items-center gap-1.5">
+            <div className="flex rounded-sm border border-input p-0.5">
+              <button
+                type="button"
+                aria-label="List view"
+                onClick={() => setView("list")}
+                className={cn(
+                  "grid size-7 place-items-center rounded-[3px] transition-colors",
+                  view === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <LayoutList className="size-4" />
+              </button>
+              <button
+                type="button"
+                aria-label="Board view"
+                onClick={() => setView("board")}
+                className={cn(
+                  "grid size-7 place-items-center rounded-[3px] transition-colors",
+                  view === "board" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Columns3 className="size-4" />
+              </button>
+            </div>
+            <ActionButton icon={Plus} label="New ticket" primary onClick={openNew} />
+          </div>
         </div>
       </div>
 
@@ -188,6 +254,45 @@ export default function TicketsPage() {
               </Button>
             )
           }
+        />
+      ) : view === "board" ? (
+        <KanbanBoard<Ticket, TicketStatus>
+          columns={boardColumns}
+          items={filtered}
+          getId={(t) => t.id}
+          getColumn={(t) => t.status}
+          onMove={(id, status) => moveTicket(id, status)}
+          emptyLabel="No tickets"
+          renderCard={(t) => (
+            <button
+              type="button"
+              onClick={() => setSelectedTicket(t)}
+              className="flex w-full flex-col gap-2 p-3 text-left"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-mono text-[11px] text-muted-foreground">{t.ticket_number}</span>
+                <Badge className={cn("shrink-0", TICKET_PRIORITY_STYLES[t.priority])}>
+                  {TICKET_PRIORITY_LABELS[t.priority]}
+                </Badge>
+              </div>
+              <p className="text-sm font-medium leading-snug">{t.title}</p>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                <Badge variant="outline" className="text-[10px]">
+                  {TICKET_CATEGORY_LABELS[t.category]}
+                </Badge>
+                {t.assigned_to && (
+                  <span className="flex items-center gap-1">
+                    <User className="size-3 shrink-0" />
+                    {nameFor(t.assigned_to) ?? "Assigned"}
+                  </span>
+                )}
+                <span className="flex items-center gap-1">
+                  <Clock className="size-3 shrink-0" />
+                  {formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}
+                </span>
+              </div>
+            </button>
+          )}
         />
       ) : (
         <div className="divide-y overflow-hidden rounded-lg border bg-card">

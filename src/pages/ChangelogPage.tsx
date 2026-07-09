@@ -17,6 +17,23 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.10.0",
+    date: "2026-07-07",
+    type: "minor",
+    summary:
+      "Kanban boards — drag-and-drop boards for support tickets and the feature roadmap.",
+    sections: [
+      {
+        title: "Boards",
+        items: [
+          "Support Tickets now has a Board view — switch with the list/board toggle and drag tickets between status columns to update them",
+          "The feature roadmap (Updates → Feature requests) now has a Board view; admins can drag requests between Pending / Planned / In Progress / Done / Rejected",
+          "Both boards share one reusable drag-and-drop Kanban component",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.9.0",
     date: "2026-07-07",
     type: "minor",

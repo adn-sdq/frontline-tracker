@@ -2,6 +2,8 @@ import { useMemo, useState } from "react"
 import {
   ArrowUp,
   ChevronDown,
+  Columns3,
+  LayoutList,
   Loader2,
   MessageSquarePlus,
   Newspaper,
@@ -10,7 +12,13 @@ import {
 import { toast } from "sonner"
 
 import { useAuth } from "@/contexts/AuthContext"
-import { useFeatureRequests, useUpvoteFeatureRequest, type FeatureRequest } from "@/hooks/useAdmin"
+import {
+  useFeatureRequests,
+  useUpdateFeatureRequest,
+  useUpvoteFeatureRequest,
+  type FeatureRequest,
+} from "@/hooks/useAdmin"
+import { KanbanBoard, type KanbanColumn } from "@/components/kanban/KanbanBoard"
 import { supabase } from "@/lib/supabase"
 import { RELEASES, type ReleaseEntry } from "@/pages/ChangelogPage"
 import { Badge } from "@/components/ui/badge"
@@ -165,6 +173,16 @@ const FR_STATUS_STYLES: Record<FeatureRequest["status"], string> = {
   rejected: "bg-muted text-muted-foreground border-transparent",
 }
 
+const FR_STATUS_DOT: Record<FeatureRequest["status"], string> = {
+  pending: "bg-amber-500",
+  planned: "bg-blue-500",
+  in_progress: "bg-orange-500",
+  done: "bg-emerald-500",
+  rejected: "bg-muted-foreground/40",
+}
+
+const ROADMAP_ORDER = ["pending", "planned", "in_progress", "done", "rejected"] as const
+
 function fmtTimeAgo(iso: string): string {
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
   if (days === 0) return "Today"
@@ -244,10 +262,13 @@ type StatusFilter = "all" | FeatureRequest["status"]
 const ACTIVE_STATUS_FILTERS = ["all", "pending", "planned", "in_progress", "done"] as const
 
 function FeatureRequestsTab() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
+  const isAdmin = !!profile?.is_admin
   const { data: requests = [], isLoading } = useFeatureRequests()
   const upvote = useUpvoteFeatureRequest()
+  const updateFR = useUpdateFeatureRequest()
 
+  const [view, setView] = useState<"list" | "board">("list")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
   const [showForm, setShowForm] = useState(false)
   const [title, setTitle] = useState("")
@@ -292,6 +313,25 @@ function FeatureRequestsTab() {
       },
     })
   }
+
+  async function moveRequest(id: string, status: FeatureRequest["status"]) {
+    if (!isAdmin) {
+      toast("Only admins can update the roadmap status")
+      return
+    }
+    try {
+      await updateFR.mutateAsync({ id, patch: { status } })
+      toast.success(`Moved to ${FR_STATUS_LABELS[status]}`)
+    } catch (e) {
+      toast.error("Could not update", { description: e instanceof Error ? e.message : "Unknown error" })
+    }
+  }
+
+  const boardColumns: KanbanColumn<FeatureRequest["status"]>[] = ROADMAP_ORDER.map((s) => ({
+    id: s,
+    label: FR_STATUS_LABELS[s],
+    accentClass: FR_STATUS_DOT[s],
+  }))
 
   return (
     <div>
@@ -351,33 +391,91 @@ function FeatureRequestsTab() {
         </div>
       )}
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {ACTIVE_STATUS_FILTERS.map((f) => (
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {view === "list" &&
+          ACTIVE_STATUS_FILTERS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setStatusFilter(f)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                statusFilter === f
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground"
+              )}
+            >
+              {f === "all" ? "All" : FR_STATUS_LABELS[f as FeatureRequest["status"]]}
+            </button>
+          ))}
+        {view === "board" && (
+          <p className="text-xs text-muted-foreground">
+            {isAdmin ? "Drag cards between columns to update status." : "Roadmap board (read-only)."}
+          </p>
+        )}
+        <div className="ml-auto flex rounded-sm border border-input p-0.5">
           <button
-            key={f}
             type="button"
-            onClick={() => setStatusFilter(f)}
+            aria-label="List view"
+            onClick={() => setView("list")}
             className={cn(
-              "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-              statusFilter === f
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground"
+              "grid size-7 place-items-center rounded-[3px] transition-colors",
+              view === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
             )}
           >
-            {f === "all" ? "All" : FR_STATUS_LABELS[f as FeatureRequest["status"]]}
+            <LayoutList className="size-4" />
           </button>
-        ))}
+          <button
+            type="button"
+            aria-label="Board view"
+            onClick={() => setView("board")}
+            className={cn(
+              "grid size-7 place-items-center rounded-[3px] transition-colors",
+              view === "board" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Columns3 className="size-4" />
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-16">
           <Loader2 className="size-5 animate-spin text-muted-foreground" />
         </div>
-      ) : filtered.length === 0 ? (
+      ) : requests.length === 0 ? (
         <div className="rounded-xl border border-dashed py-16 text-center">
           <p className="text-sm text-muted-foreground">
             No requests yet — be the first to suggest something.
           </p>
+        </div>
+      ) : view === "board" ? (
+        <KanbanBoard<FeatureRequest, FeatureRequest["status"]>
+          columns={boardColumns}
+          items={requests}
+          getId={(r) => r.id}
+          getColumn={(r) => r.status}
+          onMove={(id, status) => moveRequest(id, status)}
+          emptyLabel="No requests"
+          renderCard={(r) => (
+            <div className="flex flex-col gap-2 p-3">
+              <div className="flex items-start gap-2">
+                <div className="flex shrink-0 flex-col items-center rounded-md border px-1.5 py-0.5 text-muted-foreground">
+                  <ArrowUp className="size-3" />
+                  <span className="text-[10px] font-semibold tabular-nums">{r.upvotes}</span>
+                </div>
+                <p className="text-sm font-medium leading-snug">{r.title}</p>
+              </div>
+              {r.description && (
+                <p className="line-clamp-3 text-xs text-muted-foreground">{r.description}</p>
+              )}
+              <p className="text-[11px] text-muted-foreground">{fmtTimeAgo(r.submitted_at)}</p>
+            </div>
+          )}
+        />
+      ) : filtered.length === 0 ? (
+        <div className="rounded-xl border border-dashed py-16 text-center">
+          <p className="text-sm text-muted-foreground">No requests match this filter.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
