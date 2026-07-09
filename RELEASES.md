@@ -2,6 +2,17 @@
 
 ---
 
+## v2.10.1 — 2026-07-09
+
+Calendar consistency pass.
+
+### Dates
+
+- Swapped the remaining native `<input type="date">` fields (technician request/respond/assign dialogs, technician form iqama expiry, document date) for the shared `DatePicker` (Calendar)
+- Added an optional `min` prop to `DatePicker` (disables earlier dates via react-day-picker) so end dates can't precede start dates
+
+---
+
 ## v2.10.0 — 2026-07-07
 
 Phase 3 — Kanban boards for tickets and the feature roadmap.

@@ -17,6 +17,8 @@ interface DatePickerProps {
   placeholder?: string
   className?: string
   clearable?: boolean
+  /** ISO yyyy-MM-dd; dates before this are disabled. */
+  min?: string
 }
 
 export function DatePicker({
@@ -25,7 +27,9 @@ export function DatePicker({
   placeholder = "Pick a date",
   className,
   clearable = true,
+  min,
 }: DatePickerProps) {
+  const minDate = min ? parseISO(min) : undefined
   const [open, setOpen] = React.useState(false)
   const date = value ? parseISO(value) : undefined
   const valid = date !== undefined && isValid(date)
@@ -74,6 +78,7 @@ export function DatePicker({
             onChange(d ? format(d, "yyyy-MM-dd") : "")
             setOpen(false)
           }}
+          disabled={minDate && isValid(minDate) ? { before: minDate } : undefined}
           autoFocus
         />
       </PopoverPrimitive.Content>

@@ -7,6 +7,7 @@ import { useCreateTechRequest } from "@/hooks/useTechnicians"
 import { TECH_REQUEST_TAGS } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/DatePicker"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -140,11 +141,11 @@ export function RequestTechnicianDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>From date</Label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <DatePicker value={startDate} onChange={setStartDate} clearable={false} placeholder="From" />
             </div>
             <div className="space-y-1.5">
               <Label>To date</Label>
-              <Input type="date" value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)} />
+              <DatePicker value={endDate} onChange={setEndDate} min={startDate} clearable={false} placeholder="To" />
             </div>
           </div>
 

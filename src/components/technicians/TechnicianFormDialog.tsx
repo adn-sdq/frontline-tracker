@@ -9,6 +9,7 @@ import {
 import type { Technician } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/DatePicker"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -118,7 +119,7 @@ export function TechnicianFormDialog({
             </div>
             <div className="space-y-1.5">
               <Label>Iqama expiry</Label>
-              <Input type="date" value={iqamaExpiry} onChange={(e) => setIqamaExpiry(e.target.value)} />
+              <DatePicker value={iqamaExpiry} onChange={setIqamaExpiry} placeholder="Select expiry" />
             </div>
           </div>
 

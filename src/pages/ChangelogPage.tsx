@@ -17,6 +17,21 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.10.1",
+    date: "2026-07-09",
+    type: "patch",
+    summary: "Consistent calendars — every date field now uses the same calendar picker.",
+    sections: [
+      {
+        title: "Dates",
+        items: [
+          "Replaced the remaining native date inputs (technician requests, assignments, technician form, document date) with the shared calendar picker",
+          "The picker now supports a minimum date, so 'to' dates can't be set before their 'from' date",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.10.0",
     date: "2026-07-07",
     type: "minor",
