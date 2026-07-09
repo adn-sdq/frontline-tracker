@@ -2,6 +2,17 @@
 
 ---
 
+## v2.12.2 — 2026-07-09
+
+Collapsed sidebar icon centering — definitive fix.
+
+### Collapsed rail
+
+- Replaced `flex flex-col items-center` container centering with explicit `px-3.5` padding on every collapsed section — since the rail is 64 px and icons are 36 px (size-9), 14 px each side is arithmetically exact and can't drift with subpixel flex rounding or scrollbar-gutter offsets
+- Dividers now fill the padded content area (`h-px bg-sidebar-border`, no explicit width) so they align to the same 36 px column as the icons
+
+---
+
 ## v2.12.1 — 2026-07-09
 
 Calendar redesign + collapsed-sidebar polish.

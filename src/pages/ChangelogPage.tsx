@@ -17,6 +17,21 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.12.2",
+    date: "2026-07-09",
+    type: "patch",
+    summary: "Collapsed sidebar icon centering — definitive fix.",
+    sections: [
+      {
+        title: "Collapsed rail",
+        items: [
+          "Replaced flexbox items-center centering with explicit px-3.5 padding on every collapsed section — 14 px each side matches the 64 px rail vs 36 px icon math exactly, eliminating subpixel drift",
+          "Dividers now span the padded content area without a fixed width, so they sit on the same 36 px column as the icons",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.12.1",
     date: "2026-07-09",
     type: "patch",

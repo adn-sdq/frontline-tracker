@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, NavLink, useNavigate } from "react-router-dom"
+import { Link, NavLink, useNavigate, useMatch, useResolvedPath } from "react-router-dom"
 import {
   Check,
   ChevronsUpDown,
@@ -122,7 +122,7 @@ function NewMenu({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: 
           <button
             type="button"
             aria-label="New"
-            className="grid size-9 place-items-center rounded-lg bg-brand-muted text-brand-muted-foreground transition-colors hover:bg-brand/15"
+            className="grid size-9 place-items-center rounded-lg text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
           >
             <Plus className="size-4.5" />
           </button>
@@ -173,6 +173,12 @@ function NavRow({
   onNavigate?: () => void
 }) {
   const Icon = item.icon
+  // Radix Slot (asChild) merges classNames with string join — passing a function
+  // className through it would stringify the function. Compute isActive manually
+  // so we can always pass a plain string when inside TooltipTrigger asChild.
+  const resolved = useResolvedPath(item.to)
+  const match = useMatch({ path: resolved.pathname, end: item.to === "/" })
+  const isActive = Boolean(match)
 
   if (collapsed) {
     if (item.soon) {
@@ -194,14 +200,12 @@ function NavRow({
             to={item.to}
             end={item.to === "/"}
             onClick={onNavigate}
-            className={({ isActive }) =>
-              cn(
-                "grid size-9 place-items-center rounded-lg transition-colors",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-              )
-            }
+            className={cn(
+              "grid size-9 place-items-center rounded-lg transition-colors",
+              isActive
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+            )}
           >
             <Icon className="size-4.5" />
           </NavLink>
@@ -272,7 +276,7 @@ function FooterProfile({ collapsed }: { collapsed?: boolean }) {
             <button
               type="button"
               aria-label={displayName}
-              className="grid size-9 place-items-center rounded-md transition-colors hover:bg-sidebar-accent/50"
+              className="grid size-9 place-items-center rounded-full transition-colors hover:bg-sidebar-accent/50"
             >
               {avatar}
             </button>
@@ -350,6 +354,7 @@ export function SidebarContent({
   const { profile } = useAuth()
   const { dark, toggle } = useTheme()
   const sections = navSectionsFor(profile)
+  const updatesActive = Boolean(useMatch("/updates"))
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -379,7 +384,7 @@ export function SidebarContent({
       )}
 
       {collapsed && onToggleCollapse && (
-        <div className="flex items-center justify-center pb-1">
+        <div className="px-3.5 pb-1">
           <button
             type="button"
             onClick={onToggleCollapse}
@@ -391,33 +396,30 @@ export function SidebarContent({
         </div>
       )}
 
-      {/* Project + quick create */}
-      <div className={cn("flex flex-col gap-2 pb-2", collapsed ? "w-full items-center px-0" : "px-3")}>
+      {/* Project switcher */}
+      <div className={cn("pb-2", collapsed ? "px-3.5" : "px-3")}>
         <ProjectSwitcher collapsed={collapsed} />
-        <NewMenu collapsed={collapsed} onNavigate={onNavigate} />
       </div>
 
       {/* Nav sections */}
       <nav
         className={cn(
           "flex-1 overflow-y-auto overflow-x-hidden py-2",
-          collapsed ? "scrollbar-none flex flex-col items-center gap-1" : "px-3"
+          collapsed ? "scrollbar-none flex flex-col gap-1 px-3.5" : "px-3"
         )}
       >
         {sections.map((section, i) => (
           <div
             key={section.label ?? i}
-            className={cn(
-              collapsed ? "flex flex-col items-center gap-1" : i > 0 && "mt-4"
-            )}
+            className={cn(collapsed ? "flex flex-col gap-1" : i > 0 && "mt-4")}
           >
             {section.label && !collapsed && (
               <p className="mb-1 px-2.5 text-xs font-normal text-muted-foreground">
                 {section.label}
               </p>
             )}
-            {collapsed && i > 0 && <div className="h-px w-8 bg-sidebar-border" />}
-            <div className={cn("flex flex-col gap-0.5", collapsed && "items-center gap-1")}>
+            {collapsed && i > 0 && <div className="my-1 h-px bg-sidebar-border" />}
+            <div className={cn("flex flex-col gap-0.5", collapsed && "gap-1")}>
               {section.items.map((item) => (
                 <NavRow
                   key={item.to}
@@ -435,9 +437,16 @@ export function SidebarContent({
       <div
         className={cn(
           "shrink-0 border-t border-sidebar-border py-2.5",
-          collapsed ? "flex w-full flex-col items-center gap-1 px-0" : "space-y-0.5 px-3"
+          collapsed ? "flex flex-col gap-1 px-3.5" : "space-y-0.5 px-3"
         )}
       >
+        {/* New — sits at top of footer, above profile, in both modes */}
+        {collapsed ? (
+          <NewMenu collapsed onNavigate={onNavigate} />
+        ) : (
+          <NewMenu onNavigate={onNavigate} />
+        )}
+
         <FooterProfile collapsed={collapsed} />
 
         {collapsed ? (
@@ -448,14 +457,12 @@ export function SidebarContent({
                 <NavLink
                   to="/updates"
                   onClick={onNavigate}
-                  className={({ isActive }) =>
-                    cn(
-                      "grid size-9 place-items-center rounded-lg transition-colors",
-                      isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    )
-                  }
+                  className={cn(
+                    "grid size-9 place-items-center rounded-lg transition-colors",
+                    updatesActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  )}
                 >
                   <Newspaper className="size-4.5" />
                 </NavLink>
