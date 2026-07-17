@@ -2,6 +2,19 @@
 
 ---
 
+## v2.13.1 — 2026-07-09
+
+Technician requests — card polish, expired state, deduped actions.
+
+### Requests
+
+- Compact card layout: project name + status badge on one line, date / time / qty / requester on the next, tags below; notes and response notes moved to a detail dialog (eye icon)
+- Requests sort automatically: actionable (pending/changed, date not yet passed) float to the top, expired in the middle, resolved at the bottom
+- Expired state: a pending or changed request whose work date has passed now shows an "Expired" badge and hides the Respond button
+- "New request" button moved inside the Requests tab; redundant global ActionButton removed from the tab header row
+
+---
+
 ## v2.13.0 — 2026-07-09
 
 Technician schedule board overhaul — global project Kanban.

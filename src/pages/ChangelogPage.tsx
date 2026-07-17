@@ -17,6 +17,23 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.13.1",
+    date: "2026-07-09",
+    type: "patch",
+    summary: "Technician requests — compact cards, expired state, deduped actions.",
+    sections: [
+      {
+        title: "Requests",
+        items: [
+          "Compact card: project + status on one line, metadata row below, tags condensed; notes moved to an eye-icon detail dialog",
+          "Auto-sort: actionable requests (pending/changed, date not passed) float to the top; expired in the middle; resolved at the bottom",
+          "Expired state: a pending/changed request whose work date has passed shows 'Expired' and hides the Respond button",
+          "New request button moved inside the Requests tab — removed the duplicate global action button from the tab header",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.13.0",
     date: "2026-07-09",
     type: "minor",
