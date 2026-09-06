@@ -2,6 +2,17 @@
 
 ---
 
+## v2.13.2 — 2026-09-06
+
+Build fix — production deploy was failing `tsc -b`.
+
+### Fixes
+
+- `MyRequests` was calling `RequestCard` with the old `children` API (a Cancel button); rewired it to the current `onView` / `onDelete` props with a detail dialog — the trash action cancels the member's own request
+- Removed an unused `Input` import in `RespondRequestDialog` that tripped `noUnusedLocals`
+
+---
+
 ## v2.13.1 — 2026-07-09
 
 Technician requests — card polish, expired state, deduped actions.

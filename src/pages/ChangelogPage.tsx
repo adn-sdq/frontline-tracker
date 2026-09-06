@@ -17,6 +17,21 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.13.2",
+    date: "2026-09-06",
+    type: "patch",
+    summary: "Build fix — production deploy was failing type-check.",
+    sections: [
+      {
+        title: "Fixes",
+        items: [
+          "My Requests list was using the old request-card API; rewired it to the current card with a detail dialog — the trash action cancels your own request",
+          "Removed an unused import that broke the production type-check build",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.13.1",
     date: "2026-07-09",
     type: "patch",
