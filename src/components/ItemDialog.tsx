@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import {
+  Boxes,
   Download,
   FileText,
   Loader2,
@@ -25,6 +26,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ItemHistoryList } from "@/components/ItemHistoryList"
 import {
   Select,
   SelectContent,
@@ -41,6 +44,7 @@ import {
   useItemFilesRealtime,
   useUploadItemFile,
 } from "@/hooks/useItemFiles"
+import { useConfirm } from "@/components/ui/confirm-dialog"
 import { useSystems } from "@/hooks/useSystems"
 import { useAuth } from "@/contexts/AuthContext"
 import { useProject } from "@/contexts/ProjectContext"
@@ -65,6 +69,7 @@ function ItemAttachments({ itemId }: { itemId: string }) {
   const files = useItemFiles(itemId)
   const uploadFile = useUploadItemFile()
   const deleteFile = useDeleteItemFile()
+  const confirm = useConfirm()
   const fileInput = useRef<HTMLInputElement>(null)
   const [note, setNote] = useState("")
   const [downloading, setDownloading] = useState<string | null>(null)
@@ -106,6 +111,13 @@ function ItemAttachments({ itemId }: { itemId: string }) {
   }
 
   async function remove(id: string, storagePath: string) {
+    const ok = await confirm({
+      title: "Remove attachment?",
+      description: "This permanently deletes the file. This can't be undone.",
+      confirmText: "Remove",
+      destructive: true,
+    })
+    if (!ok) return
     try {
       await deleteFile.mutateAsync({ id, itemId, storagePath })
       toast.success("File removed")
@@ -357,6 +369,93 @@ export function ItemDialog({
 
   const busy = create.isPending || update.isPending
 
+  const detailsForm = (
+    <>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <Field label="System">
+          <Select value={form.system} onValueChange={(v) => set("system", v as System)}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {activeSystems.map((s) => (
+                <SelectItem key={s.key} value={s.key}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Location / Room">
+          <Input value={form.location} onChange={(e) => set("location", e.target.value)} />
+        </Field>
+        <Field label="Unique ID">
+          <Input
+            value={form.unique_id}
+            onChange={(e) => set("unique_id", e.target.value)}
+            placeholder="e.g. SN-001 or AV-003"
+          />
+        </Field>
+        <Field label="Brand">
+          <Input value={form.brand} onChange={(e) => set("brand", e.target.value)} />
+        </Field>
+        <Field label="Model No">
+          <Input value={form.model_no} onChange={(e) => set("model_no", e.target.value)} />
+        </Field>
+        <Field label="Supplier">
+          <Input value={form.supplier} onChange={(e) => set("supplier", e.target.value)} />
+        </Field>
+      </div>
+
+      <Field label="Description">
+        <Textarea
+          value={form.description}
+          onChange={(e) => set("description", e.target.value)}
+          rows={2}
+        />
+      </Field>
+
+      <Separator />
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Field label="Procurement">
+          <StatusPicker value={form.procurement_status} options={PROCUREMENT_STATUSES} onChange={(v) => set("procurement_status", v)} />
+        </Field>
+        <Field label="Delivery">
+          <StatusPicker value={form.delivery_status} options={DELIVERY_STATUSES} onChange={(v) => set("delivery_status", v)} />
+        </Field>
+        <Field label="Installation">
+          <StatusPicker value={form.installation_status} options={INSTALLATION_STATUSES} onChange={(v) => set("installation_status", v)} />
+        </Field>
+      </div>
+
+      {/* Quantities — secondary "mid" info, grouped compactly */}
+      <div className="rounded-lg border bg-muted/30 px-3 py-2.5">
+        <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <Boxes className="size-3.5" /> Quantities
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          <QtyInput label="Req" value={form.qty_required} onChange={(v) => set("qty_required", v)} />
+          <QtyInput label="Ord" value={form.qty_ordered} onChange={(v) => set("qty_ordered", v)} />
+          <QtyInput label="Del" value={form.qty_delivered} onChange={(v) => set("qty_delivered", v)} />
+          <QtyInput label="Inst" value={form.qty_installed} onChange={(v) => set("qty_installed", v)} />
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="ETA">
+          <DatePicker value={form.eta} onChange={(v) => set("eta", v)} placeholder="Select ETA" />
+        </Field>
+      </div>
+
+      <Field label="Notes">
+        <Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} />
+      </Field>
+    </>
+  )
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90svh] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
@@ -369,94 +468,29 @@ export function ItemDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <Field label="System">
-            <Select value={form.system} onValueChange={(v) => set("system", v as System)}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {activeSystems.map((s) => (
-                  <SelectItem key={s.key} value={s.key}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="Location / Room">
-            <Input value={form.location} onChange={(e) => set("location", e.target.value)} />
-          </Field>
-          <Field label="Unique ID">
-            <Input
-              value={form.unique_id}
-              onChange={(e) => set("unique_id", e.target.value)}
-              placeholder="e.g. SN-001 or AV-003"
-            />
-          </Field>
-          <Field label="Brand">
-            <Input value={form.brand} onChange={(e) => set("brand", e.target.value)} />
-          </Field>
-          <Field label="Model No">
-            <Input value={form.model_no} onChange={(e) => set("model_no", e.target.value)} />
-          </Field>
-          <Field label="Supplier">
-            <Input value={form.supplier} onChange={(e) => set("supplier", e.target.value)} />
-          </Field>
-        </div>
-
-        <Field label="Description">
-          <Textarea
-            value={form.description}
-            onChange={(e) => set("description", e.target.value)}
-            rows={2}
-          />
-        </Field>
-
-        <div className="grid grid-cols-4 gap-3">
-          <Field label="Required">
-            <Input type="number" value={form.qty_required} onChange={(e) => set("qty_required", e.target.value)} />
-          </Field>
-          <Field label="Ordered">
-            <Input type="number" value={form.qty_ordered} onChange={(e) => set("qty_ordered", e.target.value)} />
-          </Field>
-          <Field label="Delivered">
-            <Input type="number" value={form.qty_delivered} onChange={(e) => set("qty_delivered", e.target.value)} />
-          </Field>
-          <Field label="Installed">
-            <Input type="number" value={form.qty_installed} onChange={(e) => set("qty_installed", e.target.value)} />
-          </Field>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Field label="Procurement">
-            <StatusPicker value={form.procurement_status} options={PROCUREMENT_STATUSES} onChange={(v) => set("procurement_status", v)} />
-          </Field>
-          <Field label="Delivery">
-            <StatusPicker value={form.delivery_status} options={DELIVERY_STATUSES} onChange={(v) => set("delivery_status", v)} />
-          </Field>
-          <Field label="Installation">
-            <StatusPicker value={form.installation_status} options={INSTALLATION_STATUSES} onChange={(v) => set("installation_status", v)} />
-          </Field>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="ETA">
-            <DatePicker value={form.eta} onChange={(v) => set("eta", v)} placeholder="Select ETA" />
-          </Field>
-        </div>
-
-        <Field label="Notes">
-          <Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} />
-        </Field>
-
-        {editing && item && (
-          <>
-            <Separator />
-            <SerialsSection itemId={item.id} qty={Number(form.qty_required) || 0} />
-            <Separator />
-            <ItemAttachments itemId={item.id} />
-          </>
+        {editing && item ? (
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList className="w-full justify-start">
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="serials">Serials</TabsTrigger>
+              <TabsTrigger value="files">Attachments</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+            </TabsList>
+            <TabsContent value="details" className="flex flex-col gap-4 pt-2">
+              {detailsForm}
+            </TabsContent>
+            <TabsContent value="serials" className="pt-2">
+              <SerialsSection itemId={item.id} qty={Number(form.qty_required) || 0} />
+            </TabsContent>
+            <TabsContent value="files" className="pt-2">
+              <ItemAttachments itemId={item.id} />
+            </TabsContent>
+            <TabsContent value="history" className="pt-2">
+              <ItemHistoryList itemId={item.id} />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className="flex flex-col gap-4">{detailsForm}</div>
         )}
 
         <DialogFooter>
@@ -552,6 +586,31 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div className="grid gap-1.5">
       <Label className="text-xs text-muted-foreground">{label}</Label>
       {children}
+    </div>
+  )
+}
+
+function QtyInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+}) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </Label>
+      <Input
+        type="number"
+        min={0}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-8 px-2 text-center tabular-nums"
+      />
     </div>
   )
 }

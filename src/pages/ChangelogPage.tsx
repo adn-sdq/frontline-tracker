@@ -7,7 +7,7 @@ import { FitLogo } from "@/components/FitLogo"
 // ── Release data ──────────────────────────────────────────────────────────────
 // Add new releases at the top. type: "major" | "minor" | "patch"
 
-interface ReleaseEntry {
+export interface ReleaseEntry {
   version: string
   date: string
   summary: string
@@ -15,7 +15,377 @@ interface ReleaseEntry {
   sections: { title: string; items: string[] }[]
 }
 
-const RELEASES: ReleaseEntry[] = [
+export const RELEASES: ReleaseEntry[] = [
+  {
+    version: "v2.13.1",
+    date: "2026-07-09",
+    type: "patch",
+    summary: "Technician requests — compact cards, expired state, deduped actions.",
+    sections: [
+      {
+        title: "Requests",
+        items: [
+          "Compact card: project + status on one line, metadata row below, tags condensed; notes moved to an eye-icon detail dialog",
+          "Auto-sort: actionable requests (pending/changed, date not passed) float to the top; expired in the middle; resolved at the bottom",
+          "Expired state: a pending/changed request whose work date has passed shows 'Expired' and hides the Respond button",
+          "New request button moved inside the Requests tab — removed the duplicate global action button from the tab header",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.13.0",
+    date: "2026-07-09",
+    type: "minor",
+    summary: "Technician schedule board overhaul — global project Kanban.",
+    sections: [
+      {
+        title: "Schedule board",
+        items: [
+          "Kanban is now the default view for the Schedule tab",
+          "Cards are technicians (one per person) — a tech's column is their current or next upcoming assignment's project",
+          "Columns show all projects in the system plus a permanent Unassigned column, regardless of whether anyone is placed there",
+          "Drag to a project: updates existing assignment or opens the assign dialog pre-filled with that project",
+          "Drag to Unassigned: confirms then removes the current placement",
+          "Each card shows trade and assignment date range, or 'Available' if unscheduled",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.12.2",
+    date: "2026-07-09",
+    type: "patch",
+    summary: "Collapsed sidebar icon centering — definitive fix.",
+    sections: [
+      {
+        title: "Collapsed rail",
+        items: [
+          "Replaced flexbox items-center centering with explicit px-3.5 padding on every collapsed section — 14 px each side matches the 64 px rail vs 36 px icon math exactly, eliminating subpixel drift",
+          "Dividers now span the padded content area without a fixed width, so they sit on the same 36 px column as the icons",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.12.1",
+    date: "2026-07-09",
+    type: "patch",
+    summary: "Calendar redesign and collapsed-sidebar polish.",
+    sections: [
+      {
+        title: "Calendar",
+        items: [
+          "Rebuilt the date-picker calendar so the weekday header and day grid line up, with tighter, evenly-sized cells and a cleaner selected/today style",
+        ],
+      },
+      {
+        title: "Sidebar",
+        items: [
+          "Standardised every collapsed-rail icon to the same size and rounding, and tidied the section dividers so the rail reads as one clean centred column",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.12.0",
+    date: "2026-07-09",
+    type: "minor",
+    summary: "Scheduling board — see technicians by site and drag them to reassign placements.",
+    sections: [
+      {
+        title: "Technicians",
+        items: [
+          "The schedule now has a 'by place' board view — each site is a column showing who's assigned there",
+          "Managers can drag a technician's card to another site to reassign their placement",
+          "Switch between the by-technician and by-place views with the toggle",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.11.0",
+    date: "2026-07-09",
+    type: "minor",
+    summary: "Data grids — a sortable, paginated table view for Documents, on a reusable grid foundation.",
+    sections: [
+      {
+        title: "Tables",
+        items: [
+          "Documents now has a Table view — toggle between cards and a table, sort any column, and page through large lists",
+          "Built on a new reusable data-grid component so more lists can gain the same table view over time",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.10.1",
+    date: "2026-07-09",
+    type: "patch",
+    summary: "Consistent calendars — every date field now uses the same calendar picker.",
+    sections: [
+      {
+        title: "Dates",
+        items: [
+          "Replaced the remaining native date inputs (technician requests, assignments, technician form, document date) with the shared calendar picker",
+          "The picker now supports a minimum date, so 'to' dates can't be set before their 'from' date",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.10.0",
+    date: "2026-07-07",
+    type: "minor",
+    summary:
+      "Kanban boards — drag-and-drop boards for support tickets and the feature roadmap.",
+    sections: [
+      {
+        title: "Boards",
+        items: [
+          "Support Tickets now has a Board view — switch with the list/board toggle and drag tickets between status columns to update them",
+          "The feature roadmap (Updates → Feature requests) now has a Board view; admins can drag requests between Pending / Planned / In Progress / Done / Rejected",
+          "Both boards share one reusable drag-and-drop Kanban component",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.9.0",
+    date: "2026-07-07",
+    type: "minor",
+    summary:
+      "Tabbed item detail — the item view is now organised into Details, Serials, Attachments and History tabs; plus more delete confirmations.",
+    sections: [
+      {
+        title: "Item detail",
+        items: [
+          "Opening an item now shows tabs — Details, Serials, Attachments and History — so the form is far less crowded and its full record is easy to browse",
+          "Added a History tab showing the full change timeline (who changed what, and when) right inside the item view",
+          "Reused one shared history timeline for both the item tab and the side drawer",
+        ],
+      },
+      {
+        title: "Confirmations",
+        items: [
+          "Deleting a technician request or removing a schedule assignment now asks for confirmation first",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.8.2",
+    date: "2026-07-07",
+    type: "patch",
+    summary:
+      "Avatar, item-detail and confirmation polish — coloured avatars, a compact quantities block, and a standardised delete dialog.",
+    sections: [
+      {
+        title: "Avatars & profile",
+        items: [
+          "People without a profile photo now get consistent, colour-coded initials instead of a uniform grey circle — the colour stays stable per person across the app",
+          "Unified the avatar into one shared component (sidebar + profile view) so it always looks and behaves the same",
+        ],
+      },
+      {
+        title: "Item detail",
+        items: [
+          "Redesigned the Quantities (Required / Ordered / Delivered / Installed) into a single compact, lower-emphasis group so it no longer dominates the item form",
+          "Added separators between property groups (specs · status · schedule) to make the item detail easier to scan",
+        ],
+      },
+      {
+        title: "Confirmations",
+        items: [
+          "Deleting a delivery note now uses the shared confirmation dialog (with a proper spinner) instead of a one-off dialog",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.8.1",
+    date: "2026-07-07",
+    type: "patch",
+    summary:
+      "Consistency pass — tickets, documents and delivery notes now share the same empty-state and loading treatment.",
+    sections: [
+      {
+        title: "Consistency",
+        items: [
+          "Tickets, Documents and Delivery Notes now use the shared EmptyState, so 'nothing here yet' and 'no results' look identical everywhere",
+          "Standardised loading indicators on the shared Spinner across the Documents page (list and action buttons)",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.8.0",
+    date: "2026-07-07",
+    type: "minor",
+    summary:
+      "Foundations & polish — shared loading, empty-state and confirmation building blocks, a proper 404 page, and tighter control proportions.",
+    sections: [
+      {
+        title: "New building blocks",
+        items: [
+          "Added a shared Spinner and a consistent EmptyState used across list views, so loading and 'nothing here yet' states look the same everywhere",
+          "Added a reusable confirmation dialog — destructive actions now ask before they act (starting with removing item attachments)",
+          "Added a friendly 404 page for unknown links, with quick ways back home or to the previous page",
+        ],
+      },
+      {
+        title: "Polish",
+        items: [
+          "Fixed the add / action button proportions so they line up cleanly with search boxes and dropdowns in every filter row (matched the 32px control height and softened the square look)",
+          "Bulletproofed the collapsed sidebar rail so every icon centres on one axis regardless of scrolling, and softened the project switcher from a hard-bordered square",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.7.1",
+    date: "2026-07-07",
+    type: "patch",
+    summary: "Shell polish — aligned the collapsed rail, moved page actions inline, and tidied the sidebar footer.",
+    sections: [
+      {
+        title: "Sidebar",
+        items: [
+          "Fixed icon alignment in the collapsed rail so the logo, toggle and every icon share one centre line (and the nav no longer shifts when a scrollbar appears)",
+          "Delivery Notes now uses the truck icon in the sidebar and the New menu, matching its action button",
+          "Updates now sits beside Docs in the footer meta row with matching link styling, instead of a separate row",
+        ],
+      },
+      {
+        title: "Page actions",
+        items: [
+          "Primary add buttons moved inline to the end of each page's search/filter row (e.g. next to the date filters on Delivery Notes) instead of the top bar",
+          "Tracker keeps its delivery-note toggle and Import/Export overflow together with Add at the end of the filter row",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.7.0",
+    date: "2026-07-07",
+    type: "minor",
+    summary: "App-shell redesign — collapsible sidebar, cleaner top bar, and consistent icon action buttons across pages.",
+    sections: [
+      {
+        title: "Sidebar",
+        items: [
+          "Collapse the sidebar to an icon-only rail (and expand it back) to give the main content more room — your preference is remembered across sessions",
+          "Collapsed rail shows tooltips on hover so every nav item stays discoverable",
+          "Profile moved into a dropdown at the bottom of the sidebar — open your profile or sign out from one place",
+          "Theme toggle is now a minimal icon alongside Docs + version, instead of a full row",
+        ],
+      },
+      {
+        title: "Top Bar",
+        items: [
+          "Removed the account avatar and breadcrumb from the top bar — the account now lives in the sidebar and breadcrumbs sit just above each page title",
+          "Search box is now a fixed width so it no longer resizes as page actions change — consistent on every page",
+          "Page action buttons are compact icon buttons with tooltips; secondary actions (like Import / Export) collapse into an overflow menu to reduce clutter",
+        ],
+      },
+      {
+        title: "Pages",
+        items: [
+          "Removed the coloured category labels (Register, Support, Logistics, …) above page titles for a cleaner header",
+          "Removed the lightbulb Feature Inbox from the Admin page — feature requests are managed on the Updates page now",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.6.1",
+    date: "2026-07-07",
+    type: "patch",
+    summary: "Shell UX polish — sidebar profile row, theme toggle relocated, and per-page action buttons in the top bar.",
+    sections: [
+      {
+        title: "Sidebar",
+        items: [
+          "Profile row at the bottom of the sidebar — shows your avatar, name and @username; click to open your profile dialog",
+          "Theme toggle (dark/light mode) moved from the top bar into the sidebar footer with a text label",
+          "Profile row and theme toggle sit above the Updates link for a clean footer hierarchy",
+        ],
+      },
+      {
+        title: "Top Bar",
+        items: [
+          "Page action buttons (Add item, Import, Export, New delivery note, New ticket, Request technicians, etc.) now appear in the top-right of the top bar — keeps page bodies clean",
+          "Visual separator between page actions and the user avatar",
+          "\"My profile\" now opens on first click — fixed a Radix Dialog + DropdownMenu focus-trap race condition",
+        ],
+      },
+      {
+        title: "Bug Fixes",
+        items: [
+          "Fixed a React hooks ordering violation in ProfileDialog that caused \"view profile\" to silently fail on the first click",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.6.0",
+    date: "2026-07-07",
+    type: "minor",
+    summary: "Dedicated Updates page — changelog and feature requests now live inside the app as a first-class experience.",
+    sections: [
+      {
+        title: "Updates Page",
+        items: [
+          "New /updates page inside the app shell — What's New tab (full changelog with type filters and collapsible cards) and Feature Requests tab (submit, upvote, and track status)",
+          "Changelog cards are collapsible — the latest release opens by default, older ones are collapsed for scanning",
+          "Type filter chips (All / Major / Minor / Patch with counts) let you quickly scan what kind of changes landed",
+          "Feature Requests board: submit a new request inline, upvote others, and see status (Pending → Planned → In Progress → Done) in one place",
+          "Upvotes are now tracked per-user with a one-vote guard — your vote persists across sessions",
+          "\"Mine\" badge on requests you submitted, so they're easy to find",
+          "Updates page is accessible to all team members (including read-only guests)",
+        ],
+      },
+      {
+        title: "Navigation",
+        items: [
+          "\"Request a feature\" dialog removed from the sidebar footer — consolidated into the Updates page",
+          "Sidebar footer now links directly to Updates and Docs",
+        ],
+      },
+      {
+        title: "Database",
+        items: [
+          "Migration 0017: feature_requests SELECT opened to all authenticated users; admin-only write/delete policies enforced",
+          "New upvote_feature_request() SECURITY DEFINER function — prevents users from modifying any field other than upvote count",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.5.0",
+    date: "2026-07-06",
+    type: "minor",
+    summary: "New Technicians module — coordinate field technicians with a request → approve → assign workflow.",
+    sections: [
+      {
+        title: "Technicians",
+        items: [
+          "Roster: managers create, edit and delete technicians with Iqama number + expiry (with expiry warnings), trade, phone, nationality and notes",
+          "Requests: members request technicians for their project over flexible date-to-date and time-to-time ranges, with a quantity, notes and quick-select gear tags (Ladder, Tools, Safety Vest, Harness, Scaffold, Drill/Power Tools, PPE, Access Card)",
+          "Request inbox: managers filter by status and respond — Approve & assign specific technicians (optionally on adjusted dates), Propose change, or Decline, each with a note back",
+          "Schedule board: see where each technician is today and where they're headed next, plus ad-hoc direct assignments",
+          "My requests: members track their requests and the manager's response, and can cancel while pending",
+        ],
+      },
+      {
+        title: "Access & Roles",
+        items: [
+          "New Technicians manager role — admins are managers by default and can grant it to any member from their profile",
+          "Technicians is an access-controlled page; First Fix users are excluded from all technician data at the database level",
+        ],
+      },
+    ],
+  },
   {
     version: "v2.4.2",
     date: "2026-07-05",

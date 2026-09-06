@@ -1,16 +1,12 @@
 import { useEffect, useRef, useState } from "react"
 import {
-  ChevronDown,
-  ChevronUp,
   FolderOpen,
-  Inbox,
-  KeyRound,
-  Lightbulb,
   Loader2,
   Pencil,
   Plus,
   Shield,
   Trash2,
+  UserCircle,
   UserPlus,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -20,13 +16,8 @@ import {
   useAllProfiles,
   useCreateAccount,
   useDeleteAccount,
-  useDeleteFeatureRequest,
-  useFeatureRequests,
-  useSetPassword,
-  useUpdateFeatureRequest,
   useUpdateProfile,
   useUpdateUserDetails,
-  type FeatureRequest,
 } from "@/hooks/useAdmin"
 import {
   useAllProjectMembers,
@@ -80,221 +71,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
-import { APP_PAGES, APP_PAGE_LABELS, ORGS, ORG_LABELS, type AppPage, type Org, type Profile } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { APP_PAGES, APP_PAGE_LABELS, ORGS, ORG_LABELS, ROLES, ROLE_LABELS, type AppPage, type Org, type Profile, type Role } from "@/lib/types"
+import { ProfileDialog } from "@/components/ProfileDialog"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { PageHeader } from "@/components/PageHeader"
-
-const STATUS_LABELS: Record<FeatureRequest["status"], string> = {
-  pending: "Pending",
-  planned: "Planned",
-  in_progress: "In Progress",
-  done: "Done",
-  rejected: "Rejected",
-}
-
-const STATUS_STYLES: Record<FeatureRequest["status"], string> = {
-  pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
-  planned: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-  in_progress: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
-  done: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
-  rejected: "bg-muted text-muted-foreground",
-}
-
-function FeatureInbox() {
-  const [open, setOpen] = useState(false)
-  const [filter, setFilter] = useState<"all" | FeatureRequest["status"]>("all")
-  const { data: requests = [], isLoading } = useFeatureRequests()
-  const update = useUpdateFeatureRequest()
-  const remove = useDeleteFeatureRequest()
-
-  const visible =
-    filter === "all" ? requests : requests.filter((r) => r.status === filter)
-
-  function upvote(r: FeatureRequest) {
-    update.mutate({ id: r.id, patch: { upvotes: r.upvotes + 1 } })
-  }
-
-  function downvote(r: FeatureRequest) {
-    update.mutate({ id: r.id, patch: { upvotes: r.upvotes - 1 } })
-  }
-
-  function deleteRequest(id: string) {
-    remove.mutate(id, { onSuccess: () => toast.success("Request deleted") })
-  }
-
-  function setStatus(r: FeatureRequest, status: FeatureRequest["status"]) {
-    update.mutate(
-      { id: r.id, patch: { status } },
-      { onSuccess: () => toast.success("Status updated") },
-    )
-  }
-
-  return (
-    <>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8 text-muted-foreground/40 hover:text-muted-foreground"
-            onClick={() => setOpen(true)}
-          >
-            <Lightbulb className="size-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="text-xs">
-          Feature inbox
-        </TooltipContent>
-      </Tooltip>
-
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent
-          side="right"
-          className="flex w-full flex-col overflow-hidden p-0 sm:max-w-104"
-        >
-          <SheetHeader className="border-b px-5 py-4">
-            <SheetTitle className="flex items-center gap-2 text-base">
-              <Lightbulb className="size-4 text-primary" />
-              Feature Inbox
-              {requests.length > 0 && (
-                <span className="ml-auto text-xs font-normal text-muted-foreground">
-                  {requests.length} total
-                </span>
-              )}
-            </SheetTitle>
-          </SheetHeader>
-
-          {/* Filter pills */}
-          <div className="flex gap-1.5 overflow-x-auto border-b px-4 py-2.5 scrollbar-none">
-            {(["all", "pending", "planned", "in_progress", "done", "rejected"] as const).map(
-              (s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setFilter(s)}
-                  className={cn(
-                    "shrink-0 rounded-full px-2.5 py-0.5 text-xs transition-colors",
-                    filter === s
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted",
-                  )}
-                >
-                  {s === "all" ? "All" : STATUS_LABELS[s]}
-                </button>
-              ),
-            )}
-          </div>
-
-          {/* List */}
-          <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="size-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : visible.length === 0 ? (
-              <div className="flex flex-col items-center py-16 text-center">
-                <div className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-muted">
-                  <Inbox className="size-5 text-muted-foreground" />
-                </div>
-                <p className="font-display text-lg">All clear</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  No requests here yet.
-                </p>
-              </div>
-            ) : (
-              visible.map((r) => (
-                <div
-                  key={r.id}
-                  className="rounded-xl border bg-card p-3 transition-shadow hover:shadow-sm"
-                >
-                  <div className="flex items-start gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium leading-snug">{r.title}</p>
-                      {r.description && (
-                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                          {r.description}
-                        </p>
-                      )}
-                    </div>
-                    {/* Vote */}
-                    <div className="flex shrink-0 flex-col items-center rounded-lg border bg-muted/40 text-muted-foreground">
-                      <button
-                        type="button"
-                        title="Upvote"
-                        onClick={() => upvote(r)}
-                        className="rounded-t-lg px-1.5 pt-1 pb-0.5 transition-colors hover:bg-primary/10 hover:text-primary"
-                      >
-                        <ChevronUp className="size-3.5" />
-                      </button>
-                      <span className="text-[10px] font-bold tabular-nums leading-none py-0.5">
-                        {r.upvotes}
-                      </span>
-                      <button
-                        type="button"
-                        title="Downvote"
-                        onClick={() => downvote(r)}
-                        className="rounded-b-lg px-1.5 pb-1 pt-0.5 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <ChevronDown className="size-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <Select
-                      value={r.status}
-                      onValueChange={(v) =>
-                        setStatus(r, v as FeatureRequest["status"])
-                      }
-                    >
-                      <SelectTrigger
-                        className={cn(
-                          "h-5 w-auto gap-1 rounded-full border-0 px-2 py-0 text-[10px] font-semibold shadow-none ring-0 focus:ring-0",
-                          STATUS_STYLES[r.status],
-                        )}
-                      >
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(STATUS_LABELS).map(([val, label]) => (
-                          <SelectItem key={val} value={val} className="text-xs">
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span className="text-[10px] text-muted-foreground/60">
-                      {new Date(r.submitted_at).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </span>
-                    <button
-                      type="button"
-                      title="Delete request"
-                      onClick={() => deleteRequest(r.id)}
-                      className="ml-auto rounded p-0.5 text-muted-foreground/40 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="size-3" />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
-    </>
-  )
-}
 
 export default function AdminPage() {
   const { profile } = useAuth()
@@ -314,12 +94,9 @@ export default function AdminPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        eyebrow="Control"
         title="Admin"
         subtitle="Manage team accounts, projects and the system list."
-      >
-        <FeatureInbox />
-      </PageHeader>
+      />
       <ProjectsSection />
       <AccountsSection />
       <SystemsSection />
@@ -336,13 +113,12 @@ function AccountsSection() {
   const assign = useAssignProject()
   const unassign = useUnassignProject()
   const updateProfile = useUpdateProfile()
-  const setPassword = useSetPassword()
   const deleteAccount = useDeleteAccount()
 
   const [createOpen, setCreateOpen] = useState(false)
-  const [pwUser, setPwUser] = useState<Profile | null>(null)
   const [delUser, setDelUser] = useState<Profile | null>(null)
   const [editUser, setEditUser] = useState<Profile | null>(null)
+  const [viewProfile, setViewProfile] = useState<Profile | null>(null)
 
   async function toggleProjectMember(p: Profile, projectId: string) {
     const assigned = memberships.some(
@@ -370,13 +146,13 @@ function AccountsSection() {
     }
   }
 
-  async function changeAdmin(p: Profile, value: string) {
+  async function changeRole(p: Profile, role: Role) {
     try {
       await updateProfile.mutateAsync({
         id: p.id,
-        patch: { is_admin: value === "admin" },
+        patch: { role, is_admin: role === "admin" },
       })
-      toast.success(value === "admin" ? "Promoted to admin" : "Set to member")
+      toast.success(`Role changed to ${ROLE_LABELS[role]}`)
     } catch (e) {
       toast.error("Could not update", {
         description: e instanceof Error ? e.message : "Unknown error",
@@ -435,11 +211,11 @@ function AccountsSection() {
                       <span className="font-mono text-xs text-muted-foreground">{p.username}</span>
                     </div>
                     <div className="flex shrink-0 items-center gap-0.5">
+                      <Button variant="ghost" size="icon" className="size-8" onClick={() => setViewProfile(p)}>
+                        <UserCircle className="size-3.5" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="size-8" onClick={() => setEditUser(p)}>
                         <Pencil className="size-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="size-8" onClick={() => setPwUser(p)}>
-                        <KeyRound className="size-3.5" />
                       </Button>
                       {p.id !== user?.id && (
                         <Button variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => setDelUser(p)}>
@@ -457,11 +233,10 @@ function AccountsSection() {
                         {ORGS.map((o) => <SelectItem key={o} value={o}>{ORG_LABELS[o]}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                    <Select value={p.is_admin ? "admin" : "member"} onValueChange={(v) => changeAdmin(p, v)} disabled={p.id === user?.id}>
+                    <Select value={p.role ?? (p.is_admin ? "admin" : "member")} onValueChange={(v) => changeRole(p, v as Role)} disabled={p.id === user?.id}>
                       <SelectTrigger size="sm" className="h-8 w-full"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="member">Member</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
+                        {ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -547,12 +322,25 @@ function AccountsSection() {
                 {profiles.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">
-                      {p.full_name ?? "—"}
-                      {p.id === user?.id && (
-                        <Badge variant="secondary" className="ml-2">
-                          You
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          className="flex items-center gap-1.5 hover:text-primary transition-colors"
+                          onClick={() => setViewProfile(p)}
+                        >
+                          {p.avatar_url ? (
+                            <img src={p.avatar_url} alt="" className="size-6 rounded-full object-cover" />
+                          ) : (
+                            <div className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold uppercase text-primary">
+                              {((p.full_name ?? p.username ?? "?").slice(0, 2))}
+                            </div>
+                          )}
+                          <span>{p.full_name ?? "—"}</span>
+                        </button>
+                        {p.id === user?.id && (
+                          <Badge variant="secondary">You</Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="font-mono text-xs">
                       {p.username}
@@ -576,16 +364,17 @@ function AccountsSection() {
                     </TableCell>
                     <TableCell>
                       <Select
-                        value={p.is_admin ? "admin" : "member"}
-                        onValueChange={(v) => changeAdmin(p, v)}
+                        value={p.role ?? (p.is_admin ? "admin" : "member")}
+                        onValueChange={(v) => changeRole(p, v as Role)}
                         disabled={p.id === user?.id}
                       >
                         <SelectTrigger size="sm" className="h-7 w-28">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="member">Member</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
+                          {ROLES.map((r) => (
+                            <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -681,19 +470,19 @@ function AccountsSection() {
                       <div className="flex items-center gap-1">
                         <Tooltip>
                           <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-7" onClick={() => setViewProfile(p)}>
+                              <UserCircle className="size-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>View profile</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" className="size-7" onClick={() => setEditUser(p)}>
                               <Pencil className="size-4" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Edit name / username</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="size-7" onClick={() => setPwUser(p)}>
-                              <KeyRound className="size-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Reset password</TooltipContent>
                         </Tooltip>
                         {p.id !== user?.id && (
                           <Tooltip>
@@ -718,12 +507,6 @@ function AccountsSection() {
 
       <CreateAccountDialog open={createOpen} onOpenChange={setCreateOpen} />
       <EditProfileDialog user={editUser} onClose={() => setEditUser(null)} />
-      <ResetPasswordDialog
-        user={pwUser}
-        onClose={() => setPwUser(null)}
-        setPassword={(id, password) => setPassword.mutateAsync({ id, password })}
-        busy={setPassword.isPending}
-      />
       <DeleteAccountDialog
         user={delUser}
         onClose={() => setDelUser(null)}
@@ -741,6 +524,12 @@ function AccountsSection() {
           }
         }}
         busy={deleteAccount.isPending}
+      />
+      <ProfileDialog
+        profile={viewProfile}
+        open={!!viewProfile}
+        onClose={() => setViewProfile(null)}
+        isAdmin
       />
     </Card>
   )
@@ -842,7 +631,7 @@ function CreateAccountDialog({
   const [fullName, setFullName] = useState("")
   const [password, setPassword] = useState("")
   const [org, setOrg] = useState<Org>("frontline")
-  const [isAdmin, setIsAdmin] = useState("member")
+  const [role, setRole] = useState<Role>("member")
 
   async function submit() {
     if (!username.trim() || !password.trim()) {
@@ -855,14 +644,14 @@ function CreateAccountDialog({
         password: password.trim(),
         full_name: fullName.trim() || username.trim(),
         org,
-        is_admin: isAdmin === "admin",
+        is_admin: role === "admin",
       })
       toast.success(`Account "${username.trim()}" created`)
       setUsername("")
       setFullName("")
       setPassword("")
       setOrg("frontline")
-      setIsAdmin("member")
+      setRole("member")
       onOpenChange(false)
     } catch (e) {
       toast.error("Could not create account", {
@@ -921,13 +710,14 @@ function CreateAccountDialog({
             </div>
             <div className="grid gap-1.5">
               <Label className="text-xs text-muted-foreground">Role</Label>
-              <Select value={isAdmin} onValueChange={setIsAdmin}>
+              <Select value={role} onValueChange={(v) => setRole(v as Role)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -948,60 +738,6 @@ function CreateAccountDialog({
   )
 }
 
-function ResetPasswordDialog({
-  user,
-  onClose,
-  setPassword,
-  busy,
-}: {
-  user: Profile | null
-  onClose: () => void
-  setPassword: (id: string, password: string) => Promise<unknown>
-  busy: boolean
-}) {
-  const [pw, setPw] = useState("")
-  return (
-    <Dialog open={!!user} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Reset password</DialogTitle>
-          <DialogDescription>
-            Set a new password for {user?.full_name ?? user?.username}.
-          </DialogDescription>
-        </DialogHeader>
-        <Input
-          value={pw}
-          onChange={(e) => setPw(e.target.value)}
-          placeholder="New password"
-        />
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            disabled={busy || pw.length < 6 || !user}
-            onClick={async () => {
-              if (!user) return
-              try {
-                await setPassword(user.id, pw)
-                toast.success("Password updated")
-                setPw("")
-                onClose()
-              } catch (e) {
-                toast.error("Could not update password", {
-                  description: e instanceof Error ? e.message : "Unknown error",
-                })
-              }
-            }}
-          >
-            {busy && <Loader2 className="size-4 animate-spin" />}
-            Update
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 function DeleteAccountDialog({
   user,
@@ -1269,7 +1005,7 @@ function ProjectsSection() {
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>Projects</CardTitle>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
+        <Button size="sm" variant="outline" onClick={() => setCreateOpen(true)}>
           <Plus className="size-4" /> New project
         </Button>
       </CardHeader>

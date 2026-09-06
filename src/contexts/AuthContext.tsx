@@ -18,6 +18,7 @@ interface AuthContextValue {
   loading: boolean
   signIn: (username: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  refetchProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -65,12 +66,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [session?.user.id])
 
+  async function refetchProfile() {
+    const uid = session?.user.id
+    if (!uid) return
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", uid)
+      .maybeSingle()
+    if (data) setProfile(data as Profile)
+  }
+
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
       user: session?.user ?? null,
       profile,
       loading,
+      refetchProfile,
       signIn: async (username, password) => {
         const { error } = await supabase.auth.signInWithPassword({
           email: usernameToEmail(username),
@@ -82,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut()
       },
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [session, profile, loading]
   )
 

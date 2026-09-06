@@ -120,6 +120,19 @@ export const ORG_LABELS: Record<string, string> = {
   firstfix: "First Fix",
 }
 
+export const ROLES = ["admin", "member", "guest"] as const
+export type Role = (typeof ROLES)[number]
+export const ROLE_LABELS: Record<Role, string> = {
+  admin: "Admin",
+  member: "Member",
+  guest: "Guest",
+}
+export const ROLE_DESCRIPTIONS: Record<Role, string> = {
+  admin: "Full access — manage users, projects and all data",
+  member: "Standard access — create and edit within assigned projects",
+  guest: "Read-only — can view data but cannot create or modify",
+}
+
 export interface Project {
   id: string
   name: string
@@ -153,13 +166,14 @@ export interface ItemSerial {
 
 // Pages that can be individually granted/revoked per frontline user.
 // Admins see all pages; firstfix users only see "documents" regardless.
-export const APP_PAGES = ["tracker", "documents", "dashboard", "tickets"] as const
+export const APP_PAGES = ["tracker", "documents", "dashboard", "tickets", "technicians"] as const
 export type AppPage = (typeof APP_PAGES)[number]
 export const APP_PAGE_LABELS: Record<AppPage, string> = {
   tracker: "Procurement",
   documents: "Documents",
   dashboard: "Dashboard",
   tickets: "Support Tickets",
+  technicians: "Technicians",
 }
 
 // ---- Support Tickets -------------------------------------------------------
@@ -259,10 +273,12 @@ export interface Profile {
   id: string
   username: string | null
   full_name: string | null
-  role: string
+  role: Role
   org: Org | null
   is_admin: boolean
+  is_tech_manager: boolean
   allowed_pages: string[] | null
+  avatar_url: string | null
   created_at: string
 }
 
@@ -425,4 +441,94 @@ export interface ItemFile {
   dated: string
   uploaded_by: string | null
   uploaded_at: string
+}
+
+// ---- Technicians ---------------------------------------------------------
+export interface Technician {
+  id: string
+  full_name: string
+  iqama_number: string | null
+  iqama_expiry: string | null
+  phone: string | null
+  nationality: string | null
+  trade: string | null
+  notes: string | null
+  active: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+// Common gear / requirements a member can tag on a request instead of writing
+// them out in notes.
+export const TECH_REQUEST_TAGS = [
+  "Ladder",
+  "Tools",
+  "Safety Vest",
+  "Harness",
+  "Scaffold",
+  "Drill / Power Tools",
+  "PPE",
+  "Access Card",
+] as const
+export type TechRequestTag = (typeof TECH_REQUEST_TAGS)[number]
+
+export const TECH_REQUEST_STATUSES = [
+  "pending",
+  "approved",
+  "changed",
+  "declined",
+  "cancelled",
+] as const
+export type TechRequestStatus = (typeof TECH_REQUEST_STATUSES)[number]
+
+export const TECH_REQUEST_STATUS_LABELS: Record<TechRequestStatus, string> = {
+  pending: "Pending",
+  approved: "Approved",
+  changed: "Changed",
+  declined: "Declined",
+  cancelled: "Cancelled",
+}
+
+export const TECH_REQUEST_STATUS_STYLES: Record<TechRequestStatus, string> = {
+  pending: "bg-amber-100 text-amber-800 border-transparent dark:bg-amber-950 dark:text-amber-300",
+  approved: "bg-emerald-100 text-emerald-800 border-transparent dark:bg-emerald-950 dark:text-emerald-300",
+  changed: "bg-blue-100 text-blue-800 border-transparent dark:bg-blue-950 dark:text-blue-300",
+  declined: "bg-red-100 text-red-800 border-transparent dark:bg-red-950 dark:text-red-300",
+  cancelled: "bg-muted text-muted-foreground border-transparent",
+}
+
+export interface TechnicianRequest {
+  id: string
+  project_id: string | null
+  project_name: string
+  quantity: number
+  start_date: string
+  end_date: string
+  start_time: string | null
+  end_time: string | null
+  tags: string[]
+  notes: string | null
+  status: TechRequestStatus
+  response_note: string | null
+  responded_by: string | null
+  responded_at: string | null
+  requested_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface TechnicianAssignment {
+  id: string
+  technician_id: string
+  project_id: string | null
+  project_name: string
+  request_id: string | null
+  start_date: string
+  end_date: string
+  start_time: string | null
+  end_time: string | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
 }

@@ -2,6 +2,281 @@
 
 ---
 
+## v2.13.1 — 2026-07-09
+
+Technician requests — card polish, expired state, deduped actions.
+
+### Requests
+
+- Compact card layout: project name + status badge on one line, date / time / qty / requester on the next, tags below; notes and response notes moved to a detail dialog (eye icon)
+- Requests sort automatically: actionable (pending/changed, date not yet passed) float to the top, expired in the middle, resolved at the bottom
+- Expired state: a pending or changed request whose work date has passed now shows an "Expired" badge and hides the Respond button
+- "New request" button moved inside the Requests tab; redundant global ActionButton removed from the tab header row
+
+---
+
+## v2.13.0 — 2026-07-09
+
+Technician schedule board overhaul — global project Kanban.
+
+### Schedule board
+
+- Board is now the default view (replaces the list-first layout)
+- Items are **technicians** (one card per person), not individual assignments — a tech's column is their current or next upcoming assignment's project
+- Columns are all projects in the system (not just ones that already have assignments), plus a permanent **Unassigned** column at the left
+- Drag a tech to a project column: if they have an existing assignment, the project is updated in place; if they're unassigned, the assign dialog opens pre-filled with that project and technician
+- Drag a tech to Unassigned: confirms then removes their current placement, returning them to the pool
+- Each card shows the tech's trade and their assignment date range (or "Available" if none)
+- `AssignTechnicianDialog` now accepts a `projectId` prop so drop-to-assign pre-fills the project picker
+
+---
+
+## v2.12.2 — 2026-07-09
+
+Collapsed sidebar icon centering — definitive fix.
+
+### Collapsed rail
+
+- Replaced `flex flex-col items-center` container centering with explicit `px-3.5` padding on every collapsed section — since the rail is 64 px and icons are 36 px (size-9), 14 px each side is arithmetically exact and can't drift with subpixel flex rounding or scrollbar-gutter offsets
+- Dividers now fill the padded content area (`h-px bg-sidebar-border`, no explicit width) so they align to the same 36 px column as the icons
+
+---
+
+## v2.12.1 — 2026-07-09
+
+Calendar redesign + collapsed-sidebar polish.
+
+### Calendar
+
+- Rewrote `ui/calendar.tsx` classNames: fixed the weekday/day width mismatch (`week` was `flex w-full` while `weekdays` was `flex`, so header and grid didn't line up), tightened cell sizing to a uniform `size-9`, absolutely-positioned nav over the caption row, and cleaned the selected/today styles
+
+### Sidebar
+
+- Standardised all collapsed-rail icons to `size-4.5` + `rounded-lg` (the collapse toggle and theme toggle were `size-4`), simplified the section containers, and widened dividers to `w-8` so the rail reads as one centred column
+
+---
+
+## v2.12.0 — 2026-07-09
+
+Phase 3 — technician scheduling board (third Kanban), using existing data (no migration).
+
+### Technicians
+
+- Schedule gains a **by-place board view**: columns are sites (projects), cards are technician placements (name · dates · times)
+- Managers drag a card to another site column to reassign the placement (`useUpdateAssignment`, gated by existing tech-manager RLS)
+- Toggle between the by-technician roster and the by-place board
+
+### Deferred (need a DB migration / can't be verified here)
+
+- **Manual PDF upload for delivery notes** — delivery notes are generated client-side; storing an uploaded PDF needs a new `storage_path` column + bucket + an upload/download round-trip that can't be verified without a live environment
+- **Server-side pagination for the Tracker** — the tracker relies on the full dataset for system-grouping and delivery-note multi-select; paginating server-side would break those flows and needs a UX rethink first (the new `DataTable` already gives client-side pagination for flatter lists like Documents)
+
+---
+
+## v2.11.0 — 2026-07-09
+
+Phase 2 — reusable data grid, first applied to Documents.
+
+### Tables
+
+- New reusable `DataTable` (`src/components/ui/data-table.tsx`) built on `@tanstack/react-table` + the shared Table primitives: sortable columns, global filter, and client-side pagination
+- **Documents** gains a cards/table view toggle; the table sorts by column, filters, paginates, and opens the document drawer on row click
+- Note: server-side pagination for the Tracker is intentionally deferred — the tracker relies on the full dataset for system-grouping and delivery-note multi-select; revisiting once dataset sizes warrant it
+
+---
+
+## v2.10.1 — 2026-07-09
+
+Calendar consistency pass.
+
+### Dates
+
+- Swapped the remaining native `<input type="date">` fields (technician request/respond/assign dialogs, technician form iqama expiry, document date) for the shared `DatePicker` (Calendar)
+- Added an optional `min` prop to `DatePicker` (disables earlier dates via react-day-picker) so end dates can't precede start dates
+
+---
+
+## v2.10.0 — 2026-07-07
+
+Phase 3 — Kanban boards for tickets and the feature roadmap.
+
+### Boards
+
+- New reusable `KanbanBoard` component (native HTML5 drag-and-drop, no new dependency) in `src/components/kanban/`
+- **Support Tickets**: list/board view toggle; drag tickets between status columns (open · in progress · pending · resolved · closed) to update status via `useUpdateTicket`
+- **Feature roadmap** (Updates → Feature requests): list/board toggle; admins drag requests across Pending · Planned · In Progress · Done · Rejected via `useUpdateFeatureRequest` (non-admins get a read-only board)
+
+---
+
+## v2.9.0 — 2026-07-07
+
+Phase 2 begins — the item detail is now tabbed, and more destructive actions are confirmed.
+
+### Item detail
+
+- The item dialog is now organised into **Details · Serials · Attachments · History** tabs (when editing an existing item); adding a new item still shows the single form
+- New **History** tab renders the full edit timeline inside the item view
+- Extracted a shared `ItemHistoryList` used by both the item History tab and the `HistoryDrawer` (removes duplicated timeline rendering)
+
+### Confirmations
+
+- Technician request deletion and schedule assignment removal now go through the shared `useConfirm` dialog
+
+---
+
+## v2.8.2 — 2026-07-07
+
+Continued Phase 1 polish — avatars, item-detail density, and confirmation consistency.
+
+### Avatars & profile
+
+- New shared `UserAvatar` with deterministic colour-coded initials fallbacks (stable per user id); adopted in the sidebar profile and the profile view large avatar
+- Removed the duplicated `initials()` helpers in favour of the shared component
+
+### Item detail
+
+- Redesigned the Quantities block (Required / Ordered / Delivered / Installed) into a single compact, lower-emphasis grouped control (`QtyInput`)
+- Added `Separator`s between property groups (specs · status · schedule) for scannability
+
+### Confirmations
+
+- Delivery-note deletion migrated to the shared `useConfirm` dialog; removed the bespoke dialog and its placeholder emoji spinner
+
+---
+
+## v2.8.1 — 2026-07-07
+
+Consistency pass adopting the new v2.8.0 primitives across the list pages.
+
+### Consistency
+
+- Tickets, Documents and Delivery Notes now render the shared `EmptyState` for both "nothing yet" and "no results" cases
+- Documents page loading indicators standardised on the shared `Spinner` (list and inline action buttons)
+
+---
+
+## v2.8.0 — 2026-07-07
+
+Foundations & polish — the first phase of the broader UI overhaul. Introduces shared building blocks (loading, empty states, confirmations), a real 404 page, and tighter control proportions that later phases build on.
+
+### New building blocks
+
+- Shared `Spinner` and a consistent `EmptyState` component adopted across list views for uniform loading and empty presentation
+- Reusable, imperative confirmation dialog (`useConfirm`) so destructive/irreversible actions are gated behind a dialog — wired first into item attachment removal
+- Friendly 404 page for unknown routes with "Go back" and "Go home" actions
+
+### Polish
+
+- Fixed action/add button proportions to match the 32px control height and `rounded-sm` radius of inputs and selects, so they align cleanly in every filter row; softened the square-button look
+- Hardened the collapsed sidebar rail — every section is an explicit full-width centered column so icons share one axis regardless of scroll gutter; softened the project switcher from a hard-bordered square
+
+---
+
+## v2.7.1 — 2026-07-07
+
+Shell polish following the v2.7.0 redesign — collapsed-rail alignment, inline page actions, and a tidier sidebar footer.
+
+### Sidebar
+
+- Fixed icon alignment in the collapsed rail so the logo, collapse toggle and every icon share a single centre line; the nav no longer shifts when a scrollbar appears
+- Delivery Notes uses the truck icon in the sidebar and the New menu, matching its action button
+- Updates now sits beside Docs in the footer meta row with matching link styling, instead of its own row
+
+### Page actions
+
+- Primary add buttons moved inline to the end of each page's search/filter row (e.g. beside the date filters on Delivery Notes) rather than the top bar
+- Tracker keeps its delivery-note toggle and Import/Export overflow together with Add at the end of the filter row
+
+---
+
+## v2.7.0 — 2026-07-07
+
+App-shell redesign — collapsible sidebar, a cleaner top bar, and consistent icon action buttons across every page.
+
+### Sidebar
+
+- **Collapsible rail:** collapse the sidebar to an icon-only rail (and expand it back) for a wider view of the main content; the state persists across sessions
+- Collapsed rail shows tooltips on hover so nav items stay discoverable
+- **Profile dropdown:** the profile row at the bottom now opens a menu with "My profile" and "Sign out" — the account no longer lives in the top bar
+- **Minimal theme toggle:** dark/light switch is now a small icon next to Docs + version, not a full row
+
+### Top Bar
+
+- Removed the account avatar and the breadcrumb from the top bar
+- **Fixed-width search:** the search box no longer resizes as page actions change — it stays consistent on every page
+- **Icon action buttons:** each page's actions are now compact icon buttons with tooltips; secondary actions (Import / Export) collapse into an overflow menu to reduce clutter
+
+### Pages
+
+- Breadcrumbs now sit just above each page title instead of in the top bar
+- Removed the coloured category eyebrows (Register, Support, Logistics, …) above page titles
+- Removed the lightbulb Feature Inbox from the Admin page — feature requests live on the Updates page now
+
+---
+
+## v2.6.1 — 2026-07-07
+
+Shell UX polish — profile access in sidebar, theme toggle relocated, and page action buttons promoted to the top bar.
+
+### Sidebar
+
+- **Profile row:** avatar + name + @username at the bottom of the sidebar; click to open your profile dialog directly
+- **Theme toggle:** dark/light mode switch moved from the top bar into the sidebar footer (below the profile row), now with a text label
+- Theme toggle and profile row sit above the Updates link for a consistent footer ordering
+
+### Top Bar
+
+- **Page action buttons:** each page's primary CTA buttons (Add, Import, Export, New, Request…) now appear in the top-right corner of the top bar via a React portal — keeps the page body clean and matches the professional app-shell pattern
+- Separator between page actions and the user avatar for visual grouping
+- "My profile" dropdown item now opens reliably on first click (fixed Radix Dialog + DropdownMenu focus-trap race condition)
+
+### Bug Fix
+
+- Fixed a React hooks ordering violation in `ProfileDialog` where a `useEffect` appeared after a conditional return — caused "view profile" to silently fail on the first click
+
+---
+
+## v2.6.0 — 2026-07-07
+
+Dedicated Updates page — changelog and feature requests now live inside the app as a first-class experience.
+
+### Updates Page
+- **What's New tab:** full changelog with type filter chips (All / Major / Minor / Patch with counts) and collapsible release cards — the latest opens by default, older ones collapse for easy scanning
+- **Feature Requests tab:** submit a request inline (no dialog), upvote others (one vote per user, persists in localStorage), and track status (Pending → Planned → In Progress → Done) in one place
+- "Mine" badge on requests you submitted; upvote button shows filled state after voting
+- Page is accessible to all team members including read-only guests
+
+### Navigation
+- "Request a feature" dialog removed from the sidebar footer — consolidated into the Updates page
+- Sidebar footer now links directly to Updates (with icon) and Docs
+
+### Database
+- Migration `0017`: `feature_requests` SELECT opened to all authenticated users; admin-only policies enforced for UPDATE/DELETE
+- New `upvote_feature_request()` SECURITY DEFINER function — safe increment, cannot touch status or other fields
+
+---
+
+## v2.5.0 — 2026-07-06
+
+New Technicians module — coordinate field technicians across projects with a request → approve → assign workflow.
+
+### Technicians
+- **Roster:** a technicians manager can create, edit and delete technicians with Iqama number + expiry (with expiry warnings), trade, phone, nationality and notes
+- **Requests:** any member can request technicians for their project's upcoming work — flexible date-to-date and time-to-time ranges, a quantity, free-text notes, and quick-select requirement tags (Ladder, Tools, Safety Vest, Harness, Scaffold, Drill/Power Tools, PPE, Access Card) so common gear needn't be spelled out
+- **Request inbox:** the manager sees all requests, filters by status, and responds — Approve & assign specific technicians (optionally on adjusted dates), Propose change, or Decline, each with a note back to the requester
+- **Schedule board:** per-technician view of where each person is assigned today and where they're headed next, plus ad-hoc direct assignments and one-click removal
+- **My requests:** members track their own requests and the manager's response, and can cancel while pending
+
+### Access & roles
+- New **Technicians manager** flag (`profiles.is_tech_manager`) — admins are managers by default; admins can grant the role to any member from their profile
+- Technicians is now an access-controlled page; First Fix users don't see it
+- Firstfix users are excluded from all technician data at the database (RLS) level
+
+### Database
+- Migration `0016_technicians.sql` — `technicians`, `technician_requests`, `technician_assignments` tables with RLS, stamping triggers and realtime; adds `profiles.is_tech_manager` and the `is_tech_manager()` helper
+
+---
+
 ## v2.4.2 — 2026-07-05
 
 Seven bugs identified by code review and fixed.

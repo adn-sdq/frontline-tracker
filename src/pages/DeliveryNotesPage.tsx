@@ -7,16 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { EmptyState } from "@/components/ui/empty-state"
 import { DatePicker } from "@/components/DatePicker"
+import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { useConfirm } from "@/components/ui/confirm-dialog"
 import { Label } from "@/components/ui/label"
 import { useProject } from "@/contexts/ProjectContext"
 import {
@@ -55,12 +50,12 @@ export default function DeliveryNotesPage() {
   const { data: notes = [], isLoading } = useDeliveryNotes()
   const { data: profiles = {} } = useProfiles()
   const deleteNote = useDeleteDeliveryNote()
+  const confirm = useConfirm()
 
   const [search, setSearch] = useState("")
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
   const [createOpen, setCreateOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<DeliveryNote | null>(null)
 
   function who(id: string | null) {
     if (!id) return "—"
@@ -93,17 +88,21 @@ export default function DeliveryNotesPage() {
     })
   }
 
-  async function confirmDelete() {
-    if (!deleteTarget) return
+  async function askDelete(note: DeliveryNote) {
+    const ok = await confirm({
+      title: "Delete delivery note?",
+      description: `${note.dn_number} will be permanently removed. This can't be undone.`,
+      confirmText: "Delete",
+      destructive: true,
+    })
+    if (!ok) return
     try {
-      await deleteNote.mutateAsync(deleteTarget.id)
+      await deleteNote.mutateAsync(note.id)
       toast.success("Delivery note deleted")
     } catch (e) {
       toast.error("Could not delete", {
         description: e instanceof Error ? e.message : "Unknown error",
       })
-    } finally {
-      setDeleteTarget(null)
     }
   }
 
@@ -111,17 +110,10 @@ export default function DeliveryNotesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <PageHeader
-          eyebrow="Logistics"
-          title="Delivery Notes"
-          subtitle={`${notes.length} note${notes.length !== 1 ? "s" : ""} for ${currentProject?.name ?? "this project"}`}
-        />
-        <Button className="shrink-0 mt-1" onClick={() => setCreateOpen(true)}>
-          <Plus className="size-4" /> New delivery note
-        </Button>
-      </div>
+      <PageHeader
+        title="Delivery Notes"
+        subtitle={`${notes.length} note${notes.length !== 1 ? "s" : ""} for ${currentProject?.name ?? "this project"}`}
+      />
 
       {/* Filters */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -162,6 +154,12 @@ export default function DeliveryNotesPage() {
               Clear
             </Button>
           )}
+          <ActionButton
+            icon={Plus}
+            label="New delivery note"
+            primary
+            onClick={() => setCreateOpen(true)}
+          />
         </div>
       </div>
 
@@ -176,21 +174,15 @@ export default function DeliveryNotesPage() {
       {isLoading ? (
         <DNSkeleton />
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-xl border bg-card py-16 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <FileText className="size-6 text-muted-foreground" />
-          </div>
-          <div>
-            <p className="font-medium">
-              {notes.length === 0 ? "No delivery notes yet" : "No results"}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {notes.length === 0
-                ? "Create one manually or generate from the Procurement page."
-                : "Try adjusting your search or date range."}
-            </p>
-          </div>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title={notes.length === 0 ? "No delivery notes yet" : "No results"}
+          description={
+            notes.length === 0
+              ? "Create one manually or generate from the Procurement page."
+              : "Try adjusting your search or date range."
+          }
+        />
       ) : (
         <div className="flex flex-col gap-2">
           {filtered.map((note) => (
@@ -267,7 +259,7 @@ export default function DeliveryNotesPage() {
                       variant="ghost"
                       size="icon"
                       className="size-8 text-destructive opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
-                      onClick={() => setDeleteTarget(note)}
+                      onClick={() => askDelete(note)}
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -287,36 +279,6 @@ export default function DeliveryNotesPage() {
         initialLines={[]}
       />
 
-      {/* Delete confirm */}
-      <Dialog
-        open={!!deleteTarget}
-        onOpenChange={(o) => !o && setDeleteTarget(null)}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Delete delivery note?</DialogTitle>
-            <DialogDescription>
-              {deleteTarget?.dn_number} will be permanently removed. This
-              cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmDelete}
-              disabled={deleteNote.isPending}
-            >
-              {deleteNote.isPending && (
-                <span className="size-4 animate-spin">⏳</span>
-              )}
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

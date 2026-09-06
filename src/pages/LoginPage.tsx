@@ -33,7 +33,7 @@ export default function LoginPage() {
   }
 
   const fieldClass =
-    "h-12 rounded-xl border-transparent bg-muted/60 px-4 text-sm shadow-none focus-visible:border-primary focus-visible:bg-background focus-visible:ring-primary/15"
+    "h-12 rounded-lg border-input bg-background/60 px-4 text-sm focus-visible:border-primary focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/20"
 
   return (
     <>

@@ -4,52 +4,65 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  FIT theme — brand colors:
-    Orange #E37C30 → oklch(0.654 0.166 43.5)   primary / CTA
-    Navy  #1B354F → oklch(0.260 0.050 228)      dark surfaces / secondary
+  FIT design system — Databricks "Du Bois" spec (tokens extracted from
+  @databricks/design-system v1.12):
+    Text        #11171C (grey800)  / secondary #5F7281 (grey500)
+    Primary     #2272B4 (blue600)  hover #0E538B (blue700)
+    Borders     #D1D9E1 (grey200)  controls #C0CDD8 (grey300)
+    Surfaces    white / #F6F7F9 (grey050)
+    Danger      #C82D4C (red600)
+    Brand CTA   #FF3621 (Databricks-red treatment for the New button)
+    Type scale  13/20 base · 12/16 sm · 18/24 lg · 22/28 xl · 32/40 xxl · bold = 600
+    Geometry    4px controls · 8px cards · 32px button height
 */
 :root {
-  --radius: 0.625rem;
+  --radius: 0.5rem;
 
-  --background: oklch(0.988 0 0);
-  --foreground: oklch(0.200 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.200 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.200 0 0);
+  --background: #FFFFFF;
+  --foreground: #11171C;
+  --card: #FFFFFF;
+  --card-foreground: #11171C;
+  --popover: #FFFFFF;
+  --popover-foreground: #11171C;
 
-  --primary: oklch(0.654 0.166 43.5);
-  --primary-foreground: oklch(1 0 0);
+  --primary: #2272B4;
+  --primary-foreground: #FFFFFF;
+  --primary-hover: #0E538B;
 
-  --secondary: oklch(0.964 0.008 55);
-  --secondary-foreground: oklch(0.270 0.040 225);
-  --muted: oklch(0.964 0.008 55);
-  --muted-foreground: oklch(0.520 0.022 225);
+  --secondary: #F6F7F9;
+  --secondary-foreground: #11171C;
+  --muted: #F6F7F9;
+  --muted-foreground: #5F7281;
 
-  --accent: oklch(0.944 0.028 43);
-  --accent-foreground: oklch(0.380 0.070 43);
+  --accent: rgba(34, 114, 180, 0.08);
+  --accent-foreground: #0E538B;
 
-  --destructive: oklch(0.636 0.208 25.33);
-  --destructive-foreground: oklch(1 0 0);
+  --brand: #FF3621;
+  --brand-foreground: #FFFFFF;
+  --brand-muted: rgba(255, 54, 33, 0.09);
+  --brand-muted-foreground: #E8492E;
 
-  --border: oklch(0.926 0.006 55);
-  --input: oklch(0.926 0.006 55);
-  --ring: oklch(0.654 0.166 43.5);
+  --destructive: #C82D4C;
+  --destructive-foreground: #FFFFFF;
 
-  --chart-1: oklch(0.654 0.166 43.5);
-  --chart-2: oklch(0.260 0.050 228);
-  --chart-3: oklch(0.696 0.149 162);
-  --chart-4: oklch(0.636 0.208 25);
-  --chart-5: oklch(0.769 0.165 70);
+  --border: #D1D9E1;
+  --input: #C0CDD8;
+  --ring: #2272B4;
 
-  --sidebar: oklch(0.985 0.004 55);
-  --sidebar-foreground: oklch(0.200 0 0);
-  --sidebar-primary: oklch(0.654 0.166 43.5);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.944 0.028 43);
-  --sidebar-accent-foreground: oklch(0.380 0.070 43);
-  --sidebar-border: oklch(0.926 0.006 55);
-  --sidebar-ring: oklch(0.654 0.166 43.5);
+  --chart-1: #2272B4;
+  --chart-2: #DE7921;
+  --chart-3: #277C43;
+  --chart-4: #C82D4C;
+  --chart-5: #8A63BF;
+
+  --sidebar: #F9F7F4;
+  --sidebar-foreground: #11171C;
+  --sidebar-primary: #2272B4;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: rgba(34, 114, 180, 0.12);
+  --sidebar-accent-foreground: #0E538B;
+  --sidebar-border: #E8E6E1;
+  --sidebar-ring: #2272B4;
 
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
@@ -57,45 +70,51 @@
 }
 
 .dark {
-  --background: oklch(0.180 0.012 228);
-  --foreground: oklch(0.928 0.012 255);
-  --card: oklch(0.205 0.016 228);
-  --card-foreground: oklch(0.928 0.012 255);
-  --popover: oklch(0.256 0.015 228);
-  --popover-foreground: oklch(0.928 0.012 255);
+  --background: #11171C;
+  --foreground: #E8ECF0;
+  --card: #1F272D;
+  --card-foreground: #E8ECF0;
+  --popover: #1F272D;
+  --popover-foreground: #E8ECF0;
 
-  --primary: oklch(0.718 0.148 43.5);
-  --primary-foreground: oklch(0.120 0 0);
+  --primary: #4299E0;
+  --primary-foreground: #11171C;
+  --primary-hover: #8ACAFF;
 
-  --secondary: oklch(0.260 0.040 228);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.236 0.020 228);
-  --muted-foreground: oklch(0.698 0.012 228);
+  --secondary: #1F272D;
+  --secondary-foreground: #E8ECF0;
+  --muted: #1F272D;
+  --muted-foreground: #92A4B3;
 
-  --accent: oklch(0.314 0.052 228);
-  --accent-foreground: oklch(0.928 0.012 255);
+  --accent: rgba(138, 202, 255, 0.08);
+  --accent-foreground: #8ACAFF;
 
-  --destructive: oklch(0.636 0.208 25.33);
-  --destructive-foreground: oklch(1 0 0);
+  --brand: #FF3621;
+  --brand-foreground: #FFFFFF;
+  --brand-muted: rgba(255, 54, 33, 0.16);
+  --brand-muted-foreground: #FF8274;
 
-  --border: oklch(0.328 0.030 228);
-  --input: oklch(0.328 0.030 228);
-  --ring: oklch(0.718 0.148 43.5);
+  --destructive: #E65B77;
+  --destructive-foreground: #11171C;
 
-  --chart-1: oklch(0.718 0.148 43.5);
-  --chart-2: oklch(0.440 0.060 228);
-  --chart-3: oklch(0.696 0.149 162);
-  --chart-4: oklch(0.636 0.208 25);
-  --chart-5: oklch(0.769 0.165 70);
+  --border: #37444F;
+  --input: #37444F;
+  --ring: #4299E0;
 
-  --sidebar: oklch(0.205 0.016 228);
-  --sidebar-foreground: oklch(0.928 0.012 255);
-  --sidebar-primary: oklch(0.718 0.148 43.5);
-  --sidebar-primary-foreground: oklch(0.120 0 0);
-  --sidebar-accent: oklch(0.314 0.052 228);
-  --sidebar-accent-foreground: oklch(0.928 0.012 255);
-  --sidebar-border: oklch(0.328 0.030 228);
-  --sidebar-ring: oklch(0.718 0.148 43.5);
+  --chart-1: #4299E0;
+  --chart-2: #F2BE88;
+  --chart-3: #8DDDA8;
+  --chart-4: #E65B77;
+  --chart-5: #8A63BF;
+
+  --sidebar: #11171C;
+  --sidebar-foreground: #E8ECF0;
+  --sidebar-primary: #4299E0;
+  --sidebar-primary-foreground: #11171C;
+  --sidebar-accent: rgba(138, 202, 255, 0.12);
+  --sidebar-accent-foreground: #8ACAFF;
+  --sidebar-border: #37444F;
+  --sidebar-ring: #4299E0;
 }
 
 @theme inline {
@@ -107,12 +126,17 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-muted-foreground: var(--brand-muted-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
@@ -136,6 +160,23 @@
   --font-mono: var(--font-mono);
   --font-display: var(--font-display);
 
+  /* Du Bois type scale: sm 12/16 · base 13/20 · lg 18/24 · xl 22/28 · xxl 32/40 */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.8125rem;
+  --text-base--line-height: 1.25rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.5rem;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 2rem;
+  --text-2xl--line-height: 2.5rem;
+
+  /* Du Bois "bold" is 600 — never render 700 */
+  --font-weight-bold: 600;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -151,18 +192,54 @@
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
     -webkit-font-smoothing: antialiased;
+  }
+  /* Smooth interaction defaults — utilities with explicit transition-* win */
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  [role="menuitem"],
+  [role="option"],
+  [role="tab"] {
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      color 150ms ease,
+      box-shadow 150ms ease,
+      opacity 150ms ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-/* ── App canvas — subtle tinted, textured background behind cards ── */
+/* ── Content entrance — used on route change and tab switches ── */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-page-enter {
+  animation: page-enter 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── App canvas — Databricks content area is plain white ── */
 .app-canvas {
-  background-color: color-mix(in oklab, var(--muted) 38%, var(--background));
-  background-image: radial-gradient(
-    color-mix(in oklab, var(--muted-foreground) 8%, transparent) 1px,
-    transparent 1px
-  );
-  background-size: 22px 22px;
+  background-color: var(--background);
 }
 
 /* ── Login page decorative helpers ──────────────────────── */
@@ -179,4 +256,13 @@
 .login-logo-card {
   background: rgba(255, 255, 255, 0.07);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+/* ── Hide scrollbar (keeps layout stable, e.g. collapsed sidebar rail) ── */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

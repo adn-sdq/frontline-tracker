@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext"
 import { ProjectProvider } from "@/contexts/ProjectContext"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { ConfirmProvider } from "@/components/ui/confirm-dialog"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,7 +24,9 @@ createRoot(document.getElementById("root")!).render(
         <AuthProvider>
           <ProjectProvider>
             <TooltipProvider delayDuration={400}>
-              <App />
+              <ConfirmProvider>
+                <App />
+              </ConfirmProvider>
               <Toaster richColors position="top-right" />
             </TooltipProvider>
           </ProjectProvider>

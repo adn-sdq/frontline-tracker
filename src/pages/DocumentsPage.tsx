@@ -3,14 +3,16 @@ import { formatDistanceToNow } from "date-fns"
 import {
   CheckSquare,
   FileText,
-  Loader2,
+  LayoutGrid,
   MoreHorizontal,
   Pencil,
   Plus,
   Search,
   Square,
+  Table2,
   Trash2,
 } from "lucide-react"
+import type { ColumnDef } from "@tanstack/react-table"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -37,10 +39,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Spinner } from "@/components/ui/spinner"
+import { EmptyState } from "@/components/ui/empty-state"
 import { DocStatusBadge, DocStatusSelect } from "@/components/DocStatus"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { DocumentDialog } from "@/components/DocumentDialog"
 import { DocumentDrawer } from "@/components/DocumentDrawer"
+import { DataTable } from "@/components/ui/data-table"
+import { cn } from "@/lib/utils"
 import {
   useDeleteDocument,
   useDocuments,
@@ -59,6 +65,7 @@ import {
   type DocStatus,
   type DocumentRow,
 } from "@/lib/types"
+import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
 
 export default function DocumentsPage() {
@@ -71,6 +78,7 @@ export default function DocumentsPage() {
   const del = useDeleteDocument()
   const updateDoc = useUpdateDocument()
 
+  const [view, setView] = useState<"cards" | "table">("cards")
   const [search, setSearch] = useState("")
   const [system, setSystem] = useState("ALL")
   const [status, setStatus] = useState("ALL")
@@ -98,6 +106,50 @@ export default function DocumentsPage() {
         .some((v) => (v as string).toLowerCase().includes(q))
     })
   }, [docs, search, system, status, docType])
+
+  const columns = useMemo<ColumnDef<DocumentRow, unknown>[]>(
+    () => [
+      {
+        accessorKey: "title",
+        header: "Document",
+        cell: ({ row }) => {
+          const d = row.original
+          const meta = [d.doc_number, d.revision].filter(Boolean).join(" · ")
+          return (
+            <div className="min-w-0">
+              <div className="truncate font-medium">{d.title}</div>
+              {meta && <div className="truncate text-xs text-muted-foreground">{meta}</div>}
+            </div>
+          )
+        },
+      },
+      {
+        id: "doc_type",
+        accessorFn: (d) => (d.doc_type ? DOC_TYPE_LABELS[d.doc_type] : "—"),
+        header: "Type",
+      },
+      {
+        id: "system",
+        accessorFn: (d) => labelFor(d.system) || "—",
+        header: "System",
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => <DocStatusBadge status={row.original.status} />,
+      },
+      {
+        accessorKey: "updated_at",
+        header: "Updated",
+        cell: ({ row }) => (
+          <span className="whitespace-nowrap text-muted-foreground">
+            {formatDistanceToNow(new Date(row.original.updated_at), { addSuffix: true })}
+          </span>
+        ),
+      },
+    ],
+    [labelFor]
+  )
 
   // Keep the drawer's document in sync with refreshed data.
   const liveOpenDoc = openDoc ? docs.find((d) => d.id === openDoc.id) ?? openDoc : null
@@ -167,32 +219,9 @@ export default function DocumentsPage() {
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
-        eyebrow="Register"
         title="Documents"
         subtitle="Submittals & reviews between Frontline and First Fix."
-      >
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant={selectMode ? "secondary" : "outline"}
-            onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
-          >
-            <CheckSquare className="size-4" />
-            {selectMode ? "Cancel" : "Select"}
-          </Button>
-          {!selectMode && (
-            <Button
-              size="sm"
-              onClick={() => {
-                setEditDoc(null)
-                setDialogOpen(true)
-              }}
-            >
-              <Plus className="size-4" /> Add document
-            </Button>
-          )}
-        </div>
-      </PageHeader>
+      />
 
       {/* Bulk action bar */}
       {selectMode && (
@@ -221,9 +250,7 @@ export default function DocumentsPage() {
               disabled={!selected.size || bulkBusy}
               onClick={applyBulkStatus}
             >
-              {bulkBusy ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : null}
+              {bulkBusy ? <Spinner className="size-4 text-current" /> : null}
               Apply
             </Button>
           </div>
@@ -279,17 +306,72 @@ export default function DocumentsPage() {
             ))}
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-2 sm:ml-auto">
+          <div className="flex rounded-sm border border-input p-0.5">
+            <button
+              type="button"
+              aria-label="Card view"
+              onClick={() => setView("cards")}
+              className={cn(
+                "grid size-7 place-items-center rounded-[3px] transition-colors",
+                view === "cards" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <LayoutGrid className="size-4" />
+            </button>
+            <button
+              type="button"
+              aria-label="Table view"
+              onClick={() => setView("table")}
+              className={cn(
+                "grid size-7 place-items-center rounded-[3px] transition-colors",
+                view === "table" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Table2 className="size-4" />
+            </button>
+          </div>
+          <ActionButton
+            icon={CheckSquare}
+            label={selectMode ? "Cancel selection" : "Select"}
+            active={selectMode}
+            onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+          />
+          {!selectMode && (
+            <ActionButton
+              icon={Plus}
+              label="Add document"
+              primary
+              onClick={() => {
+                setEditDoc(null)
+                setDialogOpen(true)
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+          <Spinner className="size-6" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border bg-card py-16 text-center text-sm text-muted-foreground">
-          No documents yet. Click <strong>Add document</strong> to start tracking
-          a submittal.
-        </div>
+        <EmptyState
+          icon={FileText}
+          title={docs.length === 0 ? "No documents yet" : "No documents matched your search"}
+          description={
+            docs.length === 0
+              ? "Add your first document to start tracking a submittal."
+              : "Try adjusting the filters or search term."
+          }
+        />
+      ) : view === "table" ? (
+        <DataTable
+          columns={columns}
+          data={filtered}
+          onRowClick={(d) => setOpenDoc(d)}
+          emptyMessage="No documents match your filters."
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {filtered.map((d) => {
@@ -297,13 +379,13 @@ export default function DocumentsPage() {
             return (
               <div
                 key={d.id}
-                className={`group flex cursor-pointer flex-col gap-2 rounded-xl border bg-card p-4 transition-colors hover:border-primary/40 ${isSelected ? "border-primary/60 bg-primary/5" : ""}`}
+                className={`group flex cursor-pointer flex-col gap-2.5 rounded-lg border bg-card p-4 transition-colors hover:border-primary/40 ${isSelected ? "border-primary/60 bg-primary/5" : ""}`}
                 onClick={() => {
                   if (selectMode) toggleSelect(d.id)
                   else setOpenDoc(d)
                 }}
               >
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-3">
                   {selectMode && (
                     <div className="mt-0.5 shrink-0">
                       {isSelected ? (
@@ -314,11 +396,14 @@ export default function DocumentsPage() {
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{d.title}</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="truncate text-sm font-medium">{d.title}</div>
+                    <div className="mt-0.5 font-mono text-xs text-muted-foreground">
                       {[d.doc_number, d.revision].filter(Boolean).join(" · ") ||
                         "No number"}
                     </div>
+                  </div>
+                  <div className="shrink-0">
+                    <DocStatusBadge status={d.status} />
                   </div>
                   {!selectMode && (
                     <DropdownMenu>
@@ -355,8 +440,8 @@ export default function DocumentsPage() {
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <DocStatusBadge status={d.status} />
+                {/* Meta row — fixed order: type · system · files, updated right */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t pt-2.5 text-xs text-muted-foreground">
                   {d.doc_type && (
                     <Badge variant="secondary" className="text-xs">
                       {DOC_TYPE_LABELS[d.doc_type]}
@@ -365,18 +450,17 @@ export default function DocumentsPage() {
                   {d.system && (
                     <Badge variant="outline">{labelFor(d.system)}</Badge>
                   )}
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
                     <FileText className="size-3.5" />
                     {fileCounts[d.id] ?? 0}
                   </span>
-                </div>
-
-                <div className="text-xs text-muted-foreground">
-                  Updated by{" "}
-                  <span className="font-medium text-foreground">
-                    {who(d.updated_by)}
-                  </span>{" "}
-                  {formatDistanceToNow(new Date(d.updated_at), { addSuffix: true })}
+                  <span className="ml-auto truncate">
+                    Updated by{" "}
+                    <span className="font-medium text-foreground">
+                      {who(d.updated_by)}
+                    </span>{" "}
+                    {formatDistanceToNow(new Date(d.updated_at), { addSuffix: true })}
+                  </span>
                 </div>
               </div>
             )
@@ -409,7 +493,7 @@ export default function DocumentsPage() {
               onClick={confirmDelete}
               disabled={del.isPending}
             >
-              {del.isPending && <Loader2 className="size-4 animate-spin" />}
+              {del.isPending && <Spinner className="size-4 text-current" />}
               Delete
             </Button>
           </DialogFooter>

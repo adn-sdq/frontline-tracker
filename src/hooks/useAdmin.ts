@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { supabase } from "@/lib/supabase"
-import type { Org, Profile } from "@/lib/types"
+import type { Org, Profile, Role } from "@/lib/types"
 
 // ── Feature requests (admin-only) ─────────────────────────────────────────────
 
@@ -44,6 +44,17 @@ export function useUpdateFeatureRequest() {
         .from("feature_requests")
         .update(args.patch)
         .eq("id", args.id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: FR_KEY }),
+  })
+}
+
+export function useUpvoteFeatureRequest() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("upvote_feature_request", { request_id: id })
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: FR_KEY }),
@@ -132,18 +143,54 @@ export function useDeleteAccount() {
   })
 }
 
-// Org / admin-flag / allowed_pages changes go straight through RLS (admins may update profiles).
+// Org / admin-flag / allowed_pages / role / avatar_url go straight through RLS (admins may update profiles).
 export function useUpdateProfile() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (args: {
       id: string
-      patch: Partial<Pick<Profile, "org" | "is_admin" | "full_name" | "allowed_pages">>
+      patch: Partial<Pick<Profile, "org" | "is_admin" | "full_name" | "allowed_pages" | "avatar_url" | "role" | "is_tech_manager">>
     }) => {
       const { error } = await supabase
         .from("profiles")
         .update(args.patch)
         .eq("id", args.id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),
+  })
+}
+
+export function useUploadAvatar() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userId, file }: { userId: string; file: File }) => {
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg"
+      const path = `${userId}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, contentType: file.type })
+      if (uploadError) throw uploadError
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path)
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: data.publicUrl })
+        .eq("id", userId)
+      if (updateError) throw updateError
+      return data.publicUrl
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),
+  })
+}
+
+export function useChangeRole() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, role }: { id: string; role: Role }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ role, is_admin: role === "admin" })
+        .eq("id", id)
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),

@@ -1,6 +1,17 @@
 import { useState, useMemo } from "react"
-import { Plus, Search, Ticket as TicketIcon, X, MapPin, User, Clock } from "lucide-react"
+import {
+  Plus,
+  Search,
+  Ticket as TicketIcon,
+  X,
+  MapPin,
+  User,
+  Clock,
+  LayoutList,
+  Columns3,
+} from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,8 +24,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+import { ActionButton } from "@/components/shell/ActionButton"
+import { EmptyState } from "@/components/ui/empty-state"
 import { PageHeader } from "@/components/PageHeader"
-import { useTickets } from "@/hooks/useTickets"
+import { KanbanBoard, type KanbanColumn } from "@/components/kanban/KanbanBoard"
+import { cn } from "@/lib/utils"
+import { useTickets, useUpdateTicket } from "@/hooks/useTickets"
 import { useAllProfiles } from "@/hooks/useAdmin"
 import { TicketDialog } from "@/components/TicketDialog"
 import { TicketDetailSheet } from "@/components/TicketDetailSheet"
@@ -30,10 +45,20 @@ import {
   TICKET_CATEGORIES,
 } from "@/lib/types"
 
+const STATUS_DOT: Record<TicketStatus, string> = {
+  open: "bg-blue-500",
+  in_progress: "bg-amber-500",
+  pending: "bg-violet-500",
+  resolved: "bg-emerald-500",
+  closed: "bg-muted-foreground/40",
+}
+
 export default function TicketsPage() {
   const { data: tickets = [], isLoading } = useTickets()
   const { data: profiles = [] } = useAllProfiles()
+  const updateTicket = useUpdateTicket()
 
+  const [view, setView] = useState<"list" | "board">("list")
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<TicketStatus | "ALL">("ALL")
   const [priorityFilter, setPriorityFilter] = useState<TicketPriority | "ALL">("ALL")
@@ -86,15 +111,30 @@ export default function TicketsPage() {
     setDialogOpen(true)
   }
 
+  async function moveTicket(id: string, status: TicketStatus) {
+    try {
+      await updateTicket.mutateAsync({ id, patch: { status } })
+      toast.success(`Moved to ${TICKET_STATUS_LABELS[status]}`)
+    } catch (e) {
+      toast.error("Could not move ticket", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      })
+    }
+  }
+
+  const boardColumns: KanbanColumn<TicketStatus>[] = TICKET_STATUSES.map((s) => ({
+    id: s,
+    label: TICKET_STATUS_LABELS[s],
+    accentClass: STATUS_DOT[s],
+  }))
+
   // Count by status for header summary
   const openCount = tickets.filter((t) => t.status === "open").length
   const inProgressCount = tickets.filter((t) => t.status === "in_progress").length
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Header */}
       <PageHeader
-        eyebrow="Support"
         title="Support Tickets"
         subtitle={
           openCount > 0 || inProgressCount > 0 ? (
@@ -107,11 +147,7 @@ export default function TicketsPage() {
             "Internal issue tracking across all projects"
           )
         }
-      >
-        <Button onClick={openNew} className="shrink-0">
-          <Plus className="h-4 w-4 mr-1" /> New ticket
-        </Button>
-      </PageHeader>
+      />
 
       {/* Filters */}
       <div className="flex flex-col gap-2">
@@ -165,91 +201,146 @@ export default function TicketsPage() {
               <X className="h-3.5 w-3.5" /> Clear ({activeFilters})
             </Button>
           )}
+          <div className="ml-auto flex items-center gap-1.5">
+            <div className="flex rounded-sm border border-input p-0.5">
+              <button
+                type="button"
+                aria-label="List view"
+                onClick={() => setView("list")}
+                className={cn(
+                  "grid size-7 place-items-center rounded-[3px] transition-colors",
+                  view === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <LayoutList className="size-4" />
+              </button>
+              <button
+                type="button"
+                aria-label="Board view"
+                onClick={() => setView("board")}
+                className={cn(
+                  "grid size-7 place-items-center rounded-[3px] transition-colors",
+                  view === "board" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Columns3 className="size-4" />
+              </button>
+            </div>
+            <ActionButton icon={Plus} label="New ticket" primary onClick={openNew} />
+          </div>
         </div>
       </div>
 
       {/* Ticket list */}
       {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 rounded-lg border bg-muted/40 animate-pulse" />
+        <div className="divide-y overflow-hidden rounded-lg border">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-14 animate-pulse bg-muted/40" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border bg-card py-16 text-center gap-3">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-            <TicketIcon className="h-7 w-7" />
-          </div>
-          <div>
-            <p className="font-display text-base text-foreground">
-              {tickets.length === 0 ? "No tickets yet" : "No matches"}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {tickets.length === 0
-                ? "Create the first ticket to start tracking issues."
-                : "Try adjusting the filters or search term."}
-            </p>
-          </div>
-          {tickets.length === 0 && (
-            <Button size="sm" onClick={openNew} className="mt-1">
-              <Plus className="h-3.5 w-3.5" /> New ticket
-            </Button>
+        <EmptyState
+          icon={TicketIcon}
+          title={tickets.length === 0 ? "No tickets yet" : "No tickets matched your search"}
+          description={
+            tickets.length === 0
+              ? "Create the first ticket to start tracking issues."
+              : "Try adjusting the filters or search term."
+          }
+          action={
+            tickets.length === 0 && (
+              <Button onClick={openNew}>
+                <Plus className="h-3.5 w-3.5" /> New ticket
+              </Button>
+            )
+          }
+        />
+      ) : view === "board" ? (
+        <KanbanBoard<Ticket, TicketStatus>
+          columns={boardColumns}
+          items={filtered}
+          getId={(t) => t.id}
+          getColumn={(t) => t.status}
+          onMove={(id, status) => moveTicket(id, status)}
+          emptyLabel="No tickets"
+          renderCard={(t) => (
+            <button
+              type="button"
+              onClick={() => setSelectedTicket(t)}
+              className="flex w-full flex-col gap-2 p-3 text-left"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-mono text-[11px] text-muted-foreground">{t.ticket_number}</span>
+                <Badge className={cn("shrink-0", TICKET_PRIORITY_STYLES[t.priority])}>
+                  {TICKET_PRIORITY_LABELS[t.priority]}
+                </Badge>
+              </div>
+              <p className="text-sm font-medium leading-snug">{t.title}</p>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                <Badge variant="outline" className="text-[10px]">
+                  {TICKET_CATEGORY_LABELS[t.category]}
+                </Badge>
+                {t.assigned_to && (
+                  <span className="flex items-center gap-1">
+                    <User className="size-3 shrink-0" />
+                    {nameFor(t.assigned_to) ?? "Assigned"}
+                  </span>
+                )}
+                <span className="flex items-center gap-1">
+                  <Clock className="size-3 shrink-0" />
+                  {formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}
+                </span>
+              </div>
+            </button>
           )}
-        </div>
+        />
       ) : (
-        <div className="space-y-2">
+        <div className="divide-y overflow-hidden rounded-lg border bg-card">
           {filtered.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setSelectedTicket(t)}
-              className="w-full text-left rounded-xl border bg-card transition-all hover:border-primary/30 hover:shadow-sm active:scale-[0.995]"
+              className="flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors hover:bg-accent sm:flex-row sm:items-center sm:gap-4"
             >
-              {/* Desktop: horizontal split. Mobile: stacked. */}
-              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
-
-                {/* LEFT — ticket number + title + meta */}
-                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                  <span className="font-mono text-[11px] text-muted-foreground/60">{t.ticket_number}</span>
-                  <p className="truncate font-medium leading-snug">{t.title}</p>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground/70">{t.project_name}</span>
-                    {t.site_location && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3 shrink-0" />
-                        <span className="truncate max-w-40">{t.site_location}</span>
-                      </span>
-                    )}
-                    {t.assigned_to && (
-                      <span className="flex items-center gap-1">
-                        <User className="h-3 w-3 shrink-0" />
-                        {nameFor(t.assigned_to) ?? "Assigned"}
-                      </span>
-                    )}
-                  </div>
+              {/* LEFT — title line + meta line, fixed order */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                    {t.ticket_number}
+                  </span>
+                  <p className="truncate text-sm font-medium">{t.title}</p>
                 </div>
-
-                {/* RIGHT — badges + age */}
-                <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:gap-2">
-                  {/* Status + priority on one row */}
-                  <div className="flex items-center gap-1.5">
-                    <Badge className={`${TICKET_PRIORITY_STYLES[t.priority]} text-[11px] px-1.5 py-0`}>
-                      {TICKET_PRIORITY_LABELS[t.priority]}
-                    </Badge>
-                    <Badge className={`${TICKET_STATUS_STYLES[t.status]} text-[11px] px-1.5 py-0`}>
-                      {TICKET_STATUS_LABELS[t.status]}
-                    </Badge>
-                  </div>
-                  {/* Category + age on second row */}
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[11px] px-1.5 py-0">{TICKET_CATEGORY_LABELS[t.category]}</Badge>
-                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                      <Clock className="h-3 w-3 shrink-0" />
-                      {formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                  <span>{t.project_name}</span>
+                  {t.site_location && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="max-w-40 truncate">{t.site_location}</span>
                     </span>
-                  </div>
+                  )}
+                  {t.assigned_to && (
+                    <span className="flex items-center gap-1">
+                      <User className="h-3 w-3 shrink-0" />
+                      {nameFor(t.assigned_to) ?? "Assigned"}
+                    </span>
+                  )}
                 </div>
+              </div>
 
+              {/* RIGHT — aligned columns: category · priority · status · age */}
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                <Badge variant="outline">{TICKET_CATEGORY_LABELS[t.category]}</Badge>
+                <Badge className={TICKET_PRIORITY_STYLES[t.priority]}>
+                  {TICKET_PRIORITY_LABELS[t.priority]}
+                </Badge>
+                <Badge className={TICKET_STATUS_STYLES[t.status]}>
+                  {TICKET_STATUS_LABELS[t.status]}
+                </Badge>
+                <span className="flex w-24 items-center justify-end gap-1 text-xs text-muted-foreground tabular-nums">
+                  <Clock className="h-3 w-3 shrink-0" />
+                  {formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}
+                </span>
               </div>
             </button>
           ))}

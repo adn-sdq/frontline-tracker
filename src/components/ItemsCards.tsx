@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, Hash, MapPin, PackagePlus } from "lucide-rea
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StatusBadge } from "@/components/StatusControls"
 import { SerialSubPanel } from "@/components/SerialSubPanel"
@@ -51,29 +52,6 @@ export function ItemsCardsSkeleton() {
           </div>
         </div>
       ))}
-    </div>
-  )
-}
-
-// ── Empty state ───────────────────────────────────────────────────────────────
-
-function EmptyState({ onAdd }: { onAdd?: () => void }) {
-  return (
-    <div className="flex flex-col items-center gap-4 rounded-2xl border bg-card py-16 px-6 text-center">
-      <div className="flex size-14 items-center justify-center rounded-full bg-muted">
-        <PackagePlus className="size-7 text-muted-foreground" />
-      </div>
-      <div>
-        <p className="font-semibold">No items yet</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Add your first procurement item to get started.
-        </p>
-      </div>
-      {onAdd && (
-        <Button onClick={onAdd} className="mt-1">
-          Add item
-        </Button>
-      )}
     </div>
   )
 }
@@ -269,7 +247,15 @@ export function ItemsCards({
 }: Props) {
   const { labelFor } = useSystems()
 
-  if (items.length === 0) return <EmptyState onAdd={onAdd} />
+  if (items.length === 0)
+    return (
+      <EmptyState
+        icon={PackagePlus}
+        title="No items yet"
+        description="Add your first procurement item to get started."
+        action={onAdd && <Button onClick={onAdd}>Add item</Button>}
+      />
+    )
 
   return (
     <div className="flex flex-col gap-3">

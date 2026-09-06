@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/DatePicker"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -245,11 +246,7 @@ export function DocumentDialog({
               <Label className="text-xs text-muted-foreground">
                 Document date (auto-set to today, editable)
               </Label>
-              <Input
-                type="date"
-                value={fileDate}
-                onChange={(e) => setFileDate(e.target.value)}
-              />
+              <DatePicker value={fileDate} onChange={setFileDate} clearable={false} />
             </div>
           )}
           <p className="text-xs text-muted-foreground">
