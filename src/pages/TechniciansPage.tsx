@@ -752,6 +752,7 @@ function Roster() {
 function MyRequests({ userId }: { userId: string | undefined }) {
   const { data: requests = [] } = useTechRequests()
   const cancelReq = useCancelTechRequest()
+  const [viewing, setViewing] = useState<TechnicianRequest | null>(null)
   const mine = requests.filter((r) => r.requested_by === userId)
 
   async function cancel(id: string) {
@@ -770,14 +771,18 @@ function MyRequests({ userId }: { userId: string | undefined }) {
   return (
     <div className="space-y-2.5">
       {mine.map((req) => (
-        <RequestCard key={req.id} req={req}>
-          {req.status === "pending" && (
-            <Button size="sm" variant="ghost" className="text-muted-foreground" onClick={() => cancel(req.id)}>
-              Cancel
-            </Button>
-          )}
-        </RequestCard>
+        <RequestCard
+          key={req.id}
+          req={req}
+          onView={() => setViewing(req)}
+          onDelete={() => cancel(req.id)}
+        />
       ))}
+      <RequestDetailDialog
+        req={viewing}
+        open={!!viewing}
+        onClose={() => setViewing(null)}
+      />
     </div>
   )
 }

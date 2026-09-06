@@ -11,7 +11,6 @@ import {
 } from "@/hooks/useTechnicians"
 import type { TechnicianRequest } from "@/lib/types"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { DatePicker } from "@/components/DatePicker"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
