@@ -2,6 +2,18 @@
 
 ---
 
+## v2.16.0 — 2026-10-13
+
+Smoother page transitions — content appears together with its data.
+
+### Navigation
+- Page transitions show a loader for a minimum of 1 second, even when data arrives instantly, then the page appears together with its data
+- The loader never waits more than 8 seconds — after that the page appears with its own loading states
+- Projects home: branded loader, and stat numbers show placeholders instead of popping in after the layout
+- Thin progress bar at the top of the screen while data refreshes in the background
+
+---
+
 ## v2.15.0 — 2026-10-13
 
 SLA tracking module, a reworked profile system, and a tabbed Admin Console.

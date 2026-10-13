@@ -17,6 +17,23 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.16.0",
+    date: "2026-10-13",
+    type: "minor",
+    summary: "Smoother page transitions \u2014 content appears together with its data.",
+    sections: [
+      {
+        title: "Navigation",
+        items: [
+          "Page transitions show a loader for a minimum of 1 second, even when data arrives instantly, then the page appears together with its data",
+          "The loader never waits more than 8 seconds — after that the page appears with its own loading states",
+          "Projects home: branded loader, and stat numbers show placeholders instead of popping in after the layout",
+          "Thin progress bar at the top of the screen while data refreshes in the background",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.15.0",
     date: "2026-10-13",
     type: "minor",

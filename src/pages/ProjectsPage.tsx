@@ -7,7 +7,6 @@ import {
   FileText,
   FolderOpen,
   Hash,
-  Loader2,
   LogOut,
   MapPin,
   Package,
