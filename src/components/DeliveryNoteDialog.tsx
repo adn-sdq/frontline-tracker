@@ -16,11 +16,24 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { DatePicker } from "@/components/DatePicker"
+import { UserAvatar } from "@/components/UserAvatar"
+import { displayName } from "@/components/profile/shared"
+import { useAuth } from "@/contexts/AuthContext"
 import { useProject } from "@/contexts/ProjectContext"
+import { useAllProfiles } from "@/hooks/useAdmin"
 import { useCreateDeliveryNote, useNextDnNumber } from "@/hooks/useDeliveryNotes"
-import { printDeliveryNote } from "@/lib/deliveryNotePdf"
+import { companyContactFor, printDeliveryNote } from "@/lib/deliveryNotePdf"
 import type { DeliveryNoteItem } from "@/lib/types"
+
+const NONE = "__none__"
 
 // Auto-name: DN-[PROJECT_CODE]-[YYYYMMDD]-[NNN]
 // e.g. DN-ILMI-20260624-001
@@ -62,6 +75,11 @@ export function DeliveryNoteDialog({
   onSaved?: () => void
 }) {
   const { currentProject } = useProject()
+  const { user } = useAuth()
+  const { data: profiles = [] } = useAllProfiles()
+  const people = profiles
+    .filter((p) => p.status !== "suspended")
+    .sort((a, b) => displayName(a).localeCompare(displayName(b)))
   const create = useCreateDeliveryNote()
   const { data: nextNum } = useNextDnNumber()
 
@@ -73,6 +91,9 @@ export function DeliveryNoteDialog({
   const [location, setLocation] = useState("")
   const [contact, setContact] = useState("")
   const [lines, setLines] = useState<DeliveryNoteItem[]>([])
+  const [personId, setPersonId] = useState<string>(NONE)
+  const person = people.find((p) => p.id === personId) ?? null
+  const companyContact = person ? companyContactFor(person) : ""
 
   // Re-seed only when the dialog opens — not on subsequent realtime refreshes.
   const prevOpenRef = useRef(false)
@@ -88,6 +109,7 @@ export function DeliveryNoteDialog({
     setLocation(currentProject?.site_location ?? "")
     setContact(currentProject?.site_contact ?? "")
     setLines(initialLines)
+    setPersonId(user?.id ?? NONE)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, nextNum, currentProject])
 
@@ -126,6 +148,7 @@ export function DeliveryNoteDialog({
       deliverTo,
       location,
       contact,
+      companyContact,
       items: cleaned,
     })
   }
@@ -139,6 +162,8 @@ export function DeliveryNoteDialog({
       deliver_to: deliverTo || null,
       location: location || null,
       contact: contact || null,
+      contact_person_id: person?.id ?? null,
+      company_contact: companyContact || null,
       items: cleaned,
       notes: null,
     }
@@ -171,6 +196,7 @@ export function DeliveryNoteDialog({
         deliverTo,
         location,
         contact,
+        companyContact,
         items: cleaned,
       })
       toast.success("Delivery note saved & generated")
@@ -218,9 +244,42 @@ export function DeliveryNoteDialog({
               className="sm:col-span-1"
             />
           </Field>
-          <Field label="Contact">
+          <Field label="Site contact">
             <Input value={contact} onChange={(e) => setContact(e.target.value)} />
           </Field>
+        </div>
+
+        {/* Company contact person */}
+        <div className="grid gap-1.5 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[minmax(0,16rem)_1fr] sm:items-start sm:gap-4">
+          <Field label="Our contact person (printed on the DN)">
+            <Select value={personId} onValueChange={setPersonId}>
+              <SelectTrigger className="w-full"><SelectValue placeholder="Choose a person" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>No contact person</SelectItem>
+                {people.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    <UserAvatar name={displayName(p)} src={p.avatar_url} seed={p.id} className="size-5" fallbackClassName="text-[8px]" />
+                    {displayName(p)}
+                    {p.job_title && <span className="text-muted-foreground">· {p.job_title}</span>}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <div className="min-w-0 text-xs sm:pt-6">
+            {person ? (
+              <>
+                <p className="whitespace-pre-line text-foreground">{companyContact}</p>
+                {!person.phone && !person.contact_email && (
+                  <p className="mt-1 text-amber-700 dark:text-amber-400">
+                    No phone or email on this profile — only the name will print. Add them in their profile.
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-muted-foreground">Only the company address will print.</p>
+            )}
+          </div>
         </div>
 
         {/* Item lines */}

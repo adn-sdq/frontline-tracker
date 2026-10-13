@@ -124,6 +124,31 @@ export function useUpdateProject() {
 }
 
 // All membership rows — admin only (RLS).
+const LOGO_BUCKET = "project-logos"
+
+/** Upload (or replace) a project's logo; pass null to remove it. */
+export function useSetProjectLogo() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ projectId, file, previous }: { projectId: string; file: File | null; previous?: string | null }) => {
+      let url: string | null = null
+      if (file) {
+        const ext = file.name.split(".").pop()?.toLowerCase() || "png"
+        const path = `${projectId}/${Date.now()}.${ext}`
+        const { error } = await supabase.storage.from(LOGO_BUCKET).upload(path, file, { contentType: file.type, upsert: true })
+        if (error) throw error
+        url = supabase.storage.from(LOGO_BUCKET).getPublicUrl(path).data.publicUrl
+      }
+      const { error } = await supabase.from("projects").update({ logo_url: url }).eq("id", projectId)
+      if (error) throw error
+      const oldPath = previous?.split(`/${LOGO_BUCKET}/`).pop()?.split("?")[0]
+      if (oldPath) await supabase.storage.from(LOGO_BUCKET).remove([oldPath])
+      return url
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["projects"] }),
+  })
+}
+
 export function useAllProjectMembers() {
   return useQuery<ProjectMember[]>({
     queryKey: ["project_members"],

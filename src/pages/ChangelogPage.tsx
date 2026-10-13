@@ -17,6 +17,52 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.20.0",
+    date: "2026-10-14",
+    type: "minor",
+    summary: "Project logos, a full-screen project view, a contact person on delivery notes, a steadier home page and a new animated loader.",
+    sections: [
+      {
+        title: "Projects",
+        items: [
+          "Every project can have a logo — click or drop an image when creating or editing a project (PNG, JPG or WebP, up to 2 MB). Projects without one show coloured initials",
+          "Logos appear on the projects home page, the project switcher and the Admin project cards",
+          "Admin Console → Projects: clicking a project opens it full screen (stats, details, systems and team with their roles) instead of leaving the console. Edit, archive or open its workspace from there",
+        ],
+      },
+      {
+        title: "Delivery notes",
+        items: [
+          "Choose our contact person when creating a delivery note — their name, job title, mobile and email print under the company address. Defaults to you",
+          "The contact is saved with the note, so reprints and previews show the same details",
+        ],
+      },
+      {
+        title: "Home page",
+        items: [
+          "The project list and details panel keep a fixed size — selecting a project no longer resizes the page",
+          "All project rows are the same height, and the first project is shown straight away",
+          "Removed the Edit button; edit projects from Admin Console → Projects",
+          "Your badge now shows your role name",
+        ],
+      },
+      {
+        title: "Loader",
+        items: [
+          "New loader: the FIT mark draws itself with a soft glow and a gradient progress bar (static when the system asks for reduced motion)",
+          "The loader now shows for at least 1.8 seconds so the animation can finish",
+        ],
+      },
+      {
+        title: "Database",
+        items: [
+          "Migrations 0018–0026 applied, admin-users redeployed and SLA demo data loaded",
+          "Profile change history and last-seen data removed from the database",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.19.0",
     date: "2026-10-14",
     type: "minor",

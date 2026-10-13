@@ -1,11 +1,11 @@
 import { useEffect, useState, type ReactNode } from "react"
 import { useIsFetching } from "@tanstack/react-query"
 
-import { FitLogo } from "@/components/FitLogo"
+import { BrandLoader } from "@/components/shell/BrandLoader"
 import { cn } from "@/lib/utils"
 
 /** Shortest time the loader shows — so the loader always completes, even when data is instant. */
-const MIN_MS = 1000
+const MIN_MS = 1800
 /** Longest wait before revealing the page anyway (it shows its own states). */
 const MAX_MS = 8000
 
@@ -37,11 +37,8 @@ export function PageGate({ children }: { children: ReactNode }) {
   return (
     <div className="relative">
       {!ready && (
-        <div className="absolute inset-x-0 top-0 flex min-h-[60svh] flex-col items-center justify-center gap-4" role="status" aria-label="Loading">
-          <FitLogo size={88} className="animate-pulse" />
-          <div className="h-1 w-48 overflow-hidden rounded-full bg-muted">
-            <div className="h-full w-1/3 animate-[loader-slide_1s_ease-in-out_infinite] rounded-full bg-primary" />
-          </div>
+        <div className="absolute inset-x-0 top-0 flex min-h-[60svh] items-center justify-center">
+          <BrandLoader size={110} />
         </div>
       )}
       <div
@@ -77,11 +74,8 @@ export function useMinDelay(ms = MIN_MS) {
 /** Full-screen branded loader (pages outside the app shell). */
 export function FullPageLoader() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-4 bg-background" role="status" aria-label="Loading">
-      <FitLogo size={104} className="animate-pulse" />
-      <div className="h-1 w-48 overflow-hidden rounded-full bg-muted">
-        <div className="h-full w-1/3 animate-[loader-slide_1s_ease-in-out_infinite] rounded-full bg-primary" />
-      </div>
+    <div className="flex min-h-svh items-center justify-center bg-background">
+      <BrandLoader size={140} />
     </div>
   )
 }

@@ -147,6 +147,7 @@ export interface Project {
   our_po:        string | null
   site_location: string | null
   site_contact:  string | null
+  logo_url?:     string | null
 }
 
 export interface ProjectMember {
@@ -511,6 +512,10 @@ export interface DeliveryNote {
   deliver_to: string | null
   location: string | null
   contact: string | null
+  /** Team member whose details print as the company contact. */
+  contact_person_id?: string | null
+  /** Snapshot of that person's name / phone / email when the note was made. */
+  company_contact?: string | null
   items: DeliveryNoteItem[]
   notes: string | null
   generated_by: string | null

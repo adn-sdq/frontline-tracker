@@ -114,6 +114,7 @@ export default function DeliveryNotesPage() {
       deliverTo: note.deliver_to ?? "",
       location: note.location ?? "",
       contact: note.contact ?? "",
+      companyContact: note.company_contact ?? "",
       items: note.items,
     }
   }

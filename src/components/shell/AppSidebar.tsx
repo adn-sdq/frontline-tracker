@@ -37,6 +37,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useAuth } from "@/contexts/AuthContext"
 import { useProject } from "@/contexts/ProjectContext"
 import { useTheme } from "@/hooks/useTheme"
+import { ProjectLogo } from "@/components/ProjectLogo"
 import { navSectionsFor, type NavItem } from "@/lib/navigation"
 import { APP_VERSION } from "@/lib/version"
 import { cn } from "@/lib/utils"
@@ -61,7 +62,7 @@ function ProjectSwitcher({ collapsed }: { collapsed?: boolean }) {
       <DropdownMenuSeparator />
       {projects.map((p) => (
         <DropdownMenuItem key={p.id} onClick={() => switchProject(p.id)} className="gap-2">
-          <FolderOpen className="size-4 text-muted-foreground" />
+          <ProjectLogo project={p} size={20} className="rounded-[4px] text-[9px]" />
           <span className="flex-1 truncate">{p.name}</span>
           {p.id === currentProjectId && <Check className="size-4 text-primary" />}
         </DropdownMenuItem>
@@ -83,7 +84,7 @@ function ProjectSwitcher({ collapsed }: { collapsed?: boolean }) {
             aria-label={currentProject?.name ?? "Select project"}
             className="grid size-9 place-items-center rounded-lg text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
           >
-            <FolderOpen className="size-4.5" />
+            {currentProject ? <ProjectLogo project={currentProject} size={26} className="rounded-md" /> : <FolderOpen className="size-4.5" />}
           </button>
         </DropdownMenuTrigger>
         {menu}
@@ -98,7 +99,11 @@ function ProjectSwitcher({ collapsed }: { collapsed?: boolean }) {
           type="button"
           className="flex h-8 w-full items-center gap-2 rounded-sm border border-input bg-background px-2.5 text-left text-sm transition-colors hover:bg-accent"
         >
-          <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+          {currentProject ? (
+            <ProjectLogo project={currentProject} size={20} className="rounded-[4px]" />
+          ) : (
+            <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+          )}
           <span className="flex-1 truncate font-medium">
             {currentProject?.name ?? "Select project"}
           </span>

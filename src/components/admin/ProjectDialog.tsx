@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { errorMessage } from "@/lib/utils"
-import { Loader2 } from "lucide-react"
+import { ImagePlus, Loader2, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { useCreateProject, useUpdateProject, type ProjectInput } from "@/hooks/useProjects"
+import { ProjectLogo } from "@/components/ProjectLogo"
+import { useFileDrop } from "@/components/ui/file-dropzone"
+import { useCreateProject, useSetProjectLogo, useUpdateProject, type ProjectInput } from "@/hooks/useProjects"
 import { useProjectSystemKeys, useSetProjectSystems, useSystems } from "@/hooks/useSystems"
 
 export function blankProjectInput(): ProjectInput {
@@ -32,16 +34,19 @@ export function ProjectDialog({
   initial,
   projectId,
   projectsCount,
+  logoUrl,
 }: {
   open: boolean
   onClose: () => void
   initial: ProjectInput
   projectId?: string        // undefined = create, string = edit
   projectsCount: number     // for sort on create
+  logoUrl?: string | null   // current logo when editing
 }) {
   const create = useCreateProject()
   const update = useUpdateProject()
   const setProjectSystems = useSetProjectSystems()
+  const setLogo = useSetProjectLogo()
   const { systems: allSystems } = useSystems()
   const activeSystems = allSystems.filter((s) => s.active)
   const { data: existingKeys } = useProjectSystemKeys(projectId ?? null)
@@ -49,7 +54,27 @@ export function ProjectDialog({
   const [form, setForm] = useState<ProjectInput>(initial)
   const [selectedSystems, setSelectedSystems] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
+  // undefined = unchanged, File = new logo, null = remove
+  const [logoFile, setLogoFile] = useState<File | null | undefined>(undefined)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const isNew = !projectId
+
+  useEffect(() => {
+    if (!logoFile) return setLogoPreview(null)
+    const u = URL.createObjectURL(logoFile)
+    setLogoPreview(u)
+    return () => URL.revokeObjectURL(u)
+  }, [logoFile])
+
+  const logoDrop = useFileDrop({
+    accept: "image/png,image/jpeg,image/webp,image/gif",
+    disabled: busy,
+    onFiles: ([f]) => {
+      if (f.size > 2 * 1024 * 1024) return toast.error("Logo must be under 2 MB")
+      setLogoFile(f)
+    },
+  })
+  const shownLogo = logoFile === undefined ? logoUrl ?? null : logoPreview
 
   const prevOpenRef = useRef(false)
   const systemsSeededRef = useRef(false)
@@ -61,6 +86,7 @@ export function ProjectDialog({
     if (!open) { systemsSeededRef.current = false; return }
     if (!justOpened) return
     setForm(initial)
+    setLogoFile(undefined)
     if (!isNew && existingKeys !== undefined) {
       setSelectedSystems(existingKeys)
       systemsSeededRef.current = true
@@ -118,6 +144,9 @@ export function ProjectDialog({
         pid = projectId
       }
       await setProjectSystems.mutateAsync({ projectId: pid, keys: selectedSystems })
+      if (logoFile !== undefined) {
+        await setLogo.mutateAsync({ projectId: pid, file: logoFile, previous: logoUrl })
+      }
       toast.success(isNew ? `Project "${form.name.trim()}" created` : "Project updated")
       onClose()
     } catch (e) {
@@ -140,9 +169,33 @@ export function ProjectDialog({
         </DialogHeader>
 
         <div className="grid gap-4">
-          <div className="grid gap-1.5">
-            <Label className="text-xs text-muted-foreground">Project name *</Label>
-            <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. MiSK Ilmi Phase 2" autoFocus />
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              {...logoDrop.dropProps}
+              onClick={logoDrop.open}
+              disabled={busy}
+              aria-label="Upload project logo"
+              className={`group relative shrink-0 rounded-xl outline-offset-2 transition ${logoDrop.dragging ? "ring-2 ring-primary" : ""}`}
+            >
+              <ProjectLogo project={{ id: projectId, name: form.name || "New project" }} src={shownLogo} size={72} className="rounded-xl" />
+              <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/45 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                <ImagePlus className="size-5" />
+              </span>
+            </button>
+            {logoDrop.input}
+            <div className="grid min-w-0 flex-1 gap-1.5">
+              <Label className="text-xs text-muted-foreground">Project name *</Label>
+              <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. MiSK Ilmi Phase 2" autoFocus />
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Logo: click or drop an image (PNG, JPG, WebP · max 2 MB)</span>
+                {shownLogo && (
+                  <Button type="button" variant="ghost" size="sm" className="h-6 px-1.5 text-xs text-destructive" onClick={() => setLogoFile(null)} disabled={busy}>
+                    <Trash2 className="size-3" /> Remove
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
           <div className="grid gap-1.5">
             <Label className="text-xs text-muted-foreground">Description</Label>

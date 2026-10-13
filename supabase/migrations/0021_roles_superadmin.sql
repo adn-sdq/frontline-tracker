@@ -7,6 +7,9 @@
 --    role = 'member', so the UI showed "Member" while they had full admin
 --    rights. Align is_admin to the visible role.
 -- ---------------------------------------------------------------------------
+-- The owner account carried a legacy 'editor' role with is_admin = true.
+update public.profiles set role = 'admin' where username = 'adnan';
+
 update public.profiles set is_admin = (role = 'admin')
 where is_admin is distinct from (role = 'admin');
 

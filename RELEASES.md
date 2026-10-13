@@ -2,6 +2,39 @@
 
 ---
 
+## v2.20.0 — 2026-10-14
+
+Project logos, a full-screen project view, a contact person on delivery notes, a steadier home page and a new animated loader.
+
+Migrations 0018–0026 are now applied to the database, `admin-users` is redeployed and the SLA demo data is loaded.
+
+### Projects
+- Every project can have a logo — click or drop an image when creating or editing a project (PNG, JPG or WebP, up to 2 MB). Projects without one show coloured initials
+- Logos appear on the projects home page, the project switcher and the Admin project cards
+- Admin Console → Projects: clicking a project opens it full screen (stats, details, systems, team with roles) instead of leaving the console; edit, archive or open its workspace from there
+
+### Delivery notes
+- Choose our contact person when creating a delivery note — name, job title, mobile and email print under the company address (defaults to you)
+- The contact is saved with the note, so reprints and previews match
+
+### Home page
+- The project list and details panel keep a fixed size — selecting a project no longer resizes the page
+- All project rows are the same height, and the first project is shown straight away
+- Removed the Edit button; edit projects from Admin Console → Projects
+- Your badge now shows your role name
+
+### Loader
+- New loader: the FIT mark draws itself with a soft glow and a gradient progress bar (static with reduced motion)
+- The loader shows for at least 1.8 seconds so the animation can finish
+
+### Database
+- `0024_privacy_cleanup.sql`: drops profile change history and last-seen tracking
+- `0025_project_logos.sql`: `projects.logo_url` and the public `project-logos` bucket (admins upload)
+- `0026_dn_contact_person.sql`: `delivery_notes.contact_person_id` and `company_contact` snapshot
+- `0021` now also normalises the owner account's legacy role before deriving admin rights
+
+---
+
 ## v2.19.0 — 2026-10-14
 
 Roles are now the only way to grant access, plus a cleaner Admin Console and bigger loader.

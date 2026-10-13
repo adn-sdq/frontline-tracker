@@ -10,6 +10,7 @@ import {
   FolderOpen,
   Hash,
   LifeBuoy,
+  Maximize2,
   MapPin,
   MoreHorizontal,
   Package,
@@ -37,6 +38,8 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { avatarColor, UserAvatar } from "@/components/UserAvatar"
 import { ProjectDialog, blankProjectInput } from "@/components/admin/ProjectDialog"
+import { ProjectFullView } from "@/components/admin/ProjectFullView"
+import { ProjectLogo } from "@/components/ProjectLogo"
 import { displayName } from "@/components/profile/shared"
 import { useProject } from "@/contexts/ProjectContext"
 import { useAllProfiles } from "@/hooks/useAdmin"
@@ -65,14 +68,16 @@ function ProjectCard({
   members,
   onEdit,
   onToggleActive,
-  onOpen,
+  onView,
+  onOpenWorkspace,
 }: {
   project: Project
   systems: string[]
   members: Profile[]
   onEdit: () => void
   onToggleActive: () => void
-  onOpen: () => void
+  onView: () => void
+  onOpenWorkspace: () => void
 }) {
   const { data: stats } = useProjectStats(p.id)
   const { labelFor } = useSystems()
@@ -86,7 +91,21 @@ function ProjectCard({
   ].filter((d) => d.value)
 
   return (
-    <div className={cn("group flex flex-col overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-md", !p.active && "opacity-75")}>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onView}
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault()
+          onView()
+        }
+      }}
+      className={cn(
+        "group flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-card text-left transition-shadow outline-none hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring",
+        !p.active && "opacity-75"
+      )}
+    >
       {/* Accent strip — colour derived from the project id so each card is recognisable */}
       <div className={cn("h-1", avatarColor(p.id).split(" ").find((c) => c.startsWith("bg-")))} />
 
@@ -94,9 +113,7 @@ function ProjectCard({
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-start gap-3">
-            <div className={cn("grid size-10 shrink-0 place-items-center rounded-lg text-sm font-semibold uppercase", avatarColor(p.id))}>
-              {p.name.slice(0, 2)}
-            </div>
+            <ProjectLogo project={p} size={40} />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
                 <h3 className="truncate font-semibold">{p.name}</h3>
@@ -120,12 +137,13 @@ function ProjectCard({
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-7 shrink-0" aria-label="Project actions">
+              <Button variant="ghost" size="icon" className="size-7 shrink-0" aria-label="Project actions" onClick={(e) => e.stopPropagation()}>
                 <MoreHorizontal className="size-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onOpen}><ArrowRight className="size-4" /> Open project</DropdownMenuItem>
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem onClick={onView}><Maximize2 className="size-4" /> View full screen</DropdownMenuItem>
+              <DropdownMenuItem onClick={onOpenWorkspace}><ArrowRight className="size-4" /> Open workspace</DropdownMenuItem>
               <DropdownMenuItem onClick={onEdit}><Pencil className="size-4" /> Edit details</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onToggleActive}>
@@ -155,7 +173,7 @@ function ProjectCard({
             ))}
           </dl>
         ) : (
-          <button type="button" onClick={onEdit} className="rounded-md border border-dashed px-3 py-2 text-left text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground">
+          <button type="button" onClick={(e) => { e.stopPropagation(); onEdit() }} className="rounded-md border border-dashed px-3 py-2 text-left text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground">
             Add client, PO and site details — they pre-fill delivery notes and items.
           </button>
         )}
@@ -190,9 +208,9 @@ function ProjectCard({
               <TooltipContent className="max-w-64">{members.map(displayName).join(", ")}</TooltipContent>
             </Tooltip>
           )}
-          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={onOpen}>
-            Open <ArrowRight className="size-3.5" />
-          </Button>
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+            View <Maximize2 className="size-3.5" />
+          </span>
         </div>
       </div>
     </div>
@@ -212,6 +230,7 @@ export function AdminProjectsTab() {
   const [filter, setFilter] = useState<Filter>("active")
   const [createOpen, setCreateOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
+  const [viewId, setViewId] = useState<string | null>(null)
 
   const systemsBy = useMemo(() => {
     const m: Record<string, string[]> = {}
@@ -237,6 +256,12 @@ export function AdminProjectsTab() {
   })
 
   const editProject = projects.find((p) => p.id === editId) ?? null
+  const viewProject = projects.find((p) => p.id === viewId) ?? null
+
+  function openWorkspace(id: string) {
+    setCurrentProject(id)
+    navigate("/")
+  }
 
   async function toggleActive(p: Project) {
     if (p.active) {
@@ -303,15 +328,22 @@ export function AdminProjectsTab() {
               members={membersBy[p.id] ?? []}
               onEdit={() => setEditId(p.id)}
               onToggleActive={() => toggleActive(p)}
-              onOpen={() => {
-                setCurrentProject(p.id)
-                navigate("/")
-              }}
+              onView={() => setViewId(p.id)}
+              onOpenWorkspace={() => openWorkspace(p.id)}
             />
           ))}
         </div>
       )}
 
+      <ProjectFullView
+        project={viewProject}
+        systems={viewProject ? systemsBy[viewProject.id] ?? [] : []}
+        members={viewProject ? membersBy[viewProject.id] ?? [] : []}
+        onClose={() => setViewId(null)}
+        onEdit={() => viewProject && setEditId(viewProject.id)}
+        onToggleActive={() => viewProject && toggleActive(viewProject)}
+        onOpenWorkspace={() => viewProject && openWorkspace(viewProject.id)}
+      />
       <ProjectDialog open={createOpen} onClose={() => setCreateOpen(false)} initial={blankProjectInput()} projectsCount={projects.length} />
       <ProjectDialog
         open={!!editProject}
@@ -331,6 +363,7 @@ export function AdminProjectsTab() {
         }
         projectId={editId ?? undefined}
         projectsCount={projects.length}
+        logoUrl={editProject?.logo_url}
       />
     </div>
   )
