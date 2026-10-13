@@ -17,6 +17,21 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.17.1",
+    date: "2026-10-14",
+    type: "patch",
+    summary: "Access UI clarity.",
+    sections: [
+      {
+        title: "Fixes",
+        items: [
+          "Page access levels now read as plain labels (“Can edit”, “View only”, “No access”) with a coloured dot, instead of button-like pills",
+          "Access grid toasts now say exactly what changed, e.g. “Procurement access removed from …”",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.17.0",
     date: "2026-10-13",
     type: "minor",

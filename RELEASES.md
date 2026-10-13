@@ -2,6 +2,17 @@
 
 ---
 
+## v2.17.1 — 2026-10-14
+
+Access UI clarity.
+
+### Fixes
+- Page access levels now read as plain labels (“Can edit”, “View only”, “No access”) with a coloured dot, instead of button-like pills
+- Access grid toasts now say exactly what changed, e.g. “Procurement access removed from …”
+- Super admin row is no longer listed in the Access grid
+
+---
+
 ## v2.17.0 — 2026-10-13
 
 Custom access roles with view-only and edit levels, project cards in the Admin Console, and access fixes.

@@ -45,8 +45,10 @@ export function AdminAccessTab() {
   const assign = useAssignProject()
   const unassign = useUnassignProject()
 
-  const configurable = profiles.filter((p) => roleOf(p) !== "admin" && p.org !== "firstfix" && p.status !== "suspended")
-  const fixed = profiles.filter((p) => !configurable.includes(p))
+  // The super admin's access is self-managed, so their row is never listed.
+  const listed = profiles.filter((p) => !p.is_super_admin)
+  const configurable = listed.filter((p) => roleOf(p) !== "admin" && p.org !== "firstfix" && p.status !== "suspended")
+  const fixed = listed.filter((p) => !configurable.includes(p))
   const isMember = (uid: string, pid: string) => memberships.some((m) => m.user_id === uid && m.project_id === pid)
 
   function togglePage(p: Profile, page: AppPage) {
@@ -54,7 +56,7 @@ export function AdminAccessTab() {
     const next = current.includes(page) ? current.filter((x) => x !== page) : [...current, page]
     void withToast(
       () => update.mutateAsync({ id: p.id, patch: { allowed_pages: next.length === APP_PAGES.length ? null : next } }),
-      `${displayName(p)}: ${APP_PAGE_LABELS[page]} ${current.includes(page) ? "removed" : "granted"}`
+      `${APP_PAGE_LABELS[page]} access ${current.includes(page) ? "removed from" : "granted to"} ${displayName(p)}`
     )
   }
 
@@ -157,7 +159,7 @@ export function AdminAccessTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {profiles
+                {listed
                   .filter((p) => roleOf(p) !== "admin" && p.status !== "suspended")
                   .map((p) => (
                     <TableRow key={p.id}>

@@ -1,21 +1,18 @@
-import { Eye, Pencil } from "lucide-react"
-
 import { cn } from "@/lib/utils"
 import { PAGE_ACCESS_LABELS, PAGE_ACCESS_LEVELS, type PageAccess } from "@/lib/types"
 
-const STYLES: Record<PageAccess, string> = {
-  none: "text-muted-foreground/50",
-  view: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300",
-  edit: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+const DOT: Record<PageAccess, string> = {
+  none: "bg-muted-foreground/30",
+  view: "bg-sky-500",
+  edit: "bg-emerald-500",
 }
 
-/** Compact None / View / Edit indicator. */
+/** Read-only None / View / Edit label — plain text with a status dot, not button-like. */
 export function PageAccessBadge({ level, className }: { level: PageAccess; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-medium", STYLES[level], className)}>
-      {level === "edit" && <Pencil className="size-3" />}
-      {level === "view" && <Eye className="size-3" />}
-      {level === "none" ? "—" : level === "edit" ? "Edit" : "View"}
+    <span className={cn("inline-flex items-center gap-1.5 text-xs", level === "none" ? "text-muted-foreground/60" : "text-foreground", className)}>
+      <span className={cn("size-1.5 shrink-0 rounded-full", DOT[level])} aria-hidden />
+      {PAGE_ACCESS_LABELS[level]}
     </span>
   )
 }
