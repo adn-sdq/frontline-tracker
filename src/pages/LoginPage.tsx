@@ -121,7 +121,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6 border-t pt-4">
-            <Link to="/legal" className="cursor-default font-mono text-[10px] text-muted-foreground/60">
+            <Link to="/changelog" className="font-mono text-[10px] text-muted-foreground/60 transition-colors hover:text-foreground">
               {APP_VERSION} · {APP_VERSION_DATE}
             </Link>
           </div>
@@ -227,7 +227,7 @@ export default function LoginPage() {
                   <div className="text-[11px] text-muted-foreground">Frontline Internal Tools</div>
                 </div>
               </div>
-              <Link to="/legal" className="cursor-default font-mono text-[10px] text-muted-foreground/60">
+              <Link to="/changelog" className="font-mono text-[10px] text-muted-foreground/60 transition-colors hover:text-foreground">
                 {APP_VERSION} · {APP_VERSION_DATE}
               </Link>
             </div>

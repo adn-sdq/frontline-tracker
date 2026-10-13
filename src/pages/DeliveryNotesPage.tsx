@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import { useAuth } from "@/contexts/AuthContext"
 import { format, parseISO } from "date-fns"
 import {
   Download,
@@ -188,6 +189,7 @@ function DNSkeleton() {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function DeliveryNotesPage() {
+  const editable = useAuth().canEdit("tracker")
   const { currentProject } = useProject()
   const { data: notes = [], isLoading } = useDeliveryNotes()
   const { data: profiles = {} } = useProfiles()
@@ -301,12 +303,14 @@ export default function DeliveryNotesPage() {
               Clear
             </Button>
           )}
-          <ActionButton
-            icon={Plus}
-            label="New delivery note"
-            primary
-            onClick={() => setCreateOpen(true)}
-          />
+          {editable && (
+            <ActionButton
+              icon={Plus}
+              label="New delivery note"
+              primary
+              onClick={() => setCreateOpen(true)}
+            />
+          )}
         </div>
       </div>
 

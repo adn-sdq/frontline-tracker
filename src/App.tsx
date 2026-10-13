@@ -33,19 +33,14 @@ function FullScreen({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  const { session, loading, profile } = useAuth()
+  const { session, loading, profile, pageAccess } = useAuth()
   const { currentProjectId, loading: projectsLoading } = useProject()
   const isFirstfix = profile?.org === "firstfix"
   const isAdmin = !!profile?.is_admin
 
-  // Compute allowed pages the same way AppLayout does, so routes match nav.
+  // Same rule the nav and the database use (src/lib/access.ts).
   function canAccess(page: AppPage) {
-    if (!profile) return false
-    if (isAdmin) return true
-    if (isFirstfix) return page === "documents"
-    const pages = profile.allowed_pages
-    if (!pages || pages.length === 0) return true
-    return pages.includes(page)
+    return pageAccess(page) !== "none"
   }
 
   // Where a logged-in user with a selected project should land.

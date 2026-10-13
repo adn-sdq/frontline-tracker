@@ -32,7 +32,8 @@ import { ProfileDialog } from "@/components/ProfileDialog"
 import { CreateAccountDialog } from "@/components/admin/CreateAccountDialog"
 import { displayName, ROLE_BADGE_CLASS, roleLabel, roleOf } from "@/components/profile/shared"
 import { useAuth } from "@/contexts/AuthContext"
-import { useAllProfiles } from "@/hooks/useAdmin"
+import { useAccessRoles, useAllProfiles } from "@/hooks/useAdmin"
+import { roleFor } from "@/lib/access"
 import { useAllProjectMembers } from "@/hooks/useProjects"
 import { allowedPagesFor } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
@@ -44,6 +45,7 @@ export function AdminUsersTab() {
   const { user } = useAuth()
   const { data: profiles = [], isLoading } = useAllProfiles()
   const { data: memberships = [] } = useAllProjectMembers()
+  const { data: accessRoles = [] } = useAccessRoles()
   const [search, setSearch] = useState("")
   const [role, setRole] = useState("ALL")
   const [org, setOrg] = useState("ALL")
@@ -114,7 +116,7 @@ export function AdminUsersTab() {
                 <TableHead>User</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Team</TableHead>
-                <TableHead>Pages</TableHead>
+                <TableHead>Access</TableHead>
                 <TableHead className="text-right">Projects</TableHead>
                 <TableHead>Last active</TableHead>
                 <TableHead className="w-10" />
@@ -124,7 +126,8 @@ export function AdminUsersTab() {
               {rows.map((p) => {
                 const suspended = p.status === "suspended"
                 const isAdminUser = roleOf(p) === "admin"
-                const pages = allowedPagesFor(p).size
+                const accessRole = roleFor(p, accessRoles)
+                const pages = allowedPagesFor(p, accessRole).size
                 return (
                   <TableRow key={p.id} className={cn("cursor-pointer", suspended && "opacity-60")} onClick={() => setOpen({ profile: p, tab: "overview" })}>
                     <TableCell>
@@ -152,7 +155,9 @@ export function AdminUsersTab() {
                     </TableCell>
                     <TableCell className="text-sm">{p.org ? ORG_LABELS[p.org] : "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {isAdminUser || pages === APP_PAGES.length ? "All" : `${pages} of ${APP_PAGES.length}`}
+                      {accessRole ? (
+                        <Badge variant="outline" className="font-normal">{accessRole.name}</Badge>
+                      ) : isAdminUser || pages === APP_PAGES.length ? "All" : `${pages} of ${APP_PAGES.length}`}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{isAdminUser ? "All" : projectCount[p.id] ?? 0}</TableCell>
                     <TableCell className="whitespace-nowrap text-sm text-muted-foreground">

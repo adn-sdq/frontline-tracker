@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import { useAuth } from "@/contexts/AuthContext"
 import { formatDistanceToNow } from "date-fns"
 import {
   CheckSquare,
@@ -70,6 +71,7 @@ import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
 
 export default function DocumentsPage() {
+  const editable = useAuth().canEdit("documents")
   useDocumentsRealtime()
   const { data: docs = [], isLoading } = useDocuments()
   const { data: profiles = {} } = useProfiles()
@@ -362,13 +364,13 @@ export default function DocumentsPage() {
               <Table2 className="size-4" />
             </button>
           </div>
-          <ActionButton
+          {editable && <ActionButton
             icon={CheckSquare}
             label={selectMode ? "Cancel selection" : "Select"}
             active={selectMode}
             onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
-          />
-          {!selectMode && (
+          />}
+          {editable && !selectMode && (
             <ActionButton
               icon={Plus}
               label="Add document"

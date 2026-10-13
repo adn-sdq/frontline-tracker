@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react"
+import { useAuth } from "@/contexts/AuthContext"
 import {
   Plus,
   Search,
@@ -54,6 +55,7 @@ const STATUS_DOT: Record<TicketStatus, string> = {
 }
 
 export default function TicketsPage() {
+  const editable = useAuth().canEdit("tickets")
   const { data: tickets = [], isLoading } = useTickets()
   const { data: profiles = [] } = useAllProfiles()
   const updateTicket = useUpdateTicket()
@@ -226,7 +228,7 @@ export default function TicketsPage() {
                 <Columns3 className="size-4" />
               </button>
             </div>
-            <ActionButton icon={Plus} label="New ticket" primary onClick={openNew} />
+            {editable && <ActionButton icon={Plus} label="New ticket" primary onClick={openNew} />}
           </div>
         </div>
       </div>

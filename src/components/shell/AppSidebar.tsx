@@ -14,6 +14,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
+  ShieldCheck,
   Sun,
   Truck,
   UserCircle,
@@ -113,8 +114,8 @@ function ProjectSwitcher({ collapsed }: { collapsed?: boolean }) {
 
 function NewMenu({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   const navigate = useNavigate()
-  const { profile } = useAuth()
-  const sections = navSectionsFor(profile)
+  const { profile, accessRole } = useAuth()
+  const sections = navSectionsFor(profile, accessRole)
   const reachable = new Set(sections.flatMap((s) => s.items.filter((i) => !i.soon).map((i) => i.to)))
 
   function go(to: string) {
@@ -259,7 +260,7 @@ function NavRow({
 // ── Footer profile (dropdown: my profile + sign out) ──────────────────────────
 
 function FooterProfile({ collapsed }: { collapsed?: boolean }) {
-  const { profile, signOut } = useAuth()
+  const { profile, signOut, superAdmin } = useAuth()
   const [profileOpen, setProfileOpen] = useState(false)
 
   if (!profile) return null
@@ -323,6 +324,37 @@ function FooterProfile({ collapsed }: { collapsed?: boolean }) {
           >
             <UserCircle className="size-4" /> My profile
           </DropdownMenuItem>
+          {superAdmin && (
+            <DropdownMenuItem
+              onSelect={(e) => e.preventDefault()}
+              onClick={async () => {
+                const next = !superAdmin.elevated
+                try {
+                  await superAdmin.setElevated(next)
+                  toast.success(next ? "Admin privileges raised" : "Now browsing as a regular member")
+                } catch (e) {
+                  toast.error("Could not switch mode", { description: e instanceof Error ? e.message : undefined })
+                }
+              }}
+            >
+              <ShieldCheck className="size-4" />
+              <span className="flex-1">Admin mode</span>
+              <span
+                aria-hidden
+                className={cn(
+                  "relative h-4 w-7 rounded-full transition-colors",
+                  superAdmin.elevated ? "bg-primary" : "bg-muted-foreground/30"
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 size-3 rounded-full bg-white shadow transition-all",
+                    superAdmin.elevated ? "left-3.5" : "left-0.5"
+                  )}
+                />
+              </span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => {
@@ -358,9 +390,9 @@ export function SidebarContent({
   collapsed?: boolean
   onToggleCollapse?: () => void
 }) {
-  const { profile } = useAuth()
+  const { profile, accessRole } = useAuth()
   const { dark, toggle } = useTheme()
-  const sections = navSectionsFor(profile)
+  const sections = navSectionsFor(profile, accessRole)
   const updatesActive = Boolean(useMatch("/updates"))
 
   return (
@@ -516,7 +548,7 @@ export function SidebarContent({
             >
               {dark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
             </button>
-            <Link to="/legal" onClick={onNavigate} className="cursor-default font-mono">
+            <Link to="/changelog" onClick={onNavigate} className="font-mono transition-colors hover:text-foreground" title="What's new">
               {APP_VERSION}
             </Link>
           </div>

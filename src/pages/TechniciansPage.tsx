@@ -812,6 +812,7 @@ function EmptyState({
 
 // ── page ────────────────────────────────────────────────────────────────────
 export default function TechniciansPage() {
+  const editable = useAuth().canEdit("technicians")
   useTechniciansRealtime()
   const { profile, user } = useAuth()
   const { data: profiles = [] } = useAllProfiles()
@@ -860,12 +861,14 @@ export default function TechniciansPage() {
       ) : (
         <>
           <div className="flex items-center justify-end">
-            <ActionButton
-              icon={Plus}
-              label="Request technicians"
-              primary
-              onClick={() => setRequestOpen(true)}
-            />
+            {editable && (
+              <ActionButton
+                icon={Plus}
+                label="Request technicians"
+                primary
+                onClick={() => setRequestOpen(true)}
+              />
+            )}
           </div>
           <Separator />
           <MyRequests userId={user?.id} />

@@ -44,13 +44,24 @@ Deno.serve(async (req) => {
     const admin = createClient(url, serviceKey)
     const { data: prof } = await admin
       .from("profiles")
-      .select("is_admin")
+      .select("is_admin, is_super_admin, super_elevated")
       .eq("id", user.id)
       .single()
-    if (!prof?.is_admin) return json({ error: "Admins only" }, 403)
+    const callerIsAdmin = prof?.is_super_admin ? prof.super_elevated : prof?.is_admin
+    if (!callerIsAdmin) return json({ error: "Admins only" }, 403)
 
     const body = await req.json().catch(() => ({}))
     const action = body.action ?? "create"
+
+    // The super admin's account can only be changed by themself.
+    if (action !== "create" && body.id && body.id !== user.id) {
+      const { data: target } = await admin
+        .from("profiles")
+        .select("is_super_admin")
+        .eq("id", body.id)
+        .single()
+      if (target?.is_super_admin) return json({ error: "This account can't be modified." }, 403)
+    }
 
     if (action === "create") {
       const username = String(body.username ?? "").trim().toLowerCase()

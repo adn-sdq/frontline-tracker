@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { supabase } from "@/lib/supabase"
-import type { AccountStatus, Org, Profile, ProfileHistoryRow, Role } from "@/lib/types"
+import type { AccessRole, AccountStatus, Org, Profile, ProfileHistoryRow, Role } from "@/lib/types"
 
 // ── Feature requests (admin-only) ─────────────────────────────────────────────
 
@@ -157,7 +157,7 @@ export function useDeleteAccount() {
 
 /** Profile columns writable through RLS. The DB guard strips privileged ones for non-admins. */
 export type ProfilePatch = Partial<
-  Omit<Profile, "id" | "username" | "created_at" | "updated_at" | "last_seen_at" | "status" | "status_reason">
+  Omit<Profile, "id" | "username" | "created_at" | "updated_at" | "last_seen_at" | "status" | "status_reason" | "is_super_admin" | "super_elevated">
 >
 
 // Details, org, access flags, avatar go straight through RLS (admins may update any profile).
@@ -262,5 +262,57 @@ export function useUpdateUserDetails() {
     mutationFn: (args: { id: string; username?: string; full_name?: string }) =>
       callAdmin({ action: "update_profile", ...args }),
     onSuccess: () => invalidateProfiles(qc),
+  })
+}
+
+// ── Access roles ──────────────────────────────────────────────────────────────
+
+const ROLES_KEY = ["access_roles"]
+
+export function useAccessRoles() {
+  return useQuery<AccessRole[]>({
+    queryKey: ROLES_KEY,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("access_roles").select("*").order("name")
+      if (error) throw error
+      return (data ?? []) as AccessRole[]
+    },
+    staleTime: 60_000,
+  })
+}
+
+export type AccessRoleInput = Pick<
+  AccessRole,
+  "name" | "description" | "permissions" | "is_tech_manager" | "is_sla_manager"
+>
+
+export function useSaveAccessRole() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: { id?: string; input: AccessRoleInput }) => {
+      const payload = { ...args.input, updated_at: new Date().toISOString() }
+      const { error } = args.id
+        ? await supabase.from("access_roles").update(payload).eq("id", args.id)
+        : await supabase.from("access_roles").insert(payload)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ROLES_KEY })
+      invalidateProfiles(qc)
+    },
+  })
+}
+
+export function useDeleteAccessRole() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("access_roles").delete().eq("id", id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ROLES_KEY })
+      invalidateProfiles(qc)
+    },
   })
 }

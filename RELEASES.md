@@ -2,6 +2,34 @@
 
 ---
 
+## v2.17.0 — 2026-10-13
+
+Custom access roles with view-only and edit levels, project cards in the Admin Console, and access fixes.
+
+Requires migration `0021_roles_superadmin.sql` and redeploying `admin-users`.
+
+### Access roles
+- Admins can create roles (Admin Console → Roles) that bundle page access — each page set to None, View or Edit — plus Technicians/SLA manager capabilities
+- Assign a role to a member from their profile or from the Access grid; everyone on a role updates when the role changes
+- View-only is enforced by the database, not just hidden: view-only users can't create, edit or delete on that page, and see a “view-only” notice
+- Guest accounts are now genuinely read-only
+
+### Admin Console
+- Projects are now cards: status, description, item/document/delivery-note/ticket counts, client and PO details, systems and team avatars, with search and Active / Archived filters
+- Archiving a project asks for confirmation; open a project straight from its card
+- New Roles tab; the Access grid has a Role column per member
+
+### Fixes
+- Accounts created as Admin were shown as “Member” while having full admin rights (including the Admin Console). The visible role is now the single source of truth — check your user list after updating
+- Members can no longer see access controls; their own profile shows a read-only summary, and other people's access isn't shown to them
+- Clicking the version number now opens the changelog
+
+### Internal
+- Hidden super-admin account (`adnan`) with an Admin-mode switch in the account menu; protected from changes by other admins.
+- Legal page is no longer linked anywhere — reachable only at `#/legal`.
+
+---
+
 ## v2.16.0 — 2026-10-13
 
 Smoother page transitions — content appears together with its data.

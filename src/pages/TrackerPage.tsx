@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import { useAuth } from "@/contexts/AuthContext"
 import {
   Download,
   Filter,
@@ -92,6 +93,7 @@ function activeFilterCount(f: StatusFilters) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function TrackerPage() {
+  const editable = useAuth().canEdit("tracker")
   useItemsRealtime()
   const { data: items = [], isLoading } = useItems()
   const { data: profiles = {} } = useProfiles()
@@ -391,12 +393,12 @@ export default function TrackerPage() {
           </DropdownMenu>
 
           {/* Delivery-note mode toggle */}
-          <ActionButton
+          {editable && <ActionButton
             icon={Truck}
             label={dnMode ? "Cancel delivery" : "Delivery note"}
             active={dnMode}
             onClick={() => (dnMode ? exitDnMode() : enterDnMode())}
-          />
+          />}
 
           {/* Import / Export overflow */}
           <DropdownMenu>
@@ -411,7 +413,7 @@ export default function TrackerPage() {
               <TooltipContent>More actions</TooltipContent>
             </Tooltip>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setImportOpen(true)}>
+              <DropdownMenuItem onClick={() => setImportOpen(true)} disabled={!editable}>
                 <Upload className="size-4" /> Import CSV
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -424,7 +426,7 @@ export default function TrackerPage() {
           </DropdownMenu>
 
           {/* Primary add */}
-          <ActionButton icon={Plus} label="Add item" primary onClick={openAdd} />
+          {editable && <ActionButton icon={Plus} label="Add item" primary onClick={openAdd} />}
         </div>
 
         {/* Active filter chips */}

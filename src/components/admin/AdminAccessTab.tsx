@@ -9,7 +9,16 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { displayName, roleOf, withToast } from "@/components/profile/shared"
-import { useAllProfiles, useUpdateProfile } from "@/hooks/useAdmin"
+import { useAccessRoles, useAllProfiles, useUpdateProfile } from "@/hooks/useAdmin"
+import { roleFor } from "@/lib/access"
+import { PageAccessBadge } from "@/components/admin/PageAccessBadge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   useAllProjectMembers,
   useAllProjects,
@@ -29,6 +38,7 @@ const STICKY = "sticky left-0 z-10 bg-background"
  */
 export function AdminAccessTab() {
   const { data: profiles = [], isLoading } = useAllProfiles()
+  const { data: roles = [] } = useAccessRoles()
   const { data: projects = [] } = useAllProjects()
   const { data: memberships = [] } = useAllProjectMembers()
   const update = useUpdateProfile()
@@ -40,11 +50,19 @@ export function AdminAccessTab() {
   const isMember = (uid: string, pid: string) => memberships.some((m) => m.user_id === uid && m.project_id === pid)
 
   function togglePage(p: Profile, page: AppPage) {
-    const current = [...allowedPagesFor(p)] as AppPage[]
+    const current = [...allowedPagesFor(p, null)] as AppPage[]
     const next = current.includes(page) ? current.filter((x) => x !== page) : [...current, page]
     void withToast(
       () => update.mutateAsync({ id: p.id, patch: { allowed_pages: next.length === APP_PAGES.length ? null : next } }),
       `${displayName(p)}: ${APP_PAGE_LABELS[page]} ${current.includes(page) ? "removed" : "granted"}`
+    )
+  }
+
+  function setRole(p: Profile, roleId: string) {
+    const id = roleId === "__custom" ? null : roleId
+    void withToast(
+      () => update.mutateAsync({ id: p.id, patch: { access_role_id: id } }),
+      `${displayName(p)}: ${id ? roles.find((r) => r.id === id)?.name : "individual access"}`
     )
   }
 
@@ -65,13 +83,14 @@ export function AdminAccessTab() {
       <section className="flex flex-col gap-2">
         <div>
           <h2 className="text-sm font-semibold">Pages & capabilities</h2>
-          <p className="text-xs text-muted-foreground">Changes save instantly. Granting every page stores “all”, so new pages are included automatically.</p>
+          <p className="text-xs text-muted-foreground">Changes save instantly. Users on a role follow that role’s None / View / Edit levels; switch them to Individual to set pages directly.</p>
         </div>
         <div className="overflow-x-auto rounded-lg border">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40 hover:bg-muted/40">
                 <TableHead className={`${STICKY} bg-muted/40`}>User</TableHead>
+                <TableHead>Role</TableHead>
                 {APP_PAGES.map((pg) => <TableHead key={pg} className="text-center whitespace-nowrap">{APP_PAGE_LABELS[pg]}</TableHead>)}
                 <TableHead className="border-l text-center whitespace-nowrap">Tech mgr</TableHead>
                 <TableHead className="text-center whitespace-nowrap">SLA mgr</TableHead>
@@ -79,13 +98,27 @@ export function AdminAccessTab() {
             </TableHeader>
             <TableBody>
               {configurable.map((p) => {
-                const allowed = allowedPagesFor(p)
+                const role = roleFor(p, roles)
+                const allowed = allowedPagesFor(p, role)
                 return (
                   <TableRow key={p.id}>
                     <TableCell className={`${STICKY} font-medium whitespace-nowrap`}>{displayName(p)}</TableCell>
+                    <TableCell>
+                      <Select value={p.access_role_id ?? "__custom"} onValueChange={(v) => setRole(p, v)}>
+                        <SelectTrigger size="sm" className="h-7 w-40"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__custom">Individual</SelectItem>
+                          {roles.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     {APP_PAGES.map((pg) => (
                       <TableCell key={pg} className="text-center">
-                        <Checkbox aria-label={`${displayName(p)} — ${APP_PAGE_LABELS[pg]}`} checked={allowed.has(pg)} onCheckedChange={() => togglePage(p, pg)} />
+                        {role ? (
+                          <PageAccessBadge level={role.permissions[pg] ?? "none"} />
+                        ) : (
+                          <Checkbox aria-label={`${displayName(p)} — ${APP_PAGE_LABELS[pg]}`} checked={allowed.has(pg)} onCheckedChange={() => togglePage(p, pg)} />
+                        )}
                       </TableCell>
                     ))}
                     <TableCell className="border-l text-center">
@@ -98,7 +131,7 @@ export function AdminAccessTab() {
                 )
               })}
               {configurable.length === 0 && (
-                <TableRow><TableCell colSpan={APP_PAGES.length + 3} className="h-16 text-center text-muted-foreground">No configurable members.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={APP_PAGES.length + 4} className="h-16 text-center text-muted-foreground">No configurable members.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

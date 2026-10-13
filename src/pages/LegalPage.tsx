@@ -21,8 +21,8 @@ function Section({ id, title, children }: { id: string; title: string; children:
 }
 
 /**
- * Ownership notice, Terms of Use and Privacy Policy. Deliberately not in the
- * navigation — reached via /legal (the version label in the sidebar/login footer).
+ * Ownership notice, Terms of Use and Privacy Policy. Not linked from anywhere
+ * in the app — reachable only by typing the URL (#/legal).
  */
 export default function LegalPage() {
   return (

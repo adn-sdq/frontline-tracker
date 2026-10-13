@@ -280,6 +280,11 @@ export interface Profile {
   is_tech_manager: boolean
   is_sla_manager: boolean
   allowed_pages: string[] | null
+  /** Custom access role; when set it governs page access instead of allowed_pages. */
+  access_role_id: string | null
+  /** Internal — never rendered. */
+  is_super_admin?: boolean
+  super_elevated?: boolean
   avatar_url: string | null
   job_title: string | null
   department: string | null
@@ -296,6 +301,26 @@ export interface Profile {
 }
 
 export type AccountStatus = "active" | "suspended"
+
+export const PAGE_ACCESS_LEVELS = ["none", "view", "edit"] as const
+export type PageAccess = (typeof PAGE_ACCESS_LEVELS)[number]
+export const PAGE_ACCESS_LABELS: Record<PageAccess, string> = {
+  none: "No access",
+  view: "View only",
+  edit: "Can edit",
+}
+
+export interface AccessRole {
+  id: string
+  name: string
+  description: string | null
+  permissions: Partial<Record<AppPage, PageAccess>>
+  is_tech_manager: boolean
+  is_sla_manager: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
 
 export interface ProfileHistoryRow {
   id: number

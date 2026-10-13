@@ -11,7 +11,8 @@ import {
   UsersRound,
 } from "lucide-react"
 
-import { APP_PAGES, type AppPage, type Profile } from "@/lib/types"
+import { APP_PAGES, type AccessRole, type AppPage, type Profile } from "@/lib/types"
+import { pageAccessFor } from "@/lib/access"
 
 /**
  * Single source of truth for app navigation.
@@ -66,18 +67,13 @@ const SECTIONS: NavSection[] = [
   },
 ]
 
-export function allowedPagesFor(profile: Profile | null): Set<AppPage> {
-  if (!profile) return new Set()
-  if (profile.is_admin) return new Set<AppPage>(APP_PAGES)
-  if (profile.org === "firstfix") return new Set<AppPage>(["documents"])
-  if (!profile.allowed_pages || profile.allowed_pages.length === 0) {
-    return new Set<AppPage>(APP_PAGES)
-  }
-  return new Set(profile.allowed_pages as AppPage[])
+/** Pages a profile can open (view or edit). */
+export function allowedPagesFor(profile: Profile | null, role?: AccessRole | null): Set<AppPage> {
+  return new Set(APP_PAGES.filter((pg) => pageAccessFor(profile, role, pg) !== "none"))
 }
 
-export function navSectionsFor(profile: Profile | null): NavSection[] {
-  const allowed = allowedPagesFor(profile)
+export function navSectionsFor(profile: Profile | null, role?: AccessRole | null): NavSection[] {
+  const allowed = allowedPagesFor(profile, role)
   const isAdmin = !!profile?.is_admin
   const isFirstfix = profile?.org === "firstfix"
 
@@ -106,4 +102,15 @@ export function pageLabelFor(pathname: string): string | undefined {
   }
   if (pathname.startsWith("/sla/")) return "SLA"
   return EXTRA_LABELS[pathname]
+}
+
+/** The access-controlled page a route belongs to, if any. */
+export function pageForPath(pathname: string): AppPage | undefined {
+  for (const section of SECTIONS) {
+    for (const i of section.items) {
+      if (!i.page) continue
+      if (i.to === "/" ? pathname === "/" : pathname === i.to || pathname.startsWith(i.to + "/")) return i.page
+    }
+  }
+  return undefined
 }

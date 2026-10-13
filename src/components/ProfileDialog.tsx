@@ -206,7 +206,7 @@ export function ProfileDialog({ profile: initial, open, onClose, defaultTab = "o
               <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
                 <TabsList className="mb-5">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="access">Access</TabsTrigger>
+                  {(isSelf || viewerAdmin) && <TabsTrigger value="access">Access</TabsTrigger>}
                   {(isSelf || viewerAdmin) && <TabsTrigger value="security">Security</TabsTrigger>}
                   {(isSelf || viewerAdmin) && <TabsTrigger value="activity">Activity</TabsTrigger>}
                 </TabsList>

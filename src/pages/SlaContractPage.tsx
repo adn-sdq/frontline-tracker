@@ -98,9 +98,11 @@ export default function SlaContractPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => ws.addIssue(contract.id)}>
-            <Plus className="size-4" /> Log issue
-          </Button>
+          {ws.editable && (
+            <Button variant="outline" onClick={() => ws.addIssue(contract.id)}>
+              <Plus className="size-4" /> Log issue
+            </Button>
+          )}
           {ws.canManage && (
             <>
               <Button variant="outline" onClick={() => setEditOpen(true)}>

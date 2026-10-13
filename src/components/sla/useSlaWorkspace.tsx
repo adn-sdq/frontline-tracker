@@ -15,14 +15,15 @@ import type { SlaIssue, SlaIssueStatus } from "@/lib/types"
  */
 export function useSlaWorkspace() {
   useSlaRealtime()
-  const { profile } = useAuth()
+  const { profile, canEdit } = useAuth()
+  const editable = canEdit("sla")
   const contracts = useSlaContracts()
   const visits = useSlaVisits()
   const issues = useSlaIssues()
   const { data: profiles = {} } = useProfiles()
   const { data: technicians = [] } = useTechnicians()
 
-  const canManage = !!(profile?.is_admin || profile?.is_sla_manager)
+  const canManage = editable && !!(profile?.is_admin || profile?.is_sla_manager)
 
   const visitsById = useMemo(() => new Map((visits.data ?? []).map((v) => [v.id, v])), [visits.data])
   const visitFor = useMemo(() => {
@@ -93,6 +94,7 @@ export function useSlaWorkspace() {
     profiles,
     technicians,
     canManage,
+    editable,
     visitFor,
     visitsById,
     contractsById,
