@@ -30,6 +30,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { FitLogo } from "@/components/FitLogo"
+import { Skeleton } from "@/components/ui/skeleton"
+import { FullPageLoader, useMinDelay } from "@/components/shell/PageGate"
 import type { Project } from "@/lib/types"
 
 function greeting() {
@@ -48,7 +50,7 @@ function StatCell({ value, label, icon: Icon }: { value: number | undefined; lab
         <span className="text-xs text-muted-foreground">{label}</span>
       </div>
       <span className="text-lg font-semibold tabular-nums">
-        {value === undefined ? <span className="text-muted-foreground/40 text-sm">…</span> : value}
+        {value === undefined ? <Skeleton className="mt-0.5 h-6 w-8" /> : value}
       </span>
     </div>
   )
@@ -264,9 +266,10 @@ export default function ProjectsPage() {
   const isAdmin = !!profile?.is_admin
 
   // Admin-only data (silently empty for non-admins)
-  const { data: allProjects = [] } = useAllProjects()
-  const { data: profiles = [] } = useAllProfiles()
-  const { data: memberships = [] } = useAllProjectMembers()
+  const { data: allProjects = [], isLoading: l1 } = useAllProjects()
+  const { data: profiles = [], isLoading: l2 } = useAllProfiles()
+  const { data: memberships = [], isLoading: l3 } = useAllProjectMembers()
+  const minDone = useMinDelay()
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -287,13 +290,7 @@ export default function ProjectsPage() {
     toast.info("Edit project details in the Admin console.")
   }
 
-  if (loading) {
-    return (
-      <div className="flex min-h-svh items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
+  if (loading || !minDone || (isAdmin && (l1 || l2 || l3))) return <FullPageLoader />
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
