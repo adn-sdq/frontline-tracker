@@ -76,27 +76,22 @@ Deno.serve(async (req) => {
           username,
           full_name: body.full_name || username,
           org: body.org ?? null,
-          is_admin: !!body.is_admin,
         },
       })
       if (error) return json({ error: error.message }, 400)
-      const role = ["admin", "member", "guest"].includes(body.role)
-        ? body.role
-        : body.is_admin ? "admin" : "member"
       const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null)
+      // Access comes only from the access role; the DB derives role/is_admin from it.
       await admin
         .from("profiles")
         .update({
           org: body.org ?? null,
-          is_admin: role === "admin",
-          role,
+          access_role_id: typeof body.access_role_id === "string" ? body.access_role_id : null,
           full_name: body.full_name || username,
           username,
           job_title: text(body.job_title),
           department: text(body.department),
           phone: text(body.phone),
           contact_email: text(body.contact_email),
-          allowed_pages: Array.isArray(body.allowed_pages) ? body.allowed_pages : null,
         })
         .eq("id", data.user.id)
       return json({ ok: true, id: data.user.id })

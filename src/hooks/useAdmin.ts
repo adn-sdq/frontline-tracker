@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { supabase } from "@/lib/supabase"
-import type { AccessRole, AccountStatus, Org, Profile, ProfileHistoryRow, Role } from "@/lib/types"
+import type { AccessRole, AccountStatus, Org, Profile } from "@/lib/types"
 
 // ── Feature requests (admin-only) ─────────────────────────────────────────────
 
@@ -128,13 +128,11 @@ export function useCreateAccount() {
       password: string
       full_name?: string
       org?: Org | null
-      is_admin?: boolean
-      role?: Role
+      access_role_id?: string | null
       job_title?: string
       department?: string
       phone?: string
       contact_email?: string
-      allowed_pages?: string[] | null
     }) => callAdmin({ action: "create", ...args }) as Promise<{ ok: boolean; id: string }>,
     onSuccess: () => invalidateProfiles(qc),
   })
@@ -214,19 +212,6 @@ export function useRemoveAvatar() {
   })
 }
 
-export function useChangeRole() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ id, role }: { id: string; role: Role }) => {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role, is_admin: role === "admin" })
-        .eq("id", id)
-      if (error) throw error
-    },
-    onSuccess: () => invalidateProfiles(qc),
-  })
-}
 
 /** Suspend (auth-level ban) or reactivate an account. Admin only. */
 export function useSetAccountStatus() {
@@ -235,23 +220,6 @@ export function useSetAccountStatus() {
     mutationFn: (args: { id: string; status: AccountStatus; reason?: string }) =>
       callAdmin({ action: "set_status", ...args }),
     onSuccess: () => invalidateProfiles(qc),
-  })
-}
-
-export function useProfileHistory(profileId: string | null) {
-  return useQuery<ProfileHistoryRow[]>({
-    queryKey: ["profile_history", profileId],
-    enabled: !!profileId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profile_history")
-        .select("*")
-        .eq("profile_id", profileId)
-        .order("changed_at", { ascending: false })
-        .limit(100)
-      if (error) throw error
-      return (data ?? []) as ProfileHistoryRow[]
-    },
   })
 }
 
@@ -273,7 +241,7 @@ export function useAccessRoles() {
   return useQuery<AccessRole[]>({
     queryKey: ROLES_KEY,
     queryFn: async () => {
-      const { data, error } = await supabase.from("access_roles").select("*").order("name")
+      const { data, error } = await supabase.from("access_roles").select("*").order("sort").order("name")
       if (error) throw error
       return (data ?? []) as AccessRole[]
     },
@@ -283,7 +251,7 @@ export function useAccessRoles() {
 
 export type AccessRoleInput = Pick<
   AccessRole,
-  "name" | "description" | "permissions" | "is_tech_manager" | "is_sla_manager"
+  "name" | "description" | "permissions"
 >
 
 export function useSaveAccessRole() {

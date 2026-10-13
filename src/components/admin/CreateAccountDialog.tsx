@@ -23,9 +23,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useCreateAccount } from "@/hooks/useAdmin"
+import { useAccessRoles, useCreateAccount } from "@/hooks/useAdmin"
+import { sortRoles } from "@/lib/access"
 import { useAllProjects, useAssignProject } from "@/hooks/useProjects"
-import { ORG_LABELS, ORGS, ROLE_DESCRIPTIONS, ROLE_LABELS, ROLES, type Org, type Role } from "@/lib/types"
+import { ORG_LABELS, ORGS, type Org } from "@/lib/types"
 
 function generatePassword() {
   const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -49,7 +50,12 @@ export function CreateAccountDialog({ open, onOpenChange }: { open: boolean; onO
   const [f, setF] = useState(EMPTY)
   const [password, setPassword] = useState("")
   const [org, setOrg] = useState<Org>("frontline")
-  const [role, setRole] = useState<Role>("member")
+  const { data: rawRoles = [] } = useAccessRoles()
+  const roles = sortRoles(rawRoles)
+  const noAccessId = roles.find((r) => r.key === "none")?.id ?? ""
+  const [roleId, setRoleId] = useState("")
+  const selectedRole = roles.find((r) => r.id === (roleId || noAccessId))
+  const isAdminRole = selectedRole?.key === "admin"
   const [projectIds, setProjectIds] = useState<string[]>([])
 
   useEffect(() => {
@@ -57,7 +63,7 @@ export function CreateAccountDialog({ open, onOpenChange }: { open: boolean; onO
     setF(EMPTY)
     setPassword(generatePassword())
     setOrg("frontline")
-    setRole("member")
+    setRoleId("")
     setProjectIds([])
   }, [open])
 
@@ -75,14 +81,13 @@ export function CreateAccountDialog({ open, onOpenChange }: { open: boolean; onO
         password,
         full_name: f.fullName.trim() || username,
         org,
-        role,
-        is_admin: role === "admin",
+        access_role_id: roleId || noAccessId || null,
         job_title: f.jobTitle,
         department: f.department,
         phone: f.phone,
         contact_email: f.email,
       })
-      if (role !== "admin" && res?.id) {
+      if (!isAdminRole && res?.id) {
         for (const projectId of projectIds) await assign.mutateAsync({ projectId, userId: res.id })
       }
       toast.success(`Account "${username}" created`, {
@@ -138,13 +143,13 @@ export function CreateAccountDialog({ open, onOpenChange }: { open: boolean; onO
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-1.5">
             <Label className="text-xs text-muted-foreground">Role</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as Role)}>
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+            <Select value={roleId || noAccessId} onValueChange={setRoleId}>
+              <SelectTrigger className="w-full"><SelectValue placeholder="No access" /></SelectTrigger>
               <SelectContent>
-                {ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>)}
+                {roles.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
+            {selectedRole?.description && <p className="text-xs text-muted-foreground">{selectedRole.description}</p>}
           </div>
           <div className="grid content-start gap-1.5">
             <Label className="text-xs text-muted-foreground">Team</Label>
@@ -173,7 +178,7 @@ export function CreateAccountDialog({ open, onOpenChange }: { open: boolean; onO
           </div>
         </div>
 
-        {role !== "admin" && projects.length > 0 && (
+        {!isAdminRole && projects.length > 0 && (
           <>
             <Separator />
             <div className="grid gap-1.5">

@@ -15,7 +15,7 @@ import type { SlaIssue, SlaIssueStatus } from "@/lib/types"
  */
 export function useSlaWorkspace() {
   useSlaRealtime()
-  const { profile, canEdit } = useAuth()
+  const { canEdit } = useAuth()
   const editable = canEdit("sla")
   const contracts = useSlaContracts()
   const visits = useSlaVisits()
@@ -23,7 +23,8 @@ export function useSlaWorkspace() {
   const { data: profiles = {} } = useProfiles()
   const { data: technicians = [] } = useTechnicians()
 
-  const canManage = editable && !!(profile?.is_admin || profile?.is_sla_manager)
+  // Edit access on SLA = manage contracts too.
+  const canManage = editable
 
   const visitsById = useMemo(() => new Map((visits.data ?? []).map((v) => [v.id, v])), [visits.data])
   const visitFor = useMemo(() => {

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { format, formatDistanceToNow } from "date-fns"
+import { format } from "date-fns"
 import { Ban, KeyRound, Loader2, RotateCcw, Trash2, UserPen } from "lucide-react"
 import { toast } from "sonner"
 
@@ -110,11 +110,6 @@ export function ProfileSecurityTab({
           >
             {suspended ? "Suspended" : "Active"}
           </Badge>
-          <span className="text-muted-foreground">
-            {profile.last_seen_at
-              ? `Last active ${formatDistanceToNow(new Date(profile.last_seen_at), { addSuffix: true })}`
-              : "Not seen since activity tracking started"}
-          </span>
         </div>
         {suspended && profile.status_reason && (
           <p className="mt-1.5 text-xs text-muted-foreground">Reason: {profile.status_reason}</p>

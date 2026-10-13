@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [roleId, rawProfile?.updated_at])
 
   // Super admin: admin rights follow their own elevate/lower switch rather
-  // than whatever role others assigned; capabilities merge in from the role.
+  // than whatever role others assigned.
   const profile = useMemo<Profile | null>(() => {
     if (!rawProfile) return null
     const p = { ...rawProfile }
@@ -107,8 +107,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       p.is_admin = elevated
       p.role = elevated ? "admin" : p.role === "admin" ? "member" : p.role
     }
-    p.is_tech_manager = p.is_tech_manager || !!accessRole?.is_tech_manager
-    p.is_sla_manager = p.is_sla_manager || !!accessRole?.is_sla_manager
     return p
   }, [rawProfile, accessRole])
 
@@ -121,17 +119,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
     void supabase.auth.signOut()
   }, [profile?.status, profile?.status_reason])
-
-  // "Last active" heartbeat — at most every 5 minutes while the tab is open.
-  useEffect(() => {
-    if (!profile?.id || profile.status === "suspended") return
-    const beat = () => {
-      if (document.visibilityState === "visible") void supabase.rpc("touch_last_seen")
-    }
-    beat()
-    const t = window.setInterval(beat, 5 * 60_000)
-    return () => window.clearInterval(t)
-  }, [profile?.id, profile?.status])
 
   async function refetchProfile() {
     const uid = session?.user.id

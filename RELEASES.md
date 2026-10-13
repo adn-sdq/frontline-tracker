@@ -2,6 +2,33 @@
 
 ---
 
+## v2.19.0 — 2026-10-14
+
+Roles are now the only way to grant access, plus a cleaner Admin Console and bigger loader.
+
+Requires migration `0023_roles_only.sql` (after 0022) and redeploying `admin-users`.
+
+### Roles & access
+- Every person has exactly one role, and it alone decides what they can view or edit — no more separate base roles, per-person page lists or capabilities
+- Built-in roles: Admin (everything, including the Admin Console), Guest (view Documents & Tickets) and No access. Built-ins can't be deleted; Admin and No access can't be changed
+- Starter roles added: Project Engineer, Document Controller, Site Supervisor, Procurement Officer and Viewer — edit or delete them freely
+- Each page is None, View or Edit. Edit on Technicians now covers managing the roster; Edit on SLA covers managing contracts
+- Roles are assigned only by admins, in Admin Console → Access. Everyone can see their own role and access levels in their profile
+- Existing accounts are moved onto roles automatically, keeping what they could do before
+- Tickets is now properly restricted by role (it was reachable by URL regardless of access)
+
+### Privacy
+- Removed the profile Activity tab and the Admin audit log
+- Stopped tracking when people were last active
+
+### Admin Console
+- Systems tab: rename inline, reorder (sets dropdown order everywhere), see how many items, documents and projects use each system, and delete unused ones
+
+### Interface
+- Bigger loading logo
+
+---
+
 ## v2.18.0 — 2026-10-14
 
 Delivery note versions with signed/unsigned uploads and previews, clearer upload errors, and Admin Console tidy-up.

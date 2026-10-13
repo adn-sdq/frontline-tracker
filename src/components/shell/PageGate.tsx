@@ -38,8 +38,8 @@ export function PageGate({ children }: { children: ReactNode }) {
     <div className="relative">
       {!ready && (
         <div className="absolute inset-x-0 top-0 flex min-h-[60svh] flex-col items-center justify-center gap-4" role="status" aria-label="Loading">
-          <FitLogo size={36} className="animate-pulse" />
-          <div className="h-0.5 w-32 overflow-hidden rounded-full bg-muted">
+          <FitLogo size={88} className="animate-pulse" />
+          <div className="h-1 w-48 overflow-hidden rounded-full bg-muted">
             <div className="h-full w-1/3 animate-[loader-slide_1s_ease-in-out_infinite] rounded-full bg-primary" />
           </div>
         </div>
@@ -78,8 +78,8 @@ export function useMinDelay(ms = MIN_MS) {
 export function FullPageLoader() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-4 bg-background" role="status" aria-label="Loading">
-      <FitLogo size={40} className="animate-pulse" />
-      <div className="h-0.5 w-32 overflow-hidden rounded-full bg-muted">
+      <FitLogo size={104} className="animate-pulse" />
+      <div className="h-1 w-48 overflow-hidden rounded-full bg-muted">
         <div className="h-full w-1/3 animate-[loader-slide_1s_ease-in-out_infinite] rounded-full bg-primary" />
       </div>
     </div>

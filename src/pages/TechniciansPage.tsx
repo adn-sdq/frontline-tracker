@@ -814,10 +814,11 @@ function EmptyState({
 export default function TechniciansPage() {
   const editable = useAuth().canEdit("technicians")
   useTechniciansRealtime()
-  const { profile, user } = useAuth()
+  const { user } = useAuth()
   const { data: profiles = [] } = useAllProfiles()
   const { data: requests = [] } = useTechRequests()
-  const isManager = !!profile?.is_admin || !!profile?.is_tech_manager
+  // Edit access on Technicians = manage the roster and answer requests.
+  const isManager = editable
 
   const [requestOpen, setRequestOpen] = useState(false)
 

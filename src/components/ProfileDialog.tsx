@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
-import { formatDistanceToNow } from "date-fns"
 import { Briefcase, Camera, Loader2, Mail, Phone, Trash2, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { useAuth } from "@/contexts/AuthContext"
-import { useAllProfiles, useRemoveAvatar, useUploadAvatar } from "@/hooks/useAdmin"
+import { useAccessRoles, useAllProfiles, useRemoveAvatar, useUploadAvatar } from "@/hooks/useAdmin"
+import { roleFor } from "@/lib/access"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -22,12 +22,8 @@ import { ORG_LABELS, type Profile } from "@/lib/types"
 import { ProfileOverviewTab } from "@/components/profile/ProfileOverviewTab"
 import { ProfileAccessTab } from "@/components/profile/ProfileAccessTab"
 import { ProfileSecurityTab } from "@/components/profile/ProfileSecurityTab"
-import { ProfileActivityTab } from "@/components/profile/ProfileActivityTab"
 import {
   displayName,
-  ROLE_BADGE_CLASS,
-  roleLabel,
-  roleOf,
   type ProfilePerms,
 } from "@/components/profile/shared"
 
@@ -38,12 +34,13 @@ interface Props {
   /** Kept for call-site compatibility; permissions derive from the signed-in user. */
   isAdmin?: boolean
   canEditSelf?: boolean
-  defaultTab?: "overview" | "access" | "security" | "activity"
+  defaultTab?: "overview" | "access" | "security"
 }
 
 export function ProfileDialog({ profile: initial, open, onClose, defaultTab = "overview" }: Props) {
   const { user, profile: me, refetchProfile } = useAuth()
   const { data: all = [] } = useAllProfiles()
+  const { data: roles = [] } = useAccessRoles()
   const uploadAvatar = useUploadAvatar()
   const removeAvatar = useRemoveAvatar()
 
@@ -81,6 +78,7 @@ export function ProfileDialog({ profile: initial, open, onClose, defaultTab = "o
 
   if (!p) return null
   const name = displayName(p)
+  const accessRole = roleFor(p, roles)
   const suspended = p.status === "suspended"
 
   async function saveAvatar() {
@@ -181,7 +179,9 @@ export function ProfileDialog({ profile: initial, open, onClose, defaultTab = "o
                 <p className="font-mono text-xs text-muted-foreground">@{p.username}</p>
                 {p.job_title && <p className="mt-1 text-sm">{p.job_title}</p>}
                 <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
-                  <Badge className={ROLE_BADGE_CLASS[roleOf(p)]}>{roleLabel(p)}</Badge>
+                  <Badge variant={accessRole?.key === "admin" ? "default" : "outline"} className="font-normal">
+                    {accessRole?.name ?? "No access"}
+                  </Badge>
                   {p.org && <Badge variant="outline" className="font-normal">{ORG_LABELS[p.org] ?? p.org}</Badge>}
                   {suspended && <Badge className="border-transparent bg-red-600 text-white">Suspended</Badge>}
                   {isSelf && <Badge variant="secondary">You</Badge>}
@@ -194,11 +194,6 @@ export function ProfileDialog({ profile: initial, open, onClose, defaultTab = "o
                 {p.contact_email && <span className="flex items-center gap-2 break-all"><Mail className="size-3.5 shrink-0" /> {p.contact_email}</span>}
               </div>
 
-              <p className="mt-auto pt-2 text-xs text-muted-foreground">
-                {p.last_seen_at
-                  ? `Active ${formatDistanceToNow(new Date(p.last_seen_at), { addSuffix: true })}`
-                  : "No recent activity"}
-              </p>
             </aside>
 
             {/* ── Tabs ──────────────────────────────────────────────── */}
@@ -208,12 +203,10 @@ export function ProfileDialog({ profile: initial, open, onClose, defaultTab = "o
                   <TabsTrigger value="overview">Overview</TabsTrigger>
                   {(isSelf || viewerAdmin) && <TabsTrigger value="access">Access</TabsTrigger>}
                   {(isSelf || viewerAdmin) && <TabsTrigger value="security">Security</TabsTrigger>}
-                  {(isSelf || viewerAdmin) && <TabsTrigger value="activity">Activity</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="overview"><ProfileOverviewTab profile={p} perms={perms} /></TabsContent>
                 <TabsContent value="access"><ProfileAccessTab profile={p} perms={perms} /></TabsContent>
                 <TabsContent value="security"><ProfileSecurityTab profile={p} perms={perms} onDeleted={onClose} /></TabsContent>
-                <TabsContent value="activity"><ProfileActivityTab profile={p} /></TabsContent>
               </Tabs>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import { Navigate, Route, Routes } from "react-router-dom"
-import { Loader2 } from "lucide-react"
+import { FullPageLoader } from "@/components/shell/PageGate"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { useProject } from "@/contexts/ProjectContext"
@@ -72,7 +72,7 @@ export default function App() {
   if (loading || (session && projectsLoading)) {
     return (
       <FullScreen>
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <FullPageLoader />
       </FullScreen>
     )
   }
@@ -161,6 +161,8 @@ export default function App() {
         element={
           !session ? (
             <Navigate to="/login" replace />
+          ) : !canAccess("tickets") ? (
+            <Navigate to={homeRedirect} replace />
           ) : (
             <AppLayout>
               <TicketsPage />

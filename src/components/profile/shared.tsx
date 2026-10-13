@@ -2,16 +2,8 @@ import type { ReactNode } from "react"
 import { errorMessage } from "@/lib/utils"
 import { toast } from "sonner"
 
-import { ROLE_LABELS, type Profile, type Role } from "@/lib/types"
+import type { Profile } from "@/lib/types"
 
-export const ROLE_BADGE_CLASS: Record<Role, string> = {
-  admin: "bg-blue-100 text-blue-800 border-transparent dark:bg-blue-900/30 dark:text-blue-300",
-  member: "bg-muted text-muted-foreground border-transparent",
-  guest: "bg-amber-100 text-amber-800 border-transparent dark:bg-amber-900/30 dark:text-amber-400",
-}
-
-export const roleOf = (p: Profile): Role => p.role ?? (p.is_admin ? "admin" : "member")
-export const roleLabel = (p: Profile) => ROLE_LABELS[roleOf(p)]
 export const displayName = (p: Profile) => p.full_name ?? p.username ?? "Unknown"
 
 /** Run a mutation with consistent success / error toasts. */

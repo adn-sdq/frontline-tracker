@@ -310,13 +310,18 @@ export const PAGE_ACCESS_LABELS: Record<PageAccess, string> = {
   edit: "Can edit",
 }
 
+/** Built-in roles: Admin (everything), Guest (view Documents & Tickets), No access. */
+export type SystemRoleKey = "admin" | "guest" | "none"
+
 export interface AccessRole {
   id: string
+  /** Set only on built-in roles. */
+  key: SystemRoleKey | null
+  is_system: boolean
+  sort: number
   name: string
   description: string | null
   permissions: Partial<Record<AppPage, PageAccess>>
-  is_tech_manager: boolean
-  is_sla_manager: boolean
   created_by: string | null
   created_at: string
   updated_at: string
