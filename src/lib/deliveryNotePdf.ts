@@ -1,5 +1,6 @@
 import { FRONTLINE_LOGO_DATA_URL } from "@/assets/frontlineLogo"
 import type { DeliveryNoteItem } from "@/lib/types"
+import { esc, multiline, printHtml } from "@/lib/print"
 
 export interface DeliveryNotePrintData {
   dnNumber: string
@@ -15,19 +16,6 @@ export interface DeliveryNotePrintData {
 
 const NAVY = "#1f3a5f"
 const ORANGE = "#e8702a"
-
-function esc(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-}
-
-// Multi-line cell content (serials, descriptions) → <br>-separated HTML.
-function multiline(s: string): string {
-  return esc(s).replace(/\r?\n/g, "<br>")
-}
 
 function fmtDate(iso: string): string {
   if (!iso) return ""
@@ -228,49 +216,7 @@ https://frontlinesolution.com</td>
 </html>`
 }
 
-// Render the delivery note in a hidden iframe and trigger the browser's print
-// dialog (Save as PDF). Using an iframe avoids popup blockers.
+// Opens the browser print dialog (Save as PDF) for the delivery note.
 export function printDeliveryNote(data: DeliveryNotePrintData): void {
-  const html = buildHtml(data)
-  const iframe = document.createElement("iframe")
-  iframe.style.position = "fixed"
-  iframe.style.right = "0"
-  iframe.style.bottom = "0"
-  iframe.style.width = "0"
-  iframe.style.height = "0"
-  iframe.style.border = "0"
-  document.body.appendChild(iframe)
-
-  const doc = iframe.contentWindow?.document
-  if (!doc) {
-    document.body.removeChild(iframe)
-    return
-  }
-  doc.open()
-  doc.write(html)
-  doc.close()
-
-  const win = iframe.contentWindow!
-  const cleanup = () => {
-    setTimeout(() => {
-      if (iframe.parentNode) iframe.parentNode.removeChild(iframe)
-    }, 1000)
-  }
-
-  // Wait for the embedded logo to load before printing.
-  const triggerPrint = () => {
-    win.focus()
-    win.print()
-    cleanup()
-  }
-
-  const img = doc.querySelector("img")
-  if (img && !img.complete) {
-    img.addEventListener("load", triggerPrint, { once: true })
-    img.addEventListener("error", triggerPrint, { once: true })
-    // Safety fallback in case neither event fires.
-    setTimeout(triggerPrint, 1500)
-  } else {
-    setTimeout(triggerPrint, 200)
-  }
+  printHtml(buildHtml(data))
 }

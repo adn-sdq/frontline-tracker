@@ -69,13 +69,23 @@ Deno.serve(async (req) => {
         },
       })
       if (error) return json({ error: error.message }, 400)
+      const role = ["admin", "member", "guest"].includes(body.role)
+        ? body.role
+        : body.is_admin ? "admin" : "member"
+      const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null)
       await admin
         .from("profiles")
         .update({
           org: body.org ?? null,
-          is_admin: !!body.is_admin,
+          is_admin: role === "admin",
+          role,
           full_name: body.full_name || username,
           username,
+          job_title: text(body.job_title),
+          department: text(body.department),
+          phone: text(body.phone),
+          contact_email: text(body.contact_email),
+          allowed_pages: Array.isArray(body.allowed_pages) ? body.allowed_pages : null,
         })
         .eq("id", data.user.id)
       return json({ ok: true, id: data.user.id })
@@ -116,6 +126,28 @@ Deno.serve(async (req) => {
         const { error: profErr } = await admin.from("profiles").update(profilePatch).eq("id", body.id)
         if (profErr) return json({ error: profErr.message }, 400)
       }
+      return json({ ok: true })
+    }
+
+    // Suspend / reactivate: ban at the auth layer so the user can't sign in or
+    // refresh their session, and mirror the state on the profile.
+    if (action === "set_status") {
+      if (!body.id) return json({ error: "User id required" }, 400)
+      if (body.id === user.id)
+        return json({ error: "You cannot suspend your own account" }, 400)
+      const suspended = body.status === "suspended"
+      const { error: banErr } = await admin.auth.admin.updateUserById(body.id, {
+        ban_duration: suspended ? "876000h" : "none",
+      })
+      if (banErr) return json({ error: banErr.message }, 400)
+      const { error: profErr } = await admin
+        .from("profiles")
+        .update({
+          status: suspended ? "suspended" : "active",
+          status_reason: suspended ? String(body.reason ?? "").trim() || null : null,
+        })
+        .eq("id", body.id)
+      if (profErr) return json({ error: profErr.message }, 400)
       return json({ ok: true })
     }
 

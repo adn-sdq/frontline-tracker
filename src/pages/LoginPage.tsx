@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { Link } from "react-router-dom"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { APP_VERSION, APP_VERSION_DATE } from "@/lib/version"
@@ -120,9 +121,9 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6 border-t pt-4">
-            <span className="font-mono text-[10px] text-muted-foreground/60">
+            <Link to="/legal" className="cursor-default font-mono text-[10px] text-muted-foreground/60">
               {APP_VERSION} · {APP_VERSION_DATE}
-            </span>
+            </Link>
           </div>
         </div>
       </div>
@@ -226,9 +227,9 @@ export default function LoginPage() {
                   <div className="text-[11px] text-muted-foreground">Frontline Internal Tools</div>
                 </div>
               </div>
-              <span className="font-mono text-[10px] text-muted-foreground/60">
+              <Link to="/legal" className="cursor-default font-mono text-[10px] text-muted-foreground/60">
                 {APP_VERSION} · {APP_VERSION_DATE}
-              </span>
+              </Link>
             </div>
           </div>
         </div>

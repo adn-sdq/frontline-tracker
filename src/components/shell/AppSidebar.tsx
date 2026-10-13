@@ -4,6 +4,7 @@ import {
   Check,
   ChevronsUpDown,
   FileText,
+  FolderKanban,
   FolderOpen,
   LayoutGrid,
   LifeBuoy,
@@ -45,6 +46,7 @@ const COLLAPSE_KEY = "sidebar_collapsed"
 
 function ProjectSwitcher({ collapsed }: { collapsed?: boolean }) {
   const { projects, currentProject, currentProjectId, setCurrentProject } = useProject()
+  const navigate = useNavigate()
 
   function switchProject(id: string) {
     const p = projects.find((p) => p.id === id)
@@ -63,6 +65,11 @@ function ProjectSwitcher({ collapsed }: { collapsed?: boolean }) {
           {p.id === currentProjectId && <Check className="size-4 text-primary" />}
         </DropdownMenuItem>
       ))}
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={() => navigate("/projects")} className="gap-2">
+        <FolderKanban className="size-4 text-muted-foreground" />
+        All projects
+      </DropdownMenuItem>
     </DropdownMenuContent>
   )
 
@@ -509,7 +516,9 @@ export function SidebarContent({
             >
               {dark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
             </button>
-            <span className="font-mono">{APP_VERSION}</span>
+            <Link to="/legal" onClick={onNavigate} className="cursor-default font-mono">
+              {APP_VERSION}
+            </Link>
           </div>
         )}
       </div>

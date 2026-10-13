@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react"
 import type { Session, User } from "@supabase/supabase-js"
+import { toast } from "sonner"
 
 import { supabase, usernameToEmail } from "@/lib/supabase"
 import type { Profile } from "@/lib/types"
@@ -65,6 +66,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       active = false
     }
   }, [session?.user.id])
+
+  // Suspended accounts are also banned at the auth layer; this ends any
+  // session that was already open when the suspension happened.
+  useEffect(() => {
+    if (profile?.status !== "suspended") return
+    toast.error("Your account has been suspended", {
+      description: profile.status_reason ?? "Contact an administrator.",
+    })
+    void supabase.auth.signOut()
+  }, [profile?.status, profile?.status_reason])
+
+  // "Last active" heartbeat — at most every 5 minutes while the tab is open.
+  useEffect(() => {
+    if (!profile?.id || profile.status === "suspended") return
+    const beat = () => {
+      if (document.visibilityState === "visible") void supabase.rpc("touch_last_seen")
+    }
+    beat()
+    const t = window.setInterval(beat, 5 * 60_000)
+    return () => window.clearInterval(t)
+  }, [profile?.id, profile?.status])
 
   async function refetchProfile() {
     const uid = session?.user.id

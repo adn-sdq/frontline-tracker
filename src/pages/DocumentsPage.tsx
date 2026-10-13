@@ -46,6 +46,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { DocumentDialog } from "@/components/DocumentDialog"
 import { DocumentDrawer } from "@/components/DocumentDrawer"
 import { DataTable } from "@/components/ui/data-table"
+import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import {
   useDeleteDocument,
@@ -109,6 +110,35 @@ export default function DocumentsPage() {
 
   const columns = useMemo<ColumnDef<DocumentRow, unknown>[]>(
     () => [
+      ...(selectMode
+        ? [
+            {
+              id: "select",
+              enableSorting: false,
+              header: () => (
+                <Checkbox
+                  aria-label="Select all"
+                  checked={
+                    filtered.length > 0 && selected.size === filtered.length
+                      ? true
+                      : selected.size > 0
+                        ? "indeterminate"
+                        : false
+                  }
+                  onCheckedChange={() => toggleAll()}
+                />
+              ),
+              cell: ({ row }: { row: { original: DocumentRow } }) => (
+                <Checkbox
+                  aria-label={`Select ${row.original.title}`}
+                  checked={selected.has(row.original.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  onCheckedChange={() => toggleSelect(row.original.id)}
+                />
+              ),
+            } satisfies ColumnDef<DocumentRow, unknown>,
+          ]
+        : []),
       {
         accessorKey: "title",
         header: "Document",
@@ -148,7 +178,8 @@ export default function DocumentsPage() {
         ),
       },
     ],
-    [labelFor]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [labelFor, selectMode, selected, filtered]
   )
 
   // Keep the drawer's document in sync with refreshed data.
@@ -369,7 +400,8 @@ export default function DocumentsPage() {
         <DataTable
           columns={columns}
           data={filtered}
-          onRowClick={(d) => setOpenDoc(d)}
+          onRowClick={(d) => (selectMode ? toggleSelect(d.id) : setOpenDoc(d))}
+          isRowSelected={selectMode ? (d) => selected.has(d.id) : undefined}
           emptyMessage="No documents match your filters."
         />
       ) : (

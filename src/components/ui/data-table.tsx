@@ -30,6 +30,8 @@ interface DataTableProps<T> {
   onRowClick?: (row: T) => void
   pageSize?: number
   emptyMessage?: string
+  /** Highlights selected rows (bulk-selection mode). */
+  isRowSelected?: (row: T) => boolean
 }
 
 /**
@@ -44,6 +46,7 @@ export function DataTable<T>({
   onRowClick,
   pageSize = 25,
   emptyMessage = "No results.",
+  isRowSelected,
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([])
 
@@ -110,6 +113,7 @@ export function DataTable<T>({
                 <TableRow
                   key={row.id}
                   onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                  data-state={isRowSelected?.(row.original) ? "selected" : undefined}
                   className={cn(onRowClick && "cursor-pointer")}
                 >
                   {row.getVisibleCells().map((cell) => (

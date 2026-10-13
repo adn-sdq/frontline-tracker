@@ -18,6 +18,9 @@ import DocsPage from "@/pages/DocsPage"
 import TicketsPage from "@/pages/TicketsPage"
 import TechniciansPage from "@/pages/TechniciansPage"
 import UpdatesPage from "@/pages/UpdatesPage"
+import SlaPage from "@/pages/SlaPage"
+import SlaContractPage from "@/pages/SlaContractPage"
+import LegalPage from "@/pages/LegalPage"
 import NotFoundPage from "@/pages/NotFoundPage"
 import { AppLayout } from "@/components/AppLayout"
 
@@ -184,6 +187,23 @@ export default function App() {
           )
         }
       />
+      {["/sla", "/sla/:id"].map((path) => (
+        <Route
+          key={path}
+          path={path}
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : !canAccess("sla") ? (
+              <Navigate to={homeRedirect} replace />
+            ) : (
+              <AppLayout>
+                {path === "/sla" ? <SlaPage /> : <SlaContractPage />}
+              </AppLayout>
+            )
+          }
+        />
+      ))}
       <Route
         path="/updates"
         element={
@@ -198,6 +218,7 @@ export default function App() {
       />
       <Route path="/changelog" element={<ChangelogPage />} />
       <Route path="/docs" element={<DocsPage />} />
+      <Route path="/legal" element={<LegalPage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )

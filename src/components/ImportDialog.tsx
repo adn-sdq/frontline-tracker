@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Info, Loader2, Upload } from "lucide-react"
+import { Info, Loader2, X } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { FileDropzone } from "@/components/ui/file-dropzone"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/contexts/AuthContext"
@@ -32,8 +33,7 @@ export function ImportDialog({
   const [errors, setErrors] = useState<string[]>([])
   const [showHelp, setShowHelp] = useState(false)
 
-  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+  function onFile([file]: File[]) {
     if (!file) return
     const reader = new FileReader()
     reader.onload = () => setText(String(reader.result ?? ""))
@@ -133,14 +133,13 @@ export function ImportDialog({
         )}
 
         <div className="flex flex-col gap-3">
+          <FileDropzone
+            compact
+            accept=".csv,text/csv"
+            onFiles={onFile}
+            title="Drop a CSV file or click to browse"
+          />
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <label className="cursor-pointer">
-                <Upload className="size-4" />
-                Choose file
-                <input type="file" accept=".csv,text/csv" className="hidden" onChange={onFile} />
-              </label>
-            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -148,6 +147,19 @@ export function ImportDialog({
             >
               Load template
             </Button>
+            {text && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive"
+                onClick={() => {
+                  setText("")
+                  setErrors([])
+                }}
+              >
+                <X className="size-4" /> Clear
+              </Button>
+            )}
           </div>
 
           <div className="grid gap-1.5">

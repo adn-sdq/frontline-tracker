@@ -166,7 +166,7 @@ export interface ItemSerial {
 
 // Pages that can be individually granted/revoked per frontline user.
 // Admins see all pages; firstfix users only see "documents" regardless.
-export const APP_PAGES = ["tracker", "documents", "dashboard", "tickets", "technicians"] as const
+export const APP_PAGES = ["tracker", "documents", "dashboard", "tickets", "technicians", "sla"] as const
 export type AppPage = (typeof APP_PAGES)[number]
 export const APP_PAGE_LABELS: Record<AppPage, string> = {
   tracker: "Procurement",
@@ -174,6 +174,7 @@ export const APP_PAGE_LABELS: Record<AppPage, string> = {
   dashboard: "Dashboard",
   tickets: "Support Tickets",
   technicians: "Technicians",
+  sla: "SLA",
 }
 
 // ---- Support Tickets -------------------------------------------------------
@@ -277,9 +278,32 @@ export interface Profile {
   org: Org | null
   is_admin: boolean
   is_tech_manager: boolean
+  is_sla_manager: boolean
   allowed_pages: string[] | null
   avatar_url: string | null
+  job_title: string | null
+  department: string | null
+  phone: string | null
+  contact_email: string | null
+  employee_id: string | null
+  location: string | null
+  bio: string | null
+  status: AccountStatus
+  status_reason: string | null
+  last_seen_at: string | null
+  updated_at: string | null
   created_at: string
+}
+
+export type AccountStatus = "active" | "suspended"
+
+export interface ProfileHistoryRow {
+  id: number
+  profile_id: string
+  action: "create" | "update" | "delete"
+  changed_by: string | null
+  changed_at: string
+  diff: Record<string, { old: unknown; new: unknown }> | null
 }
 
 // ---- Documents ----------------------------------------------------------
@@ -378,8 +402,36 @@ export interface DocumentFile {
   rev_label: string | null
   note: string | null
   dated: string
+  /** Set when this is the reviewed/approved (stamped) copy — the code it was returned with. */
+  review_code: ReviewCode | null
   uploaded_by: string | null
   uploaded_at: string
+}
+
+/** Codes a reviewed (stamped) copy can carry. Code A/B = approved. */
+export const REVIEW_CODES = ["code_a", "code_b", "code_c"] as const
+export type ReviewCode = (typeof REVIEW_CODES)[number]
+
+export type DocHistoryAction =
+  | "create"
+  | "update"
+  | "delete"
+  | "file_upload"
+  | "file_rename"
+  | "file_update"
+  | "file_delete"
+
+export interface DocumentHistoryRow {
+  id: number
+  document_id: string
+  project_id: string | null
+  version: number | null
+  action: DocHistoryAction
+  changed_by: string | null
+  changed_at: string
+  file_name: string | null
+  diff: Record<string, { old: unknown; new: unknown }> | null
+  snapshot: Record<string, unknown> | null
 }
 
 export interface DocumentComment {
@@ -419,6 +471,12 @@ export interface DeliveryNote {
   notes: string | null
   generated_by: string | null
   generated_at: string
+  /** Signed scan of the note. Null = unsigned (the default). */
+  signed_storage_path: string | null
+  signed_file_name: string | null
+  signed_file_size: number | null
+  signed_uploaded_by: string | null
+  signed_uploaded_at: string | null
 }
 
 export interface ItemHistory {
@@ -529,6 +587,144 @@ export interface TechnicianAssignment {
   start_time: string | null
   end_time: string | null
   notes: string | null
+  created_by: string | null
+  created_at: string
+}
+
+// ---- SLA ------------------------------------------------------------------
+
+export const SLA_CONTRACT_STATUSES = ["active", "on_hold", "ended"] as const
+export type SlaContractStatus = (typeof SLA_CONTRACT_STATUSES)[number]
+export const SLA_CONTRACT_STATUS_LABELS: Record<SlaContractStatus, string> = {
+  active: "Active",
+  on_hold: "On hold",
+  ended: "Ended",
+}
+
+export const SLA_FREQUENCIES = [1, 2, 3, 6, 12] as const
+export const SLA_FREQUENCY_LABELS: Record<number, string> = {
+  1: "Monthly",
+  2: "Every 2 months",
+  3: "Quarterly",
+  6: "Every 6 months",
+  12: "Yearly",
+}
+
+export interface SlaContract {
+  id: string
+  name: string
+  client: string | null
+  site: string | null
+  contract_ref: string | null
+  project_id: string | null
+  start_date: string
+  end_date: string | null
+  frequency_months: number
+  preferred_day: number | null
+  systems: string[]
+  scope: string | null
+  contact_name: string | null
+  contact_phone: string | null
+  contact_email: string | null
+  account_manager: string | null
+  status: SlaContractStatus
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_by: string | null
+  updated_at: string
+}
+
+export const SLA_VISIT_STATUSES = ["scheduled", "completed", "missed", "cancelled"] as const
+export type SlaVisitStatus = (typeof SLA_VISIT_STATUSES)[number]
+export const SLA_VISIT_STATUS_LABELS: Record<SlaVisitStatus, string> = {
+  scheduled: "Scheduled",
+  completed: "Completed",
+  missed: "Missed",
+  cancelled: "Cancelled",
+}
+
+export interface SlaVisit {
+  id: string
+  contract_id: string
+  period: string
+  scheduled_date: string | null
+  visited_on: string | null
+  status: SlaVisitStatus
+  technician_ids: string[]
+  lead_by: string | null
+  work_done: string | null
+  customer_signatory: string | null
+  notes: string | null
+  signed_storage_path: string | null
+  signed_file_name: string | null
+  signed_file_size: number | null
+  signed_uploaded_by: string | null
+  signed_uploaded_at: string | null
+  created_by: string | null
+  created_at: string
+  updated_by: string | null
+  updated_at: string
+}
+
+export const SLA_SEVERITIES = ["low", "medium", "high", "critical"] as const
+export type SlaSeverity = (typeof SLA_SEVERITIES)[number]
+export const SLA_SEVERITY_LABELS: Record<SlaSeverity, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+  critical: "Critical",
+}
+export const SLA_SEVERITY_STYLES: Record<SlaSeverity, string> = {
+  low: "bg-muted text-muted-foreground border-transparent",
+  medium: "bg-blue-100 text-blue-800 border-transparent dark:bg-blue-950 dark:text-blue-300",
+  high: "bg-amber-100 text-amber-800 border-transparent dark:bg-amber-950 dark:text-amber-300",
+  critical: "bg-red-600 text-white border-transparent",
+}
+
+export const SLA_ISSUE_STATUSES = ["open", "in_progress", "deferred", "resolved"] as const
+export type SlaIssueStatus = (typeof SLA_ISSUE_STATUSES)[number]
+export const SLA_ISSUE_STATUS_LABELS: Record<SlaIssueStatus, string> = {
+  open: "Open",
+  in_progress: "In progress",
+  deferred: "Kept for next visit",
+  resolved: "Resolved",
+}
+export const SLA_ISSUE_STATUS_STYLES: Record<SlaIssueStatus, string> = {
+  open: "bg-red-100 text-red-800 border-transparent dark:bg-red-950 dark:text-red-300",
+  in_progress: "bg-blue-100 text-blue-800 border-transparent dark:bg-blue-950 dark:text-blue-300",
+  deferred: "bg-amber-100 text-amber-800 border-transparent dark:bg-amber-950 dark:text-amber-300",
+  resolved: "bg-emerald-600 text-white border-transparent",
+}
+
+export interface SlaIssue {
+  id: string
+  contract_id: string
+  found_visit_id: string | null
+  title: string
+  description: string | null
+  location: string | null
+  system: string | null
+  severity: SlaSeverity
+  status: SlaIssueStatus
+  resolution: string | null
+  status_note: string | null
+  last_visit_id: string | null
+  resolved_visit_id: string | null
+  resolved_by: string | null
+  resolved_at: string | null
+  created_by: string | null
+  created_at: string
+  updated_by: string | null
+  updated_at: string
+}
+
+export interface SlaIssueEvent {
+  id: number
+  issue_id: string
+  visit_id: string | null
+  action: "opened" | "updated" | "in_progress" | "deferred" | "resolved" | "reopened"
+  note: string | null
   created_by: string | null
   created_at: string
 }

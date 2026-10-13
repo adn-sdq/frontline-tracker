@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { Loader2, Paperclip, Upload, X } from "lucide-react"
+import { Loader2, Paperclip, X } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DocStatusSelect } from "@/components/DocStatus"
+import { FileDropzone } from "@/components/ui/file-dropzone"
 import {
   useCreateDocument,
   useUpdateDocument,
@@ -51,7 +52,6 @@ export function DocumentDialog({
   const update = useUpdateDocument()
   const upload = useUploadDocumentFile()
   const editing = !!doc
-  const fileInput = useRef<HTMLInputElement>(null)
 
   const [title, setTitle] = useState("")
   const [docNumber, setDocNumber] = useState("")
@@ -60,7 +60,7 @@ export function DocumentDialog({
   const [revision, setRevision] = useState("")
   const [status, setStatus] = useState<DocStatus>("pending")
   const [description, setDescription] = useState("")
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
   const [fileDate, setFileDate] = useState(today())
 
   const prevOpenRef = useRef(false)
@@ -75,7 +75,7 @@ export function DocumentDialog({
     setRevision(doc?.revision ?? "")
     setStatus(doc?.status ?? "pending")
     setDescription(doc?.description ?? "")
-    setFile(null)
+    setFiles([])
     setFileDate(today())
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, doc])
@@ -105,12 +105,14 @@ export function DocumentDialog({
         })
         docId = created.id
       }
-      if (file && docId) {
-        await upload.mutateAsync({
-          documentId: docId,
-          file,
-          dated: fileDate || undefined,
-        })
+      if (docId) {
+        for (const file of files) {
+          await upload.mutateAsync({
+            documentId: docId,
+            file,
+            dated: fileDate || undefined,
+          })
+        }
       }
       toast.success(editing ? "Document updated" : "Document added")
       onOpenChange(false)
@@ -206,42 +208,35 @@ export function DocumentDialog({
           />
         </div>
 
-        {/* Attach a file */}
+        {/* Attach files */}
         <div className="grid gap-1.5">
           <Label className="text-xs text-muted-foreground">
-            {editing ? "Attach a new file (optional)" : "Upload file (optional)"}
+            {editing ? "Attach new files (optional)" : "Upload files (optional)"}
           </Label>
-          <input
-            ref={fileInput}
-            type="file"
-            aria-label="Upload file"
-            className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          <FileDropzone
+            multiple
+            compact
+            onFiles={(picked) => setFiles((prev) => [...prev, ...picked])}
+            disabled={busy}
+            hint="Uploaded when you save"
           />
-          {file ? (
-            <div className="flex items-start gap-2 rounded-md border p-2 text-sm">
+          {files.map((f, i) => (
+            <div key={`${f.name}-${i}`} className="flex items-start gap-2 rounded-md border p-2 text-sm">
               <Paperclip className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-              <span className="min-w-0 flex-1 break-all">{file.name}</span>
+              <span className="min-w-0 flex-1 break-all">{f.name}</span>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-6"
-                onClick={() => setFile(null)}
+                className="size-6 text-destructive"
+                aria-label={`Remove ${f.name}`}
+                onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}
               >
                 <X className="size-4" />
               </Button>
             </div>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => fileInput.current?.click()}
-            >
-              <Upload className="size-4" /> Choose file
-            </Button>
-          )}
-          {file && (
+          ))}
+          {files.length > 0 && (
             <div className="mt-1 grid gap-1.5">
               <Label className="text-xs text-muted-foreground">
                 Document date (auto-set to today, editable)

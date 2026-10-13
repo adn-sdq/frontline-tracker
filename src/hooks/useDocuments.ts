@@ -11,7 +11,9 @@ import type {
   DocStatus,
   DocumentComment,
   DocumentFile,
+  DocumentHistoryRow,
   DocumentRow,
+  ReviewCode,
 } from "@/lib/types"
 
 const DOCS_KEY = ["documents"]
@@ -53,6 +55,14 @@ export function useDocumentsRealtime() {
           qc.invalidateQueries({ queryKey: ["document_file_counts"] })
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "document_history" },
+        (payload) => {
+          const docId = (payload.new as { document_id?: string } | null)?.document_id
+          if (docId) qc.invalidateQueries({ queryKey: ["document_history", docId] })
+        }
+      )
       .subscribe()
     return () => {
       supabase.removeChannel(ch)
@@ -87,7 +97,10 @@ export function useUpdateDocument() {
         .eq("id", args.id)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: DOCS_KEY }),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: DOCS_KEY })
+      qc.invalidateQueries({ queryKey: ["document_history", vars.id] })
+    },
   })
 }
 
@@ -101,10 +114,20 @@ export function useDeleteDocument() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
+      // Collect storage paths first — the rows cascade away with the document.
+      const { data: files } = await supabase
+        .from("document_files")
+        .select("storage_path")
+        .eq("document_id", id)
       const { error } = await supabase.from("documents").delete().eq("id", id)
       if (error) throw error
+      const paths = (files ?? []).map((f) => f.storage_path as string)
+      if (paths.length) await supabase.storage.from("documents").remove(paths)
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: DOCS_KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: DOCS_KEY })
+      qc.invalidateQueries({ queryKey: ["document_file_counts"] })
+    },
   })
 }
 
@@ -151,6 +174,8 @@ export function useUploadDocumentFile() {
       revLabel?: string
       note?: string
       dated?: string
+      /** Marks this as the approved/reviewed copy; the document takes this status. */
+      reviewCode?: ReviewCode | null
     }) => {
       const safe = args.file.name.replace(/[^\w.\-]+/g, "_")
       const path = `${args.documentId}/${Date.now()}_${safe}`
@@ -166,12 +191,64 @@ export function useUploadDocumentFile() {
         rev_label: args.revLabel || null,
         note: args.note || null,
         dated: args.dated || undefined,
+        review_code: args.reviewCode ?? null,
       })
+      if (error) {
+        await supabase.storage.from("documents").remove([path])
+        throw error
+      }
+    },
+    onSuccess: (_d, vars) => invalidateFileChange(qc, vars.documentId),
+  })
+}
+
+// A file change bumps the parent document's version (and maybe its status).
+function invalidateFileChange(qc: ReturnType<typeof useQueryClient>, documentId: string) {
+  qc.invalidateQueries({ queryKey: ["document_files", documentId] })
+  qc.invalidateQueries({ queryKey: ["document_file_counts"] })
+  qc.invalidateQueries({ queryKey: ["document_history", documentId] })
+  qc.invalidateQueries({ queryKey: DOCS_KEY })
+}
+
+export function useRenameDocumentFile() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: { id: string; documentId: string; fileName: string }) => {
+      const { error } = await supabase
+        .from("document_files")
+        .update({ file_name: args.fileName })
+        .eq("id", args.id)
       if (error) throw error
     },
-    onSuccess: (_d, vars) => {
-      qc.invalidateQueries({ queryKey: ["document_files", vars.documentId] })
-      qc.invalidateQueries({ queryKey: ["document_file_counts"] })
+    onSuccess: (_d, vars) => invalidateFileChange(qc, vars.documentId),
+  })
+}
+
+export function useDeleteDocumentFile() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: { id: string; documentId: string; storagePath: string }) => {
+      const { error } = await supabase.from("document_files").delete().eq("id", args.id)
+      if (error) throw error
+      await supabase.storage.from("documents").remove([args.storagePath])
+    },
+    onSuccess: (_d, vars) => invalidateFileChange(qc, vars.documentId),
+  })
+}
+
+export function useDocumentHistory(documentId: string | null) {
+  return useQuery<DocumentHistoryRow[]>({
+    queryKey: ["document_history", documentId],
+    enabled: !!documentId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("document_history")
+        .select("*")
+        .eq("document_id", documentId)
+        .order("changed_at", { ascending: false })
+        .order("id", { ascending: false })
+      if (error) throw error
+      return (data ?? []) as DocumentHistoryRow[]
     },
   })
 }
@@ -186,8 +263,7 @@ export function useUpdateFileDate() {
         .eq("id", args.id)
       if (error) throw error
     },
-    onSuccess: (_d, vars) =>
-      qc.invalidateQueries({ queryKey: ["document_files", vars.documentId] }),
+    onSuccess: (_d, vars) => invalidateFileChange(qc, vars.documentId),
   })
 }
 

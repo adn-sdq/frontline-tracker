@@ -17,6 +17,105 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.15.0",
+    date: "2026-10-13",
+    type: "minor",
+    summary: "SLA tracking module, a reworked profile system, and a tabbed Admin Console.",
+    sections: [
+      {
+        title: "SLA tracking (new)",
+        items: [
+          "New SLA page under Operations: maintenance contracts with monthly (or 2/3/6/12-monthly) visits owed from the contract start date",
+          "This month view lists every visit due or overdue across all contracts; KPI tiles for due, overdue, unsigned reports and open issues",
+          "Visit record: status, scheduled/visited dates, lead engineer, technicians from the roster, client signatory and work carried out",
+          "Printable visit report (outstanding issues, new issues, work done, signature blocks) to get signed on site; upload the signed copy, which marks the visit Signed (Unsigned by default)",
+          "Issues found on site carry over to every following visit until resolved; at each visit, resolve them with a note or keep them for the next visit",
+          "Each issue has a timeline showing when it was raised, deferred and resolved, and at which visit",
+          "Contract page with visit history, compliance %, issues and contract details; SLA managers (new capability) and admins manage contracts",
+        ],
+      },
+      {
+        title: "Profiles",
+        items: [
+          "Profile is now tabbed: Overview, Access, Security, Activity",
+          "New details: job title, department, phone, contact email, employee ID, location and an About section, editable by the user or an admin",
+          "Access tab gathers role, organisation, capabilities (Technicians manager, SLA manager), page access and project membership in one place",
+          "Accounts can be suspended and reactivated with a reason; suspended users are signed out and blocked from signing in",
+          "Activity tab shows every change to the profile: who changed which field, from what, to what",
+          "Last-active tracking",
+        ],
+      },
+      {
+        title: "Admin Console",
+        items: [
+          "Reorganised into tabs: Overview, Users, Access, Projects, Systems, Audit log",
+          "Overview lists accounts without projects, accounts inactive for 30+ days, and projects with no members",
+          "Users: search plus filters by role, team and status; each row opens the profile on the right tab",
+          "Access: grids for managing everyone's pages, capabilities and project membership at once",
+          "Audit log: one combined feed of account, procurement and document changes, filterable by source and person",
+          "Add account now sets role, job details and projects up front, and can generate a password",
+        ],
+      },
+      {
+        title: "Documents",
+        items: [
+          "Table view now shows selection checkboxes in Select mode (previously only the card view had them)",
+        ],
+      },
+      {
+        title: "Security & fixes",
+        items: [
+          "Users could grant themselves extra pages or the Technicians manager capability through the API; the database now blocks this",
+          "Admin username changes now actually update the profile",
+          "Profile edits now refresh names and avatars across the whole app",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.14.0",
+    date: "2026-10-13",
+    type: "minor",
+    summary: "Back-to-projects navigation, drag-and-drop uploads everywhere, document versioning and approved copies, signed delivery notes.",
+    sections: [
+      {
+        title: "Navigation",
+        items: [
+          "\"All projects\" link at the top of the sidebar, in the project switcher menu, in ⌘K and as a breadcrumb — always one click back to the project list",
+        ],
+      },
+      {
+        title: "Uploads",
+        items: [
+          "Every upload is now drag-and-drop (document files, new-document dialog, item attachments, CSV import, profile photo, signed delivery notes), with click-to-browse still available",
+          "Multiple files can be dropped at once on documents and item attachments",
+          "Delete option for document files, profile photos and signed delivery notes; deleting a document or delivery note also removes its stored files",
+        ],
+      },
+      {
+        title: "Documents",
+        items: [
+          "Rename document files inline (the extension is kept)",
+          "Upload a file as an \"Approved copy\" with its review code — the document's status updates automatically and the file is marked with an approved badge",
+          "Version history: a History tab shows every saved change (field edits, uploads, renames, deletions), who made it, when, and the version number it produced; the drawer header shows the current version and who last saved it",
+        ],
+      },
+      {
+        title: "Delivery Notes",
+        items: [
+          "Delivery notes are Unsigned by default; upload the signed scan to mark one Signed, or replace/remove it later",
+          "Filter by All / Unsigned / Signed",
+        ],
+      },
+      {
+        title: "Fixes",
+        items: [
+          "Deleting an item attachment now actually removes the stored file (the storage bucket was missing a delete policy)",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.13.2",
     date: "2026-09-06",
     type: "patch",

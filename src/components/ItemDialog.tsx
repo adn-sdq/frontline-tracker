@@ -6,7 +6,6 @@ import {
   Loader2,
   Paperclip,
   Trash2,
-  Upload,
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"
@@ -45,6 +44,7 @@ import {
   useUploadItemFile,
 } from "@/hooks/useItemFiles"
 import { useConfirm } from "@/components/ui/confirm-dialog"
+import { FileDropzone } from "@/components/ui/file-dropzone"
 import { useSystems } from "@/hooks/useSystems"
 import { useAuth } from "@/contexts/AuthContext"
 import { useProject } from "@/contexts/ProjectContext"
@@ -70,23 +70,24 @@ function ItemAttachments({ itemId }: { itemId: string }) {
   const uploadFile = useUploadItemFile()
   const deleteFile = useDeleteItemFile()
   const confirm = useConfirm()
-  const fileInput = useRef<HTMLInputElement>(null)
   const [note, setNote] = useState("")
   const [downloading, setDownloading] = useState<string | null>(null)
 
-  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    try {
-      await uploadFile.mutateAsync({ itemId, file, note: note || undefined })
-      toast.success("File attached")
+  async function onFiles(picked: File[]) {
+    let done = 0
+    for (const file of picked) {
+      try {
+        await uploadFile.mutateAsync({ itemId, file, note: note || undefined })
+        done++
+      } catch (err) {
+        toast.error(`Upload failed: ${file.name}`, {
+          description: err instanceof Error ? err.message : "Unknown error",
+        })
+      }
+    }
+    if (done > 0) {
+      toast.success(done === 1 ? "File attached" : `${done} files attached`)
       setNote("")
-    } catch (err) {
-      toast.error("Upload failed", {
-        description: err instanceof Error ? err.message : "Unknown error",
-      })
-    } finally {
-      if (fileInput.current) fileInput.current.value = ""
     }
   }
 
@@ -135,35 +136,16 @@ function ItemAttachments({ itemId }: { itemId: string }) {
         <Badge variant="secondary">{files.data?.length ?? 0}</Badge>
       </div>
 
-      <div className="rounded-lg border bg-muted/30 p-3">
-        <Input
-          placeholder="Note (optional)"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          className="h-8 mb-2"
-        />
-        <input
-          ref={fileInput}
-          type="file"
-          aria-label="Attach file"
-          className="hidden"
-          onChange={onPickFile}
-        />
-        <Button
-          type="button"
-          size="sm"
-          className="w-full"
-          onClick={() => fileInput.current?.click()}
-          disabled={uploadFile.isPending}
-        >
-          {uploadFile.isPending ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Upload className="size-4" />
-          )}
-          Attach file
-        </Button>
-      </div>
+      <FileDropzone multiple onFiles={onFiles} busy={uploadFile.isPending}>
+        <div className="px-3 py-2.5">
+          <Input
+            placeholder="Note (optional)"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className="h-8"
+          />
+        </div>
+      </FileDropzone>
 
       {(files.data?.length ?? 0) > 0 && (
         <div className="flex flex-col gap-1.5">
