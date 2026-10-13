@@ -1,6 +1,8 @@
 {
   "name": "ft-scaffold",
   "private": true,
+  "author": "Adnan Siddiqui <hello@adn-memos.com>",
+  "license": "UNLICENSED",
   "version": "0.0.0",
   "type": "module",
   "scripts": {

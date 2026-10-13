@@ -4,6 +4,7 @@ import {
   Check,
   ChevronsUpDown,
   FileText,
+  FolderKanban,
   FolderOpen,
   LayoutGrid,
   LifeBuoy,
@@ -13,6 +14,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
+  ShieldCheck,
   Sun,
   Truck,
   UserCircle,
@@ -35,6 +37,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useAuth } from "@/contexts/AuthContext"
 import { useProject } from "@/contexts/ProjectContext"
 import { useTheme } from "@/hooks/useTheme"
+import { ProjectLogo } from "@/components/ProjectLogo"
 import { navSectionsFor, type NavItem } from "@/lib/navigation"
 import { APP_VERSION } from "@/lib/version"
 import { cn } from "@/lib/utils"
@@ -45,6 +48,7 @@ const COLLAPSE_KEY = "sidebar_collapsed"
 
 function ProjectSwitcher({ collapsed }: { collapsed?: boolean }) {
   const { projects, currentProject, currentProjectId, setCurrentProject } = useProject()
+  const navigate = useNavigate()
 
   function switchProject(id: string) {
     const p = projects.find((p) => p.id === id)
@@ -58,11 +62,16 @@ function ProjectSwitcher({ collapsed }: { collapsed?: boolean }) {
       <DropdownMenuSeparator />
       {projects.map((p) => (
         <DropdownMenuItem key={p.id} onClick={() => switchProject(p.id)} className="gap-2">
-          <FolderOpen className="size-4 text-muted-foreground" />
+          <ProjectLogo project={p} size={20} className="rounded-[4px] text-[9px]" />
           <span className="flex-1 truncate">{p.name}</span>
           {p.id === currentProjectId && <Check className="size-4 text-primary" />}
         </DropdownMenuItem>
       ))}
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={() => navigate("/projects")} className="gap-2">
+        <FolderKanban className="size-4 text-muted-foreground" />
+        All projects
+      </DropdownMenuItem>
     </DropdownMenuContent>
   )
 
@@ -75,7 +84,7 @@ function ProjectSwitcher({ collapsed }: { collapsed?: boolean }) {
             aria-label={currentProject?.name ?? "Select project"}
             className="grid size-9 place-items-center rounded-lg text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
           >
-            <FolderOpen className="size-4.5" />
+            {currentProject ? <ProjectLogo project={currentProject} size={26} className="rounded-md" /> : <FolderOpen className="size-4.5" />}
           </button>
         </DropdownMenuTrigger>
         {menu}
@@ -90,7 +99,11 @@ function ProjectSwitcher({ collapsed }: { collapsed?: boolean }) {
           type="button"
           className="flex h-8 w-full items-center gap-2 rounded-sm border border-input bg-background px-2.5 text-left text-sm transition-colors hover:bg-accent"
         >
-          <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+          {currentProject ? (
+            <ProjectLogo project={currentProject} size={20} className="rounded-[4px]" />
+          ) : (
+            <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+          )}
           <span className="flex-1 truncate font-medium">
             {currentProject?.name ?? "Select project"}
           </span>
@@ -106,8 +119,8 @@ function ProjectSwitcher({ collapsed }: { collapsed?: boolean }) {
 
 function NewMenu({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   const navigate = useNavigate()
-  const { profile } = useAuth()
-  const sections = navSectionsFor(profile)
+  const { profile, accessRole } = useAuth()
+  const sections = navSectionsFor(profile, accessRole)
   const reachable = new Set(sections.flatMap((s) => s.items.filter((i) => !i.soon).map((i) => i.to)))
 
   function go(to: string) {
@@ -252,7 +265,7 @@ function NavRow({
 // ── Footer profile (dropdown: my profile + sign out) ──────────────────────────
 
 function FooterProfile({ collapsed }: { collapsed?: boolean }) {
-  const { profile, signOut } = useAuth()
+  const { profile, signOut, superAdmin } = useAuth()
   const [profileOpen, setProfileOpen] = useState(false)
 
   if (!profile) return null
@@ -316,6 +329,37 @@ function FooterProfile({ collapsed }: { collapsed?: boolean }) {
           >
             <UserCircle className="size-4" /> My profile
           </DropdownMenuItem>
+          {superAdmin && (
+            <DropdownMenuItem
+              onSelect={(e) => e.preventDefault()}
+              onClick={async () => {
+                const next = !superAdmin.elevated
+                try {
+                  await superAdmin.setElevated(next)
+                  toast.success(next ? "Admin privileges raised" : "Now browsing as a regular member")
+                } catch (e) {
+                  toast.error("Could not switch mode", { description: e instanceof Error ? e.message : undefined })
+                }
+              }}
+            >
+              <ShieldCheck className="size-4" />
+              <span className="flex-1">Admin mode</span>
+              <span
+                aria-hidden
+                className={cn(
+                  "relative h-4 w-7 rounded-full transition-colors",
+                  superAdmin.elevated ? "bg-primary" : "bg-muted-foreground/30"
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 size-3 rounded-full bg-white shadow transition-all",
+                    superAdmin.elevated ? "left-3.5" : "left-0.5"
+                  )}
+                />
+              </span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => {
@@ -351,9 +395,9 @@ export function SidebarContent({
   collapsed?: boolean
   onToggleCollapse?: () => void
 }) {
-  const { profile } = useAuth()
+  const { profile, accessRole } = useAuth()
   const { dark, toggle } = useTheme()
-  const sections = navSectionsFor(profile)
+  const sections = navSectionsFor(profile, accessRole)
   const updatesActive = Boolean(useMatch("/updates"))
 
   return (
@@ -509,7 +553,9 @@ export function SidebarContent({
             >
               {dark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
             </button>
-            <span className="font-mono">{APP_VERSION}</span>
+            <Link to="/changelog" onClick={onNavigate} className="font-mono transition-colors hover:text-foreground" title="What's new">
+              {APP_VERSION}
+            </Link>
           </div>
         )}
       </div>

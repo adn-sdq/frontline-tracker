@@ -44,13 +44,24 @@ Deno.serve(async (req) => {
     const admin = createClient(url, serviceKey)
     const { data: prof } = await admin
       .from("profiles")
-      .select("is_admin")
+      .select("is_admin, is_super_admin, super_elevated")
       .eq("id", user.id)
       .single()
-    if (!prof?.is_admin) return json({ error: "Admins only" }, 403)
+    const callerIsAdmin = prof?.is_super_admin ? prof.super_elevated : prof?.is_admin
+    if (!callerIsAdmin) return json({ error: "Admins only" }, 403)
 
     const body = await req.json().catch(() => ({}))
     const action = body.action ?? "create"
+
+    // The super admin's account can only be changed by themself.
+    if (action !== "create" && body.id && body.id !== user.id) {
+      const { data: target } = await admin
+        .from("profiles")
+        .select("is_super_admin")
+        .eq("id", body.id)
+        .single()
+      if (target?.is_super_admin) return json({ error: "This account can't be modified." }, 403)
+    }
 
     if (action === "create") {
       const username = String(body.username ?? "").trim().toLowerCase()
@@ -65,17 +76,22 @@ Deno.serve(async (req) => {
           username,
           full_name: body.full_name || username,
           org: body.org ?? null,
-          is_admin: !!body.is_admin,
         },
       })
       if (error) return json({ error: error.message }, 400)
+      const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null)
+      // Access comes only from the access role; the DB derives role/is_admin from it.
       await admin
         .from("profiles")
         .update({
           org: body.org ?? null,
-          is_admin: !!body.is_admin,
+          access_role_id: typeof body.access_role_id === "string" ? body.access_role_id : null,
           full_name: body.full_name || username,
           username,
+          job_title: text(body.job_title),
+          department: text(body.department),
+          phone: text(body.phone),
+          contact_email: text(body.contact_email),
         })
         .eq("id", data.user.id)
       return json({ ok: true, id: data.user.id })
@@ -116,6 +132,28 @@ Deno.serve(async (req) => {
         const { error: profErr } = await admin.from("profiles").update(profilePatch).eq("id", body.id)
         if (profErr) return json({ error: profErr.message }, 400)
       }
+      return json({ ok: true })
+    }
+
+    // Suspend / reactivate: ban at the auth layer so the user can't sign in or
+    // refresh their session, and mirror the state on the profile.
+    if (action === "set_status") {
+      if (!body.id) return json({ error: "User id required" }, 400)
+      if (body.id === user.id)
+        return json({ error: "You cannot suspend your own account" }, 400)
+      const suspended = body.status === "suspended"
+      const { error: banErr } = await admin.auth.admin.updateUserById(body.id, {
+        ban_duration: suspended ? "876000h" : "none",
+      })
+      if (banErr) return json({ error: banErr.message }, 400)
+      const { error: profErr } = await admin
+        .from("profiles")
+        .update({
+          status: suspended ? "suspended" : "active",
+          status_reason: suspended ? String(body.reason ?? "").trim() || null : null,
+        })
+        .eq("id", body.id)
+      if (profErr) return json({ error: profErr.message }, 400)
       return json({ ok: true })
     }
 

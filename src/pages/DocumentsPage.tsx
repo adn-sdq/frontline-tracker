@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import { useAuth } from "@/contexts/AuthContext"
 import { formatDistanceToNow } from "date-fns"
 import {
   CheckSquare,
@@ -46,7 +47,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { DocumentDialog } from "@/components/DocumentDialog"
 import { DocumentDrawer } from "@/components/DocumentDrawer"
 import { DataTable } from "@/components/ui/data-table"
-import { cn } from "@/lib/utils"
+import { Checkbox } from "@/components/ui/checkbox"
+import { cn, errorMessage } from "@/lib/utils"
 import {
   useDeleteDocument,
   useDocuments,
@@ -69,6 +71,7 @@ import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
 
 export default function DocumentsPage() {
+  const editable = useAuth().canEdit("documents")
   useDocumentsRealtime()
   const { data: docs = [], isLoading } = useDocuments()
   const { data: profiles = {} } = useProfiles()
@@ -109,6 +112,35 @@ export default function DocumentsPage() {
 
   const columns = useMemo<ColumnDef<DocumentRow, unknown>[]>(
     () => [
+      ...(selectMode
+        ? [
+            {
+              id: "select",
+              enableSorting: false,
+              header: () => (
+                <Checkbox
+                  aria-label="Select all"
+                  checked={
+                    filtered.length > 0 && selected.size === filtered.length
+                      ? true
+                      : selected.size > 0
+                        ? "indeterminate"
+                        : false
+                  }
+                  onCheckedChange={() => toggleAll()}
+                />
+              ),
+              cell: ({ row }: { row: { original: DocumentRow } }) => (
+                <Checkbox
+                  aria-label={`Select ${row.original.title}`}
+                  checked={selected.has(row.original.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  onCheckedChange={() => toggleSelect(row.original.id)}
+                />
+              ),
+            } satisfies ColumnDef<DocumentRow, unknown>,
+          ]
+        : []),
       {
         accessorKey: "title",
         header: "Document",
@@ -148,7 +180,8 @@ export default function DocumentsPage() {
         ),
       },
     ],
-    [labelFor]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [labelFor, selectMode, selected, filtered]
   )
 
   // Keep the drawer's document in sync with refreshed data.
@@ -195,7 +228,7 @@ export default function DocumentsPage() {
       exitSelectMode()
     } catch (e) {
       toast.error("Could not update some documents", {
-        description: e instanceof Error ? e.message : "Unknown error",
+        description: errorMessage(e),
       })
     } finally {
       setBulkBusy(false)
@@ -209,7 +242,7 @@ export default function DocumentsPage() {
       toast.success("Document deleted")
     } catch (e) {
       toast.error("Could not delete", {
-        description: e instanceof Error ? e.message : "Unknown error",
+        description: errorMessage(e),
       })
     } finally {
       setDeleteDoc(null)
@@ -331,13 +364,13 @@ export default function DocumentsPage() {
               <Table2 className="size-4" />
             </button>
           </div>
-          <ActionButton
+          {editable && <ActionButton
             icon={CheckSquare}
             label={selectMode ? "Cancel selection" : "Select"}
             active={selectMode}
             onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
-          />
-          {!selectMode && (
+          />}
+          {editable && !selectMode && (
             <ActionButton
               icon={Plus}
               label="Add document"
@@ -369,7 +402,8 @@ export default function DocumentsPage() {
         <DataTable
           columns={columns}
           data={filtered}
-          onRowClick={(d) => setOpenDoc(d)}
+          onRowClick={(d) => (selectMode ? toggleSelect(d.id) : setOpenDoc(d))}
+          isRowSelected={selectMode ? (d) => selected.has(d.id) : undefined}
           emptyMessage="No documents match your filters."
         />
       ) : (

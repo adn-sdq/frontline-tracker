@@ -46,7 +46,7 @@ import {
 import { ActionButton } from "@/components/shell/ActionButton"
 import { useConfirm } from "@/components/ui/confirm-dialog"
 import { KanbanBoard, type KanbanColumn } from "@/components/kanban/KanbanBoard"
-import { cn } from "@/lib/utils"
+import { cn, errorMessage } from "@/lib/utils"
 import { PageHeader } from "@/components/PageHeader"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -277,7 +277,7 @@ function RequestsInbox({
       await deleteReq.mutateAsync(id)
       toast.success("Request deleted")
     } catch (e) {
-      toast.error("Could not delete", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not delete", { description: errorMessage(e) })
     }
   }
 
@@ -395,7 +395,7 @@ function ScheduleBoard() {
         await deleteAssignment.mutateAsync(existing.id)
         toast.success("Moved to unassigned")
       } catch (e) {
-        toast.error("Could not remove", { description: e instanceof Error ? e.message : "Unknown error" })
+        toast.error("Could not remove", { description: errorMessage(e) })
       }
     } else if (existing) {
       // Already has assignment → update project
@@ -407,7 +407,7 @@ function ScheduleBoard() {
         })
         toast.success(`Moved to ${project?.name ?? colId}`)
       } catch (e) {
-        toast.error("Could not move", { description: e instanceof Error ? e.message : "Unknown error" })
+        toast.error("Could not move", { description: errorMessage(e) })
       }
     } else {
       // Unassigned → project: open dialog pre-filled
@@ -429,7 +429,7 @@ function ScheduleBoard() {
       await deleteAssignment.mutateAsync(id)
       toast.success("Assignment removed")
     } catch (e) {
-      toast.error("Could not remove", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not remove", { description: errorMessage(e) })
     }
   }
 
@@ -635,7 +635,7 @@ function Roster() {
       toast.success("Technician removed")
       setConfirmId(null)
     } catch (e) {
-      toast.error("Could not remove", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not remove", { description: errorMessage(e) })
     }
   }
 
@@ -760,7 +760,7 @@ function MyRequests({ userId }: { userId: string | undefined }) {
       await cancelReq.mutateAsync(id)
       toast.success("Request cancelled")
     } catch (e) {
-      toast.error("Could not cancel", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not cancel", { description: errorMessage(e) })
     }
   }
 
@@ -812,11 +812,13 @@ function EmptyState({
 
 // ── page ────────────────────────────────────────────────────────────────────
 export default function TechniciansPage() {
+  const editable = useAuth().canEdit("technicians")
   useTechniciansRealtime()
-  const { profile, user } = useAuth()
+  const { user } = useAuth()
   const { data: profiles = [] } = useAllProfiles()
   const { data: requests = [] } = useTechRequests()
-  const isManager = !!profile?.is_admin || !!profile?.is_tech_manager
+  // Edit access on Technicians = manage the roster and answer requests.
+  const isManager = editable
 
   const [requestOpen, setRequestOpen] = useState(false)
 
@@ -860,12 +862,14 @@ export default function TechniciansPage() {
       ) : (
         <>
           <div className="flex items-center justify-end">
-            <ActionButton
-              icon={Plus}
-              label="Request technicians"
-              primary
-              onClick={() => setRequestOpen(true)}
-            />
+            {editable && (
+              <ActionButton
+                icon={Plus}
+                label="Request technicians"
+                primary
+                onClick={() => setRequestOpen(true)}
+              />
+            )}
           </div>
           <Separator />
           <MyRequests userId={user?.id} />

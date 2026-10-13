@@ -1,5 +1,6 @@
 import { FRONTLINE_LOGO_DATA_URL } from "@/assets/frontlineLogo"
 import type { DeliveryNoteItem } from "@/lib/types"
+import { esc, multiline, printHtml } from "@/lib/print"
 
 export interface DeliveryNotePrintData {
   dnNumber: string
@@ -10,24 +11,30 @@ export interface DeliveryNotePrintData {
   deliverTo: string
   location: string
   contact: string
+  /** Chosen team member's details, printed under the company address. */
+  companyContact?: string
   items: DeliveryNoteItem[]
+}
+
+/** Multi-line contact block for a team member (name, title, phone, email). */
+export function companyContactFor(p: {
+  full_name: string | null
+  username: string | null
+  job_title?: string | null
+  phone?: string | null
+  contact_email?: string | null
+}): string {
+  return [
+    [p.full_name || p.username || "", p.job_title].filter(Boolean).join(" — "),
+    p.phone ? `Mobile: ${p.phone}` : "",
+    p.contact_email ? `Email: ${p.contact_email}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n")
 }
 
 const NAVY = "#1f3a5f"
 const ORANGE = "#e8702a"
-
-function esc(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-}
-
-// Multi-line cell content (serials, descriptions) → <br>-separated HTML.
-function multiline(s: string): string {
-  return esc(s).replace(/\r?\n/g, "<br>")
-}
 
 function fmtDate(iso: string): string {
   if (!iso) return ""
@@ -48,7 +55,7 @@ const TERMS = [
 // printed template even for short deliveries.
 const MIN_ROWS = 5
 
-function buildHtml(d: DeliveryNotePrintData): string {
+export function buildHtml(d: DeliveryNotePrintData): string {
   const rows = [...d.items]
   while (rows.length < MIN_ROWS) {
     rows.push({ description: "", qty: 0, serial: "" })
@@ -118,6 +125,7 @@ function buildHtml(d: DeliveryNotePrintData): string {
   .info td { padding: 0; }
   .info .label-cell { background: #fff; font-weight: 700; width: 22%; padding: 4px 6px; }
   .info .contact-cell { width: 50%; white-space: pre-line; padding: 6px 8px; vertical-align: middle; }
+  .info .contact-person { margin-top: 6px; padding-top: 6px; border-top: 1px dashed #999; white-space: normal; }
   .info .contact-head { background: #f0f0f0; font-weight: 700; text-align: center; }
   .kv td { padding: 4px 6px; }
   .kv .k { font-weight: 700; width: 42%; }
@@ -165,7 +173,7 @@ function buildHtml(d: DeliveryNotePrintData): string {
 P.O. Box: 200435 Riyadh, Saudi Arabia
 Tel.: +96611 288 2999
 VAT: 302007992700003
-https://frontlinesolution.com</td>
+https://frontlinesolution.com${d.companyContact ? `<div class="contact-person"><b>Contact person</b><br>${multiline(d.companyContact)}</div>` : ""}</td>
         <td class="label-cell">Project Name</td>
         <td>${esc(d.projectName)}</td>
       </tr>
@@ -228,49 +236,7 @@ https://frontlinesolution.com</td>
 </html>`
 }
 
-// Render the delivery note in a hidden iframe and trigger the browser's print
-// dialog (Save as PDF). Using an iframe avoids popup blockers.
+// Opens the browser print dialog (Save as PDF) for the delivery note.
 export function printDeliveryNote(data: DeliveryNotePrintData): void {
-  const html = buildHtml(data)
-  const iframe = document.createElement("iframe")
-  iframe.style.position = "fixed"
-  iframe.style.right = "0"
-  iframe.style.bottom = "0"
-  iframe.style.width = "0"
-  iframe.style.height = "0"
-  iframe.style.border = "0"
-  document.body.appendChild(iframe)
-
-  const doc = iframe.contentWindow?.document
-  if (!doc) {
-    document.body.removeChild(iframe)
-    return
-  }
-  doc.open()
-  doc.write(html)
-  doc.close()
-
-  const win = iframe.contentWindow!
-  const cleanup = () => {
-    setTimeout(() => {
-      if (iframe.parentNode) iframe.parentNode.removeChild(iframe)
-    }, 1000)
-  }
-
-  // Wait for the embedded logo to load before printing.
-  const triggerPrint = () => {
-    win.focus()
-    win.print()
-    cleanup()
-  }
-
-  const img = doc.querySelector("img")
-  if (img && !img.complete) {
-    img.addEventListener("load", triggerPrint, { once: true })
-    img.addEventListener("error", triggerPrint, { once: true })
-    // Safety fallback in case neither event fires.
-    setTimeout(triggerPrint, 1500)
-  } else {
-    setTimeout(triggerPrint, 200)
-  }
+  printHtml(buildHtml(data))
 }

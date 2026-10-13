@@ -7,19 +7,15 @@ import {
   FileText,
   FolderOpen,
   Hash,
-  Loader2,
   LogOut,
   MapPin,
   Package,
-  Pencil,
   Phone,
   Plus,
   TicketIcon,
   UserCircle,
   Users,
 } from "lucide-react"
-import { toast } from "sonner"
-
 import { useAuth } from "@/contexts/AuthContext"
 import { useProject } from "@/contexts/ProjectContext"
 import { useAllProjectMembers, useAllProjects, useProjectStats } from "@/hooks/useProjects"
@@ -30,6 +26,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { FitLogo } from "@/components/FitLogo"
+import { ProjectLogo } from "@/components/ProjectLogo"
+import { Skeleton } from "@/components/ui/skeleton"
+import { FullPageLoader, useMinDelay } from "@/components/shell/PageGate"
 import type { Project } from "@/lib/types"
 
 function greeting() {
@@ -48,7 +47,7 @@ function StatCell({ value, label, icon: Icon }: { value: number | undefined; lab
         <span className="text-xs text-muted-foreground">{label}</span>
       </div>
       <span className="text-lg font-semibold tabular-nums">
-        {value === undefined ? <span className="text-muted-foreground/40 text-sm">…</span> : value}
+        {value === undefined ? <Skeleton className="mt-0.5 h-6 w-8" /> : value}
       </span>
     </div>
   )
@@ -58,14 +57,12 @@ function StatCell({ value, label, icon: Icon }: { value: number | undefined; lab
 function ProjectDetail({
   project,
   onOpen,
-  onEdit,
   isAdmin,
   profiles,
   memberships,
 }: {
   project: Project
   onOpen: () => void
-  onEdit: () => void
   isAdmin: boolean
   profiles: ReturnType<typeof useAllProfiles>["data"]
   memberships: ReturnType<typeof useAllProjectMembers>["data"]
@@ -80,10 +77,12 @@ function ProjectDetail({
     .filter(Boolean)
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto">
+    <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="border-b px-8 py-6">
+      <div className="shrink-0 border-b px-8 py-6">
         <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-start gap-4">
+          <ProjectLogo project={project} size={52} />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-xl font-semibold tracking-tight">{project.name}</h2>
@@ -92,15 +91,11 @@ function ProjectDetail({
               )}
             </div>
             {project.description && (
-              <p className="mt-1 text-sm text-muted-foreground">{project.description}</p>
+              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{project.description}</p>
             )}
           </div>
+          </div>
           <div className="flex shrink-0 items-center gap-2">
-            {isAdmin && (
-              <Button variant="outline" size="sm" onClick={onEdit}>
-                <Pencil className="size-4" /> Edit
-              </Button>
-            )}
             <Button size="sm" onClick={onOpen}>
               Open project <ArrowRight className="size-4" />
             </Button>
@@ -109,7 +104,7 @@ function ProjectDetail({
       </div>
 
       {/* Body */}
-      <div className="flex-1 px-8 py-6 space-y-6">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-8 py-6">
         {/* Stats row */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatCell value={stats?.items} label="Items" icon={Package} />
@@ -227,19 +222,12 @@ function ProjectRow({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors ${
-        selected
-          ? "bg-primary/8 border border-primary/30"
-          : "border border-transparent hover:bg-muted/60"
+      aria-pressed={selected}
+      className={`flex h-16 w-full shrink-0 items-center gap-3 rounded-lg border px-3 text-left transition-colors ${
+        selected ? "border-primary/30 bg-primary/8" : "border-transparent hover:bg-muted/60"
       }`}
     >
-      <div
-        className={`flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
-          selected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-        }`}
-      >
-        <FolderOpen className="size-4" />
-      </div>
+      <ProjectLogo project={project} size={36} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="truncate text-sm font-medium">{project.name}</span>
@@ -247,9 +235,7 @@ function ProjectRow({
             <Badge variant="secondary" className="shrink-0 text-[10px]">Inactive</Badge>
           )}
         </div>
-        {project.description && (
-          <p className="truncate text-xs text-muted-foreground">{project.description}</p>
-        )}
+        <p className="truncate text-xs text-muted-foreground">{project.description || project.client_name || "\u00a0"}</p>
       </div>
       <ArrowRight className={`size-4 shrink-0 transition-opacity ${selected ? "text-primary opacity-100" : "opacity-0"}`} />
     </button>
@@ -258,42 +244,34 @@ function ProjectRow({
 
 // ── Main page ───────────────────────────────────────────────────────────────
 export default function ProjectsPage() {
-  const { profile, user, signOut } = useAuth()
+  const { profile, accessRole, user, signOut } = useAuth()
   const { projects, loading, setCurrentProject } = useProject()
   const navigate = useNavigate()
   const isAdmin = !!profile?.is_admin
 
   // Admin-only data (silently empty for non-admins)
-  const { data: allProjects = [] } = useAllProjects()
-  const { data: profiles = [] } = useAllProfiles()
-  const { data: memberships = [] } = useAllProjectMembers()
+  const { data: allProjects = [], isLoading: l1 } = useAllProjects()
+  const { data: profiles = [], isLoading: l2 } = useAllProfiles()
+  const { data: memberships = [], isLoading: l3 } = useAllProjectMembers()
+  const minDone = useMinDelay()
 
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [pickedId, setPickedId] = useState<string | null>(null)
 
   const name = profile?.full_name ?? profile?.username ?? user?.email ?? "User"
   const firstName = name.split(" ")[0]
 
   // For display: admins see all projects, members see assigned projects
   const displayProjects = isAdmin ? allProjects : projects
-  const selectedProject = displayProjects.find((p) => p.id === selectedId) ?? null
+  // Always show a project on the right so the layout never jumps.
+  const selectedProject = displayProjects.find((p) => p.id === pickedId) ?? displayProjects[0] ?? null
+  const selectedId = selectedProject?.id ?? null
 
   function open(id: string) {
     setCurrentProject(id)
     navigate("/", { replace: true })
   }
 
-  function handleEdit(_project: Project) {
-    navigate("/admin")
-    toast.info("Edit project details in the Admin console.")
-  }
-
-  if (loading) {
-    return (
-      <div className="flex min-h-svh items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
+  if (loading || !minDone || (isAdmin && (l1 || l2 || l3))) return <FullPageLoader />
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
@@ -312,11 +290,9 @@ export default function ProjectsPage() {
               <div className="flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1">
                 <UserCircle className="size-4 text-muted-foreground" />
                 <span className="text-xs font-medium">{name}</span>
-                {profile.role && (
-                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                    {profile.role === "admin" ? "Admin" : profile.role === "guest" ? "Guest" : "Member"}
-                  </Badge>
-                )}
+                <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
+                  {profile.is_admin ? "Admin" : accessRole?.name ?? "No access"}
+                </Badge>
               </div>
             )}
             <Button
@@ -377,33 +353,32 @@ export default function ProjectsPage() {
           </div>
         ) : (
           /* Two-pane layout */
-          <div className="flex flex-col gap-4 lg:flex-row lg:gap-0 lg:overflow-hidden lg:rounded-xl lg:border">
+          <div className="flex flex-col gap-4 lg:h-[clamp(28rem,calc(100svh-15rem),44rem)] lg:flex-row lg:gap-0 lg:overflow-hidden lg:rounded-xl lg:border">
             {/* Left pane — project list */}
-            <div className="flex w-full flex-col lg:w-72 lg:shrink-0 lg:border-r">
-              <div className="border-b px-4 py-3">
+            <div className="flex w-full flex-col lg:min-h-0 lg:w-80 lg:shrink-0 lg:border-r">
+              <div className="shrink-0 border-b px-4 py-3">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Projects ({displayProjects.length})
                 </span>
               </div>
-              <div className="flex flex-col gap-1 overflow-y-auto p-2 lg:max-h-[calc(100svh-16rem)]">
+              <div className="flex max-h-80 flex-col gap-1 overflow-y-auto p-2 lg:max-h-none lg:flex-1">
                 {displayProjects.map((p) => (
                   <ProjectRow
                     key={p.id}
                     project={p}
                     selected={selectedId === p.id}
-                    onClick={() => setSelectedId(p.id === selectedId ? null : p.id)}
+                    onClick={() => setPickedId(p.id)}
                   />
                 ))}
               </div>
             </div>
 
             {/* Right pane — detail or empty state */}
-            <div className="flex-1 lg:overflow-y-auto lg:max-h-[calc(100svh-16rem)]">
+            <div className="min-w-0 rounded-xl border lg:min-h-0 lg:flex-1 lg:rounded-none lg:border-0">
               {selectedProject ? (
                 <ProjectDetail
                   project={selectedProject}
                   onOpen={() => open(selectedProject.id)}
-                  onEdit={() => handleEdit(selectedProject)}
                   isAdmin={isAdmin}
                   profiles={profiles}
                   memberships={memberships}

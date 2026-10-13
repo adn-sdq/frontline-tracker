@@ -1,6 +1,8 @@
 import {
   BarChart3,
+  CalendarCheck2,
   FileText,
+  FolderKanban,
   LayoutGrid,
   LifeBuoy,
   PenTool,
@@ -9,7 +11,8 @@ import {
   UsersRound,
 } from "lucide-react"
 
-import type { AppPage, Profile } from "@/lib/types"
+import { APP_PAGES, type AccessRole, type AppPage, type Profile } from "@/lib/types"
+import { pageAccessFor } from "@/lib/access"
 
 /**
  * Single source of truth for app navigation.
@@ -34,6 +37,10 @@ export interface NavSection {
 
 const SECTIONS: NavSection[] = [
   {
+    // Home — the project picker. Always reachable from inside a project.
+    items: [{ to: "/projects", label: "All projects", icon: FolderKanban }],
+  },
+  {
     label: "Procurement",
     items: [
       { to: "/", label: "Tracker", icon: LayoutGrid, page: "tracker" },
@@ -46,6 +53,7 @@ const SECTIONS: NavSection[] = [
     items: [
       { to: "/tickets", label: "Tickets", icon: LifeBuoy, page: "tickets" },
       { to: "/technicians", label: "Technicians", icon: UsersRound, page: "technicians" },
+      { to: "/sla", label: "SLA", icon: CalendarCheck2, page: "sla" },
       { to: "/schematics", label: "Schematics", icon: PenTool, soon: true },
     ],
   },
@@ -59,18 +67,13 @@ const SECTIONS: NavSection[] = [
   },
 ]
 
-export function allowedPagesFor(profile: Profile | null): Set<AppPage> {
-  if (!profile) return new Set()
-  if (profile.is_admin) return new Set<AppPage>(["tracker", "documents", "dashboard", "tickets", "technicians"])
-  if (profile.org === "firstfix") return new Set<AppPage>(["documents"])
-  if (!profile.allowed_pages || profile.allowed_pages.length === 0) {
-    return new Set<AppPage>(["tracker", "documents", "dashboard", "tickets", "technicians"])
-  }
-  return new Set(profile.allowed_pages as AppPage[])
+/** Pages a profile can open (view or edit). */
+export function allowedPagesFor(profile: Profile | null, role?: AccessRole | null): Set<AppPage> {
+  return new Set(APP_PAGES.filter((pg) => pageAccessFor(profile, role, pg) !== "none"))
 }
 
-export function navSectionsFor(profile: Profile | null): NavSection[] {
-  const allowed = allowedPagesFor(profile)
+export function navSectionsFor(profile: Profile | null, role?: AccessRole | null): NavSection[] {
+  const allowed = allowedPagesFor(profile, role)
   const isAdmin = !!profile?.is_admin
   const isFirstfix = profile?.org === "firstfix"
 
@@ -86,10 +89,10 @@ export function navSectionsFor(profile: Profile | null): NavSection[] {
 }
 
 const EXTRA_LABELS: Record<string, string> = {
-  "/projects": "Projects",
   "/changelog": "Changelog",
   "/updates": "Updates",
   "/docs": "Docs",
+  "/legal": "Legal",
 }
 
 export function pageLabelFor(pathname: string): string | undefined {
@@ -97,5 +100,17 @@ export function pageLabelFor(pathname: string): string | undefined {
     const hit = section.items.find((i) => i.to === pathname)
     if (hit) return hit.label
   }
+  if (pathname.startsWith("/sla/")) return "SLA"
   return EXTRA_LABELS[pathname]
+}
+
+/** The access-controlled page a route belongs to, if any. */
+export function pageForPath(pathname: string): AppPage | undefined {
+  for (const section of SECTIONS) {
+    for (const i of section.items) {
+      if (!i.page) continue
+      if (i.to === "/" ? pathname === "/" : pathname === i.to || pathname.startsWith(i.to + "/")) return i.page
+    }
+  }
+  return undefined
 }

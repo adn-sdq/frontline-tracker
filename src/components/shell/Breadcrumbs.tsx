@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { ChevronRight } from "lucide-react"
 
 import { useProject } from "@/contexts/ProjectContext"
@@ -20,7 +20,11 @@ export function Breadcrumbs() {
       aria-label="Breadcrumb"
       className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground"
     >
-      {currentProject && (
+      <Link to="/projects" className="transition-colors hover:text-foreground">
+        Projects
+      </Link>
+      <ChevronRight className="size-3 shrink-0 opacity-60" />
+      {currentProject && pathname !== "/projects" && (
         <>
           <span className="max-w-40 truncate">{currentProject.name}</span>
           <ChevronRight className="size-3 shrink-0 opacity-60" />

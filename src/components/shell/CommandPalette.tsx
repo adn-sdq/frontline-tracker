@@ -23,9 +23,9 @@ export function CommandPalette({
   onOpenChange: (open: boolean) => void
 }) {
   const navigate = useNavigate()
-  const { profile } = useAuth()
+  const { profile, accessRole } = useAuth()
   const { projects, currentProjectId, setCurrentProject } = useProject()
-  const sections = navSectionsFor(profile)
+  const sections = navSectionsFor(profile, accessRole)
 
   function run(fn: () => void) {
     onOpenChange(false)

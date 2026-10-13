@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -94,7 +95,7 @@ export function RequestTechnicianDialog({
       toast.success("Request submitted")
       onOpenChange(false)
     } catch (e) {
-      toast.error("Could not submit", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not submit", { description: errorMessage(e) })
     } finally {
       setBusy(false)
     }

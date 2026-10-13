@@ -131,3 +131,52 @@ export function useToggleSystem() {
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   })
 }
+
+/** How many items, documents and projects use each system key (admin view). */
+export function useSystemUsage() {
+  return useQuery<Record<string, { items: number; documents: number; projects: number }>>({
+    queryKey: [...KEY, "usage"],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const [items, docs, ps] = await Promise.all([
+        supabase.from("items").select("system"),
+        supabase.from("documents").select("system"),
+        supabase.from("project_systems").select("system_key"),
+      ])
+      const out: Record<string, { items: number; documents: number; projects: number }> = {}
+      const bump = (k: string | null, f: "items" | "documents" | "projects") => {
+        if (!k) return
+        out[k] ??= { items: 0, documents: 0, projects: 0 }
+        out[k][f]++
+      }
+      for (const r of (items.data ?? []) as { system: string | null }[]) bump(r.system, "items")
+      for (const r of (docs.data ?? []) as { system: string | null }[]) bump(r.system, "documents")
+      for (const r of (ps.data ?? []) as { system_key: string }[]) bump(r.system_key, "projects")
+      return out
+    },
+  })
+}
+
+/** Save display order for many systems at once. */
+export function useReorderSystems() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (rows: { key: string; label: string; sort: number; active: boolean }[]) => {
+      const { error } = await supabase.from("systems").upsert(rows)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  })
+}
+
+/** Delete an unused system (the database refuses if anything references it). */
+export function useDeleteSystem() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (key: string) => {
+      const { error } = await supabase.from("systems").delete().eq("key", key)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  })
+}

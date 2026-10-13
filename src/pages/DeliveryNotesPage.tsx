@@ -1,6 +1,15 @@
 import { useMemo, useState } from "react"
+import { useAuth } from "@/contexts/AuthContext"
 import { format, parseISO } from "date-fns"
-import { FileText, Plus, Printer, Search, Trash2 } from "lucide-react"
+import {
+  FileText,
+  Paperclip,
+  Plus,
+  Printer,
+  Search,
+  Trash2,
+  Upload,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -17,12 +26,19 @@ import { useProject } from "@/contexts/ProjectContext"
 import {
   useDeliveryNotes,
   useDeleteDeliveryNote,
+  useDeliveryNoteFiles,
 } from "@/hooks/useDeliveryNotes"
+import { DeliveryNoteFilesDialog } from "@/components/DeliveryNoteFilesDialog"
+import { ManualDeliveryNoteDialog } from "@/components/ManualDeliveryNoteDialog"
 import { useProfiles } from "@/hooks/useItems"
-import { printDeliveryNote } from "@/lib/deliveryNotePdf"
+import { printDeliveryNote, type DeliveryNotePrintData } from "@/lib/deliveryNotePdf"
 import { DeliveryNoteDialog } from "@/components/DeliveryNoteDialog"
 import type { DeliveryNote } from "@/lib/types"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { cn, errorMessage } from "@/lib/utils"
+import { SignatureBadge } from "@/components/SignatureBadge"
+
+type SignFilter = "all" | "unsigned" | "signed"
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
@@ -46,6 +62,7 @@ function DNSkeleton() {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function DeliveryNotesPage() {
+  const editable = useAuth().canEdit("tracker")
   const { currentProject } = useProject()
   const { data: notes = [], isLoading } = useDeliveryNotes()
   const { data: profiles = {} } = useProfiles()
@@ -56,6 +73,18 @@ export default function DeliveryNotesPage() {
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
   const [createOpen, setCreateOpen] = useState(false)
+  const [signFilter, setSignFilter] = useState<SignFilter>("all")
+  const [manualOpen, setManualOpen] = useState(false)
+  const [filesId, setFilesId] = useState<string | null>(null)
+  const filesNote = notes.find((n) => n.id === filesId) ?? null
+  const { data: allFiles = [] } = useDeliveryNoteFiles()
+  // A note is Signed when any of its files is marked signed.
+  const filesByNote = useMemo(() => {
+    const m = new Map<string, typeof allFiles>()
+    for (const f of allFiles) m.set(f.delivery_note_id, [...(m.get(f.delivery_note_id) ?? []), f])
+    return m
+  }, [allFiles])
+  const isSigned = (n: DeliveryNote) => !!filesByNote.get(n.id)?.some((f) => f.kind === "signed")
 
   function who(id: string | null) {
     if (!id) return "—"
@@ -70,12 +99,13 @@ export default function DeliveryNotesPage() {
         .filter(Boolean).some((v) => (v as string).toLowerCase().includes(q))) return false
       if (fromDate && n.dn_date < fromDate) return false
       if (toDate && n.dn_date > toDate) return false
+      if (signFilter !== "all" && (signFilter === "signed") !== isSigned(n)) return false
       return true
     })
-  }, [notes, search, fromDate, toDate])
+  }, [notes, search, fromDate, toDate, signFilter])
 
-  function reprint(note: DeliveryNote) {
-    printDeliveryNote({
+  function printDataFor(note: DeliveryNote): DeliveryNotePrintData {
+    return {
       dnNumber: note.dn_number,
       date: note.dn_date,
       projectName: currentProject?.name ?? "",
@@ -84,9 +114,12 @@ export default function DeliveryNotesPage() {
       deliverTo: note.deliver_to ?? "",
       location: note.location ?? "",
       contact: note.contact ?? "",
+      companyContact: note.company_contact ?? "",
       items: note.items,
-    })
+    }
   }
+
+  const reprint = (note: DeliveryNote) => printDeliveryNote(printDataFor(note))
 
   async function askDelete(note: DeliveryNote) {
     const ok = await confirm({
@@ -97,16 +130,17 @@ export default function DeliveryNotesPage() {
     })
     if (!ok) return
     try {
-      await deleteNote.mutateAsync(note.id)
+      await deleteNote.mutateAsync(note)
       toast.success("Delivery note deleted")
     } catch (e) {
       toast.error("Could not delete", {
-        description: e instanceof Error ? e.message : "Unknown error",
+        description: errorMessage(e),
       })
     }
   }
 
-  const activeFilters = !!(search || fromDate || toDate)
+  const activeFilters = !!(search || fromDate || toDate || signFilter !== "all")
+  const unsignedCount = notes.filter((n) => !isSigned(n)).length
 
   return (
     <div className="flex flex-col gap-4">
@@ -149,18 +183,49 @@ export default function DeliveryNotesPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { setSearch(""); setFromDate(""); setToDate("") }}
+              onClick={() => { setSearch(""); setFromDate(""); setToDate(""); setSignFilter("all") }}
             >
               Clear
             </Button>
           )}
-          <ActionButton
-            icon={Plus}
-            label="New delivery note"
-            primary
-            onClick={() => setCreateOpen(true)}
-          />
+          {editable && (
+            <ActionButton
+              icon={Upload}
+              label="Upload existing note"
+              onClick={() => setManualOpen(true)}
+            />
+          )}
+          {editable && (
+            <ActionButton
+              icon={Plus}
+              label="New delivery note"
+              primary
+              onClick={() => setCreateOpen(true)}
+            />
+          )}
         </div>
+      </div>
+
+      {/* Signature filter */}
+      <div className="inline-flex self-start rounded-sm border p-0.5" role="radiogroup" aria-label="Signature status">
+        {(["all", "unsigned", "signed"] as const).map((f) => (
+          <button
+            key={f}
+            type="button"
+            role="radio"
+            aria-checked={signFilter === f}
+            onClick={() => setSignFilter(f)}
+            className={cn(
+              "rounded-[2px] px-2.5 py-1 text-xs font-medium capitalize transition-colors",
+              signFilter === f
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {f}
+            {f === "unsigned" && unsignedCount > 0 && ` (${unsignedCount})`}
+          </button>
+        ))}
       </div>
 
       {/* Results count when filtered */}
@@ -201,6 +266,7 @@ export default function DeliveryNotesPage() {
                   <span className="font-mono text-sm font-semibold">
                     {note.dn_number}
                   </span>
+                  <SignatureBadge signed={isSigned(note)} />
                   <Badge variant="secondary" className="text-xs">
                     {note.items.length} item{note.items.length !== 1 ? "s" : ""}
                   </Badge>
@@ -238,6 +304,16 @@ export default function DeliveryNotesPage() {
 
               {/* Actions */}
               <div className="flex shrink-0 gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => setFilesId(note.id)}
+                >
+                  <Paperclip className="size-3.5" />
+                  Files{(filesByNote.get(note.id)?.length ?? 0) + (note.items.length ? 1 : 0) > 0 ? ` (${(filesByNote.get(note.id)?.length ?? 0) + (note.items.length ? 1 : 0)})` : ""}
+                </Button>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -271,6 +347,16 @@ export default function DeliveryNotesPage() {
           ))}
         </div>
       )}
+
+      <DeliveryNoteFilesDialog
+        note={filesNote}
+        files={allFiles}
+        printData={filesNote ? printDataFor(filesNote) : null}
+        who={who}
+        canEdit={editable}
+        onClose={() => setFilesId(null)}
+      />
+      <ManualDeliveryNoteDialog open={manualOpen} onOpenChange={setManualOpen} />
 
       {/* Manual create */}
       <DeliveryNoteDialog

@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -33,7 +34,7 @@ export function FeatureRequestDialog({ open, onClose }: { open: boolean; onClose
       toast.success("Request submitted — thanks!")
       setTitle(""); setDescription(""); onClose()
     } catch (err) {
-      toast.error("Could not submit", { description: err instanceof Error ? err.message : "Unknown error" })
+      toast.error("Could not submit", { description: errorMessage(err) })
     } finally { setBusy(false) }
   }
 
@@ -80,7 +81,7 @@ export function ChangePasswordDialog({ open, onClose }: { open: boolean; onClose
       toast.success("Password updated")
       setNewPw(""); setConfirm(""); onClose()
     } catch (e) {
-      toast.error("Could not update password", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not update password", { description: errorMessage(e) })
     } finally { setBusy(false) }
   }
 

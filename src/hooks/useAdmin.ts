@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { supabase } from "@/lib/supabase"
-import type { Org, Profile, Role } from "@/lib/types"
+import type { AccessRole, AccountStatus, Org, Profile } from "@/lib/types"
 
 // ── Feature requests (admin-only) ─────────────────────────────────────────────
 
@@ -77,6 +77,12 @@ export function useDeleteFeatureRequest() {
 
 const PROFILES_KEY = ["profiles", "all"]
 
+// Prefix match refreshes both the admin list and the id→profile map, plus audit.
+function invalidateProfiles(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ["profiles"] })
+  qc.invalidateQueries({ queryKey: ["profile_history"] })
+}
+
 export function useAllProfiles() {
   return useQuery<Profile[]>({
     queryKey: PROFILES_KEY,
@@ -122,9 +128,13 @@ export function useCreateAccount() {
       password: string
       full_name?: string
       org?: Org | null
-      is_admin?: boolean
-    }) => callAdmin({ action: "create", ...args }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),
+      access_role_id?: string | null
+      job_title?: string
+      department?: string
+      phone?: string
+      contact_email?: string
+    }) => callAdmin({ action: "create", ...args }) as Promise<{ ok: boolean; id: string }>,
+    onSuccess: () => invalidateProfiles(qc),
   })
 }
 
@@ -139,25 +149,27 @@ export function useDeleteAccount() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => callAdmin({ action: "delete", id }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),
+    onSuccess: () => invalidateProfiles(qc),
   })
 }
 
-// Org / admin-flag / allowed_pages / role / avatar_url go straight through RLS (admins may update profiles).
+/** Profile columns writable through RLS. The DB guard strips privileged ones for non-admins. */
+export type ProfilePatch = Partial<
+  Omit<Profile, "id" | "username" | "created_at" | "updated_at" | "last_seen_at" | "status" | "status_reason" | "is_super_admin" | "super_elevated">
+>
+
+// Details, org, access flags, avatar go straight through RLS (admins may update any profile).
 export function useUpdateProfile() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (args: {
-      id: string
-      patch: Partial<Pick<Profile, "org" | "is_admin" | "full_name" | "allowed_pages" | "avatar_url" | "role" | "is_tech_manager">>
-    }) => {
+    mutationFn: async (args: { id: string; patch: ProfilePatch }) => {
       const { error } = await supabase
         .from("profiles")
         .update(args.patch)
         .eq("id", args.id)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),
+    onSuccess: () => invalidateProfiles(qc),
   })
 }
 
@@ -179,21 +191,35 @@ export function useUploadAvatar() {
       if (updateError) throw updateError
       return data.publicUrl
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),
+    onSuccess: () => invalidateProfiles(qc),
   })
 }
 
-export function useChangeRole() {
+/** Clear a profile photo and delete the stored image. */
+export function useRemoveAvatar() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, role }: { id: string; role: Role }) => {
+    mutationFn: async ({ userId, avatarUrl }: { userId: string; avatarUrl: string | null }) => {
       const { error } = await supabase
         .from("profiles")
-        .update({ role, is_admin: role === "admin" })
-        .eq("id", id)
+        .update({ avatar_url: null })
+        .eq("id", userId)
       if (error) throw error
+      const path = avatarUrl?.split("/avatars/").pop()?.split("?")[0]
+      if (path) await supabase.storage.from("avatars").remove([path])
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),
+    onSuccess: () => invalidateProfiles(qc),
+  })
+}
+
+
+/** Suspend (auth-level ban) or reactivate an account. Admin only. */
+export function useSetAccountStatus() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (args: { id: string; status: AccountStatus; reason?: string }) =>
+      callAdmin({ action: "set_status", ...args }),
+    onSuccess: () => invalidateProfiles(qc),
   })
 }
 
@@ -203,6 +229,58 @@ export function useUpdateUserDetails() {
   return useMutation({
     mutationFn: (args: { id: string; username?: string; full_name?: string }) =>
       callAdmin({ action: "update_profile", ...args }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: PROFILES_KEY }),
+    onSuccess: () => invalidateProfiles(qc),
+  })
+}
+
+// ── Access roles ──────────────────────────────────────────────────────────────
+
+const ROLES_KEY = ["access_roles"]
+
+export function useAccessRoles() {
+  return useQuery<AccessRole[]>({
+    queryKey: ROLES_KEY,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("access_roles").select("*").order("sort").order("name")
+      if (error) throw error
+      return (data ?? []) as AccessRole[]
+    },
+    staleTime: 60_000,
+  })
+}
+
+export type AccessRoleInput = Pick<
+  AccessRole,
+  "name" | "description" | "permissions"
+>
+
+export function useSaveAccessRole() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: { id?: string; input: AccessRoleInput }) => {
+      const payload = { ...args.input, updated_at: new Date().toISOString() }
+      const { error } = args.id
+        ? await supabase.from("access_roles").update(payload).eq("id", args.id)
+        : await supabase.from("access_roles").insert(payload)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ROLES_KEY })
+      invalidateProfiles(qc)
+    },
+  })
+}
+
+export function useDeleteAccessRole() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("access_roles").delete().eq("id", id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ROLES_KEY })
+      invalidateProfiles(qc)
+    },
   })
 }

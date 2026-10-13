@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import { Navigate, Route, Routes } from "react-router-dom"
-import { Loader2 } from "lucide-react"
+import { FullPageLoader } from "@/components/shell/PageGate"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { useProject } from "@/contexts/ProjectContext"
@@ -18,6 +18,9 @@ import DocsPage from "@/pages/DocsPage"
 import TicketsPage from "@/pages/TicketsPage"
 import TechniciansPage from "@/pages/TechniciansPage"
 import UpdatesPage from "@/pages/UpdatesPage"
+import SlaPage from "@/pages/SlaPage"
+import SlaContractPage from "@/pages/SlaContractPage"
+import LegalPage from "@/pages/LegalPage"
 import NotFoundPage from "@/pages/NotFoundPage"
 import { AppLayout } from "@/components/AppLayout"
 
@@ -30,19 +33,14 @@ function FullScreen({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  const { session, loading, profile } = useAuth()
+  const { session, loading, profile, pageAccess } = useAuth()
   const { currentProjectId, loading: projectsLoading } = useProject()
   const isFirstfix = profile?.org === "firstfix"
   const isAdmin = !!profile?.is_admin
 
-  // Compute allowed pages the same way AppLayout does, so routes match nav.
+  // Same rule the nav and the database use (src/lib/access.ts).
   function canAccess(page: AppPage) {
-    if (!profile) return false
-    if (isAdmin) return true
-    if (isFirstfix) return page === "documents"
-    const pages = profile.allowed_pages
-    if (!pages || pages.length === 0) return true
-    return pages.includes(page)
+    return pageAccess(page) !== "none"
   }
 
   // Where a logged-in user with a selected project should land.
@@ -74,7 +72,7 @@ export default function App() {
   if (loading || (session && projectsLoading)) {
     return (
       <FullScreen>
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <FullPageLoader />
       </FullScreen>
     )
   }
@@ -163,6 +161,8 @@ export default function App() {
         element={
           !session ? (
             <Navigate to="/login" replace />
+          ) : !canAccess("tickets") ? (
+            <Navigate to={homeRedirect} replace />
           ) : (
             <AppLayout>
               <TicketsPage />
@@ -184,6 +184,23 @@ export default function App() {
           )
         }
       />
+      {["/sla", "/sla/:id"].map((path) => (
+        <Route
+          key={path}
+          path={path}
+          element={
+            !session ? (
+              <Navigate to="/login" replace />
+            ) : !canAccess("sla") ? (
+              <Navigate to={homeRedirect} replace />
+            ) : (
+              <AppLayout>
+                {path === "/sla" ? <SlaPage /> : <SlaContractPage />}
+              </AppLayout>
+            )
+          }
+        />
+      ))}
       <Route
         path="/updates"
         element={
@@ -198,6 +215,7 @@ export default function App() {
       />
       <Route path="/changelog" element={<ChangelogPage />} />
       <Route path="/docs" element={<DocsPage />} />
+      <Route path="/legal" element={<LegalPage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )

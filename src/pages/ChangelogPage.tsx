@@ -17,6 +17,295 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.20.0",
+    date: "2026-10-14",
+    type: "minor",
+    summary: "Project logos, a full-screen project view, a contact person on delivery notes, a steadier home page and a new animated loader.",
+    sections: [
+      {
+        title: "Projects",
+        items: [
+          "Every project can have a logo — click or drop an image when creating or editing a project (PNG, JPG or WebP, up to 2 MB). Projects without one show coloured initials",
+          "Logos appear on the projects home page, the project switcher and the Admin project cards",
+          "Admin Console → Projects: clicking a project opens it full screen (stats, details, systems and team with their roles) instead of leaving the console. Edit, archive or open its workspace from there",
+        ],
+      },
+      {
+        title: "Delivery notes",
+        items: [
+          "Choose our contact person when creating a delivery note — their name, job title, mobile and email print under the company address. Defaults to you",
+          "The contact is saved with the note, so reprints and previews show the same details",
+        ],
+      },
+      {
+        title: "Home page",
+        items: [
+          "The project list and details panel keep a fixed size — selecting a project no longer resizes the page",
+          "All project rows are the same height, and the first project is shown straight away",
+          "Removed the Edit button; edit projects from Admin Console → Projects",
+          "Your badge now shows your role name",
+        ],
+      },
+      {
+        title: "Loader",
+        items: [
+          "New loader: the FIT mark draws itself with a soft glow and a gradient progress bar (static when the system asks for reduced motion)",
+          "The loader now shows for at least 1.8 seconds so the animation can finish",
+        ],
+      },
+      {
+        title: "Database",
+        items: [
+          "Migrations 0018–0026 applied, admin-users redeployed and SLA demo data loaded",
+          "Profile change history and last-seen data removed from the database",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.19.0",
+    date: "2026-10-14",
+    type: "minor",
+    summary: "Roles are now the only way to grant access, plus a cleaner Admin Console and bigger loader.",
+    sections: [
+      {
+        title: "Roles & access",
+        items: [
+          "Every person has exactly one role, and it alone decides what they can view or edit — no more separate base roles, per-person page lists or capabilities",
+          "Built-in roles: Admin (everything, including the Admin Console), Guest (view Documents & Tickets) and No access. Built-ins can't be deleted; Admin and No access can't be changed",
+          "Starter roles added: Project Engineer, Document Controller, Site Supervisor, Procurement Officer and Viewer — edit or delete them freely",
+          "Each page is None, View or Edit. Edit on Technicians now covers managing the roster; Edit on SLA covers managing contracts",
+          "Roles are assigned only by admins, in Admin Console → Access. Everyone can see their own role and access levels in their profile",
+          "Existing accounts are moved onto roles automatically, keeping what they could do before",
+          "Tickets is now properly restricted by role (it was reachable by URL regardless of access)",
+        ],
+      },
+      {
+        title: "Privacy",
+        items: [
+          "Removed the profile Activity tab and the Admin audit log",
+          "Stopped tracking when people were last active",
+        ],
+      },
+      {
+        title: "Admin Console",
+        items: [
+          "Systems tab: rename inline, reorder (sets dropdown order everywhere), see how many items, documents and projects use each system, and delete unused ones",
+        ],
+      },
+      {
+        title: "Interface",
+        items: [
+          "Bigger loading logo",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.18.0",
+    date: "2026-10-14",
+    type: "minor",
+    summary: "Delivery note versions with signed/unsigned uploads and previews, clearer upload errors, and Admin Console tidy-up.",
+    sections: [
+      {
+        title: "Delivery notes",
+        items: [
+          "Each note now has a Files view listing every version: the generated note plus any number of uploaded files",
+          "Upload anything — scans, photos or manually made notes — and mark each file Signed or Unsigned; change it later from the file row",
+          "A note shows Signed once any of its files is signed; the Signed/Unsigned filter follows the same rule",
+          "New “Upload existing note” button creates a delivery note straight from files made outside the app",
+          "Preview every version in-app: the generated note, PDFs, spreadsheets and now images; each file can also be downloaded or deleted",
+          "Deleting a note removes all of its stored files; scans from the earlier single signed-copy field are carried over",
+        ],
+      },
+      {
+        title: "Uploads",
+        items: [
+          "Upload errors now show the real reason instead of “Unknown error” (database errors weren't being read correctly anywhere in the app)",
+          "Document uploads no longer depend on the approved-copy column unless an approved copy is being uploaded",
+          "Document files can also preview images",
+        ],
+      },
+      {
+        title: "Admin Console",
+        items: [
+          "Removed the Overview tab; Users is now the landing tab",
+          "The Access grid lists every member, including admins, Firstfix and suspended accounts, shown locked with their effective access",
+        ],
+      },
+      {
+        title: "SLA",
+        items: [
+          "Added a demo-data script (supabase/seed/sla_demo_data.sql) for trying the SLA module; every demo contract is tagged DEMO- and removable in one line",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.17.1",
+    date: "2026-10-14",
+    type: "patch",
+    summary: "Access UI clarity.",
+    sections: [
+      {
+        title: "Fixes",
+        items: [
+          "Page access levels now read as plain labels (“Can edit”, “View only”, “No access”) with a coloured dot, instead of button-like pills",
+          "Access grid toasts now say exactly what changed, e.g. “Procurement access removed from …”",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.17.0",
+    date: "2026-10-13",
+    type: "minor",
+    summary: "Custom access roles with view-only and edit levels, project cards in the Admin Console, and access fixes.",
+    sections: [
+      {
+        title: "Access roles",
+        items: [
+          "Admins can create roles (Admin Console → Roles) that bundle page access — each page set to None, View or Edit — plus Technicians/SLA manager capabilities",
+          "Assign a role to a member from their profile or from the Access grid; everyone on a role updates when the role changes",
+          "View-only is enforced by the database, not just hidden: view-only users can't create, edit or delete on that page, and see a “view-only” notice",
+          "Guest accounts are now genuinely read-only",
+        ],
+      },
+      {
+        title: "Admin Console",
+        items: [
+          "Projects are now cards: status, description, item/document/delivery-note/ticket counts, client and PO details, systems and team avatars, with search and Active / Archived filters",
+          "Archiving a project asks for confirmation; open a project straight from its card",
+          "New Roles tab; the Access grid has a Role column per member",
+        ],
+      },
+      {
+        title: "Fixes",
+        items: [
+          "Accounts created as Admin were shown as “Member” while having full admin rights (including the Admin Console). The visible role is now the single source of truth — check your user list after updating",
+          "Members can no longer see access controls; their own profile shows a read-only summary, and other people's access isn't shown to them",
+          "Clicking the version number now opens the changelog",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.16.0",
+    date: "2026-10-13",
+    type: "minor",
+    summary: "Smoother page transitions \u2014 content appears together with its data.",
+    sections: [
+      {
+        title: "Navigation",
+        items: [
+          "Page transitions show a loader for a minimum of 1 second, even when data arrives instantly, then the page appears together with its data",
+          "The loader never waits more than 8 seconds — after that the page appears with its own loading states",
+          "Projects home: branded loader, and stat numbers show placeholders instead of popping in after the layout",
+          "Thin progress bar at the top of the screen while data refreshes in the background",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.15.0",
+    date: "2026-10-13",
+    type: "minor",
+    summary: "SLA tracking module, a reworked profile system, and a tabbed Admin Console.",
+    sections: [
+      {
+        title: "SLA tracking (new)",
+        items: [
+          "New SLA page under Operations: maintenance contracts with monthly (or 2/3/6/12-monthly) visits owed from the contract start date",
+          "This month view lists every visit due or overdue across all contracts; KPI tiles for due, overdue, unsigned reports and open issues",
+          "Visit record: status, scheduled/visited dates, lead engineer, technicians from the roster, client signatory and work carried out",
+          "Printable visit report (outstanding issues, new issues, work done, signature blocks) to get signed on site; upload the signed copy, which marks the visit Signed (Unsigned by default)",
+          "Issues found on site carry over to every following visit until resolved; at each visit, resolve them with a note or keep them for the next visit",
+          "Each issue has a timeline showing when it was raised, deferred and resolved, and at which visit",
+          "Contract page with visit history, compliance %, issues and contract details; SLA managers (new capability) and admins manage contracts",
+        ],
+      },
+      {
+        title: "Profiles",
+        items: [
+          "Profile is now tabbed: Overview, Access, Security, Activity",
+          "New details: job title, department, phone, contact email, employee ID, location and an About section, editable by the user or an admin",
+          "Access tab gathers role, organisation, capabilities (Technicians manager, SLA manager), page access and project membership in one place",
+          "Accounts can be suspended and reactivated with a reason; suspended users are signed out and blocked from signing in",
+          "Activity tab shows every change to the profile: who changed which field, from what, to what",
+          "Last-active tracking",
+        ],
+      },
+      {
+        title: "Admin Console",
+        items: [
+          "Reorganised into tabs: Overview, Users, Access, Projects, Systems, Audit log",
+          "Overview lists accounts without projects, accounts inactive for 30+ days, and projects with no members",
+          "Users: search plus filters by role, team and status; each row opens the profile on the right tab",
+          "Access: grids for managing everyone's pages, capabilities and project membership at once",
+          "Audit log: one combined feed of account, procurement and document changes, filterable by source and person",
+          "Add account now sets role, job details and projects up front, and can generate a password",
+        ],
+      },
+      {
+        title: "Documents",
+        items: [
+          "Table view now shows selection checkboxes in Select mode (previously only the card view had them)",
+        ],
+      },
+      {
+        title: "Security & fixes",
+        items: [
+          "Users could grant themselves extra pages or the Technicians manager capability through the API; the database now blocks this",
+          "Admin username changes now actually update the profile",
+          "Profile edits now refresh names and avatars across the whole app",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.14.0",
+    date: "2026-10-13",
+    type: "minor",
+    summary: "Back-to-projects navigation, drag-and-drop uploads everywhere, document versioning and approved copies, signed delivery notes.",
+    sections: [
+      {
+        title: "Navigation",
+        items: [
+          "\"All projects\" link at the top of the sidebar, in the project switcher menu, in ⌘K and as a breadcrumb — always one click back to the project list",
+        ],
+      },
+      {
+        title: "Uploads",
+        items: [
+          "Every upload is now drag-and-drop (document files, new-document dialog, item attachments, CSV import, profile photo, signed delivery notes), with click-to-browse still available",
+          "Multiple files can be dropped at once on documents and item attachments",
+          "Delete option for document files, profile photos and signed delivery notes; deleting a document or delivery note also removes its stored files",
+        ],
+      },
+      {
+        title: "Documents",
+        items: [
+          "Rename document files inline (the extension is kept)",
+          "Upload a file as an \"Approved copy\" with its review code — the document's status updates automatically and the file is marked with an approved badge",
+          "Version history: a History tab shows every saved change (field edits, uploads, renames, deletions), who made it, when, and the version number it produced; the drawer header shows the current version and who last saved it",
+        ],
+      },
+      {
+        title: "Delivery Notes",
+        items: [
+          "Delivery notes are Unsigned by default; upload the signed scan to mark one Signed, or replace/remove it later",
+          "Filter by All / Unsigned / Signed",
+        ],
+      },
+      {
+        title: "Fixes",
+        items: [
+          "Deleting an item attachment now actually removes the stored file (the storage bucket was missing a delete policy)",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.13.2",
     date: "2026-09-06",
     type: "patch",
