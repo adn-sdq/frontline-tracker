@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { Copy, Loader2, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
@@ -89,7 +90,7 @@ export function CreateAccountDialog({ open, onOpenChange }: { open: boolean; onO
       })
       onOpenChange(false)
     } catch (e) {
-      toast.error("Could not create account", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not create account", { description: errorMessage(e) })
     }
   }
 

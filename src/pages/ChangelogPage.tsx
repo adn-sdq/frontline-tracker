@@ -17,6 +17,46 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.18.0",
+    date: "2026-10-14",
+    type: "minor",
+    summary: "Delivery note versions with signed/unsigned uploads and previews, clearer upload errors, and Admin Console tidy-up.",
+    sections: [
+      {
+        title: "Delivery notes",
+        items: [
+          "Each note now has a Files view listing every version: the generated note plus any number of uploaded files",
+          "Upload anything — scans, photos or manually made notes — and mark each file Signed or Unsigned; change it later from the file row",
+          "A note shows Signed once any of its files is signed; the Signed/Unsigned filter follows the same rule",
+          "New “Upload existing note” button creates a delivery note straight from files made outside the app",
+          "Preview every version in-app: the generated note, PDFs, spreadsheets and now images; each file can also be downloaded or deleted",
+          "Deleting a note removes all of its stored files; scans from the earlier single signed-copy field are carried over",
+        ],
+      },
+      {
+        title: "Uploads",
+        items: [
+          "Upload errors now show the real reason instead of “Unknown error” (database errors weren't being read correctly anywhere in the app)",
+          "Document uploads no longer depend on the approved-copy column unless an approved copy is being uploaded",
+          "Document files can also preview images",
+        ],
+      },
+      {
+        title: "Admin Console",
+        items: [
+          "Removed the Overview tab; Users is now the landing tab",
+          "The Access grid lists every member, including admins, Firstfix and suspended accounts, shown locked with their effective access",
+        ],
+      },
+      {
+        title: "SLA",
+        items: [
+          "Added a demo-data script (supabase/seed/sla_demo_data.sql) for trying the SLA module; every demo contract is tagged DEMO- and removable in one line",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.17.1",
     date: "2026-10-14",
     type: "patch",

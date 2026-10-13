@@ -42,7 +42,7 @@ import { useProject } from "@/contexts/ProjectContext"
 import { useAllProfiles } from "@/hooks/useAdmin"
 import { useAllProjectMembers, useAllProjects, useProjectStats, useUpdateProject } from "@/hooks/useProjects"
 import { useAllProjectSystems, useSystems } from "@/hooks/useSystems"
-import { cn } from "@/lib/utils"
+import { cn, errorMessage } from "@/lib/utils"
 import type { Profile, Project } from "@/lib/types"
 
 type Filter = "active" | "archived" | "all"
@@ -251,7 +251,7 @@ export function AdminProjectsTab() {
       await update.mutateAsync({ id: p.id, patch: { active: !p.active } })
       toast.success(p.active ? "Project archived" : "Project restored")
     } catch (e) {
-      toast.error("Could not update", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not update", { description: errorMessage(e) })
     }
   }
 

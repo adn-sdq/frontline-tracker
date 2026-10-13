@@ -475,6 +475,20 @@ export interface DeliveryNoteItem {
   serial: string
 }
 
+export type DnFileKind = "signed" | "unsigned"
+
+/** One uploaded version of a delivery note (scan, photo or manually made file). */
+export interface DeliveryNoteFile {
+  id: string
+  delivery_note_id: string
+  storage_path: string
+  file_name: string
+  file_size: number | null
+  kind: DnFileKind
+  uploaded_by: string | null
+  uploaded_at: string
+}
+
 export interface DnCartEntry {
   item: Item
   qty: number

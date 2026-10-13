@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -121,7 +122,7 @@ export function ProjectDialog({
       onClose()
     } catch (e) {
       toast.error(isNew ? "Could not save project" : "Could not update project", {
-        description: e instanceof Error ? e.message : "Unknown error",
+        description: errorMessage(e),
       })
     } finally {
       setBusy(false)

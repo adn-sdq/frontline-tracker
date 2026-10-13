@@ -16,9 +16,17 @@ import { Button } from "@/components/ui/button"
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-function fileType(name: string): "pdf" | "spreadsheet" | "unknown" {
+const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "webp"]
+
+/** Whether the in-app viewer can render this file. */
+export function isPreviewable(name: string) {
+  return fileType(name) !== "unknown"
+}
+
+function fileType(name: string): "pdf" | "spreadsheet" | "image" | "unknown" {
   const e = name.split(".").pop()?.toLowerCase() ?? ""
   if (e === "pdf") return "pdf"
+  if (IMAGE_EXTS.includes(e)) return "image"
   if (["csv", "xlsx", "xls"].includes(e)) return "spreadsheet"
   return "unknown"
 }
@@ -31,6 +39,14 @@ function fileExt(name: string) {
 
 function PdfViewer({ url, fileName }: { url: string; fileName: string }) {
   return <iframe src={url} title={fileName} className="w-full h-full border-0" />
+}
+
+function ImageViewer({ url, fileName }: { url: string; fileName: string }) {
+  return (
+    <div className="flex h-full items-center justify-center overflow-auto bg-muted/30 p-4">
+      <img src={url} alt={fileName} className="max-h-full max-w-full object-contain" />
+    </div>
+  )
 }
 
 // ── Spreadsheet viewer ───────────────────────────────────────────────────────
@@ -174,9 +190,11 @@ interface Props {
   onClose: () => void
   url: string | null
   fileName: string
+  /** Render generated HTML (e.g. a delivery note) instead of a stored file. */
+  html?: string
 }
 
-export function FileViewerModal({ open, onClose, url, fileName }: Props) {
+export function FileViewerModal({ open, onClose, url, fileName, html }: Props) {
   const type = fileType(fileName)
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -192,10 +210,14 @@ export function FileViewerModal({ open, onClose, url, fileName }: Props) {
           </span>
         </div>
         <div className="flex-1 min-h-0 overflow-hidden">
-          {!url ? (
+          {html ? (
+            <iframe srcDoc={html} title={fileName} className="h-full w-full border-0 bg-white" />
+          ) : !url ? (
             <ViewerSpinner label="Preparing file…" />
           ) : type === "pdf" ? (
             <PdfViewer url={url} fileName={fileName} />
+          ) : type === "image" ? (
+            <ImageViewer url={url} fileName={fileName} />
           ) : type === "spreadsheet" ? (
             <SpreadsheetViewer url={url} fileName={fileName} />
           ) : (

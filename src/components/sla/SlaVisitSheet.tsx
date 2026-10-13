@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { format, parseISO } from "date-fns"
 import {
   ChevronDown,
@@ -172,7 +173,7 @@ export function SlaVisitSheet({
       await save.mutateAsync({ id: visit?.id, input })
       toast.success(visit ? "Visit saved" : "Visit created — you can now log issues and upload the signed report")
     } catch (e) {
-      toast.error("Could not save visit", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not save visit", { description: errorMessage(e) })
     }
   }
 
@@ -182,7 +183,7 @@ export function SlaVisitSheet({
       await upload.mutateAsync({ visit, file })
       toast.success("Signed report uploaded")
     } catch (e) {
-      toast.error("Upload failed", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Upload failed", { description: errorMessage(e) })
     }
   }
 
@@ -199,7 +200,7 @@ export function SlaVisitSheet({
       await removeReport.mutateAsync(visit)
       toast.success("Signed report removed")
     } catch (e) {
-      toast.error("Could not remove", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not remove", { description: errorMessage(e) })
     }
   }
 
@@ -217,7 +218,7 @@ export function SlaVisitSheet({
       toast.success("Visit deleted")
       onClose()
     } catch (e) {
-      toast.error("Could not delete", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not delete", { description: errorMessage(e) })
     }
   }
 

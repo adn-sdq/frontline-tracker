@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { Copy, Loader2, MoreHorizontal, Pencil, Plus, ShieldCheck, Trash2, Users } from "lucide-react"
 import { toast } from "sonner"
 
@@ -84,7 +85,7 @@ function RoleDialog({
       toast.success(role ? "Role updated" : "Role created")
       onOpenChange(false)
     } catch (e) {
-      toast.error("Could not save role", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not save role", { description: errorMessage(e) })
     }
   }
 
@@ -191,7 +192,7 @@ export function AdminRolesTab() {
       await del.mutateAsync(r.id)
       toast.success("Role deleted")
     } catch (e) {
-      toast.error("Could not delete", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not delete", { description: errorMessage(e) })
     }
   }
 
@@ -208,7 +209,7 @@ export function AdminRolesTab() {
       })
       toast.success("Role duplicated")
     } catch (e) {
-      toast.error("Could not duplicate", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not duplicate", { description: errorMessage(e) })
     }
   }
 

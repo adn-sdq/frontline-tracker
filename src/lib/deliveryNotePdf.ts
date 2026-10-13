@@ -36,7 +36,7 @@ const TERMS = [
 // printed template even for short deliveries.
 const MIN_ROWS = 5
 
-function buildHtml(d: DeliveryNotePrintData): string {
+export function buildHtml(d: DeliveryNotePrintData): string {
   const rows = [...d.items]
   while (rows.length < MIN_ROWS) {
     rows.push({ description: "", qty: 0, serial: "" })

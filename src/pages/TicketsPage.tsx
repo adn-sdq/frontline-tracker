@@ -29,7 +29,7 @@ import { ActionButton } from "@/components/shell/ActionButton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { PageHeader } from "@/components/PageHeader"
 import { KanbanBoard, type KanbanColumn } from "@/components/kanban/KanbanBoard"
-import { cn } from "@/lib/utils"
+import { cn, errorMessage } from "@/lib/utils"
 import { useTickets, useUpdateTicket } from "@/hooks/useTickets"
 import { useAllProfiles } from "@/hooks/useAdmin"
 import { TicketDialog } from "@/components/TicketDialog"
@@ -119,7 +119,7 @@ export default function TicketsPage() {
       toast.success(`Moved to ${TICKET_STATUS_LABELS[status]}`)
     } catch (e) {
       toast.error("Could not move ticket", {
-        description: e instanceof Error ? e.message : "Unknown error",
+        description: errorMessage(e),
       })
     }
   }

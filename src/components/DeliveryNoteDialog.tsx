@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { FileText, Loader2, Plus, Trash2 } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
@@ -152,7 +153,7 @@ export function DeliveryNoteDialog({
       onSaved?.()
       onOpenChange(false)
     } catch (e) {
-      toast.error("Could not save", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not save", { description: errorMessage(e) })
     }
   }
 
@@ -176,7 +177,7 @@ export function DeliveryNoteDialog({
       onSaved?.()
       onOpenChange(false)
     } catch (e) {
-      toast.error("Could not save", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not save", { description: errorMessage(e) })
     }
   }
 

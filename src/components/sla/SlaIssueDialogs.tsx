@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -82,7 +83,7 @@ export function SlaIssueDialog({
       toast.success(issue ? "Issue updated" : "Issue logged")
       onOpenChange(false)
     } catch (e) {
-      toast.error("Could not save issue", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not save issue", { description: errorMessage(e) })
     }
   }
 
@@ -172,7 +173,7 @@ export function SlaIssueStatusDialog({
       toast.success(`Issue: ${SLA_ISSUE_STATUS_LABELS[target.status]}`)
       onClose()
     } catch (e) {
-      toast.error("Could not update issue", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not update issue", { description: errorMessage(e) })
     }
   }
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { format } from "date-fns"
 import { CalendarDays, Loader2, Users } from "lucide-react"
 import { toast } from "sonner"
@@ -95,7 +96,7 @@ export function RespondRequestDialog({
       )
       onClose()
     } catch (e) {
-      toast.error("Could not approve", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not approve", { description: errorMessage(e) })
     } finally {
       setBusy(null)
     }
@@ -117,7 +118,7 @@ export function RespondRequestDialog({
       toast.success(status === "declined" ? "Request declined" : "Response sent")
       onClose()
     } catch (e) {
-      toast.error("Could not update", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not update", { description: errorMessage(e) })
     } finally {
       setBusy(null)
     }

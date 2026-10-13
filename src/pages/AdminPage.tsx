@@ -1,11 +1,11 @@
 import { useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { useSearchParams } from "react-router-dom"
 import {
   Boxes,
   FolderOpen,
   History,
   KeyRound,
-  LayoutDashboard,
   Users,
   Loader2,
   Plus,
@@ -27,16 +27,14 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/PageHeader"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AdminOverviewTab } from "@/components/admin/AdminOverviewTab"
 import { AdminUsersTab } from "@/components/admin/AdminUsersTab"
 import { AdminAccessTab } from "@/components/admin/AdminAccessTab"
 import { AdminAuditTab } from "@/components/admin/AdminAuditTab"
 import { AdminProjectsTab } from "@/components/admin/AdminProjectsTab"
 import { AdminRolesTab } from "@/components/admin/AdminRolesTab"
 
-type AdminTab = "overview" | "users" | "roles" | "access" | "projects" | "systems" | "audit"
+type AdminTab = "users" | "roles" | "access" | "projects" | "systems" | "audit"
 const ADMIN_TABS: { value: AdminTab; label: string; icon: typeof Users }[] = [
-  { value: "overview", label: "Overview", icon: LayoutDashboard },
   { value: "users", label: "Users", icon: Users },
   { value: "roles", label: "Roles", icon: ShieldCheck },
   { value: "access", label: "Access", icon: KeyRound },
@@ -49,7 +47,7 @@ export default function AdminPage() {
   const { profile } = useAuth()
   const [params, setParams] = useSearchParams()
   const raw = params.get("tab") as AdminTab | null
-  const tab: AdminTab = raw && ADMIN_TABS.some((t) => t.value === raw) ? raw : "overview"
+  const tab: AdminTab = raw && ADMIN_TABS.some((t) => t.value === raw) ? raw : "users"
   const setTab = (t: string) => setParams((p) => { p.set("tab", t); return p }, { replace: true })
 
   if (!profile?.is_admin) {
@@ -80,7 +78,6 @@ export default function AdminPage() {
             ))}
           </TabsList>
         </div>
-        <TabsContent value="overview" className="mt-4"><AdminOverviewTab onTab={setTab} /></TabsContent>
         <TabsContent value="users" className="mt-4"><AdminUsersTab /></TabsContent>
         <TabsContent value="roles" className="mt-4"><AdminRolesTab /></TabsContent>
         <TabsContent value="access" className="mt-4"><AdminAccessTab /></TabsContent>
@@ -122,7 +119,7 @@ function SystemsSection() {
       setLabel("")
     } catch (e) {
       toast.error("Could not add system", {
-        description: e instanceof Error ? e.message : "Unknown error",
+        description: errorMessage(e),
       })
     }
   }
@@ -133,7 +130,7 @@ function SystemsSection() {
       toast.success(active ? "System enabled" : "System disabled")
     } catch (e) {
       toast.error("Could not update", {
-        description: e instanceof Error ? e.message : "Unknown error",
+        description: errorMessage(e),
       })
     }
   }

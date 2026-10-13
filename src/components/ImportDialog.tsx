@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { Info, Loader2, X } from "lucide-react"
 import { toast } from "sonner"
 
@@ -59,7 +60,7 @@ export function ImportDialog({
       onOpenChange(false)
     } catch (e) {
       toast.error("Import failed", {
-        description: e instanceof Error ? e.message : "Unknown error",
+        description: errorMessage(e),
       })
     }
   }

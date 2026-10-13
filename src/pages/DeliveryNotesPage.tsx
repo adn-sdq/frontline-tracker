@@ -2,14 +2,13 @@ import { useMemo, useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { format, parseISO } from "date-fns"
 import {
-  Download,
-  FileCheck2,
   FileText,
-  Loader2,
+  Paperclip,
   Plus,
   Printer,
   Search,
   Trash2,
+  Upload,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -23,149 +22,23 @@ import { ActionButton } from "@/components/shell/ActionButton"
 import { PageHeader } from "@/components/PageHeader"
 import { useConfirm } from "@/components/ui/confirm-dialog"
 import { Label } from "@/components/ui/label"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { FileDropzone } from "@/components/ui/file-dropzone"
-import { getSignedUrl } from "@/hooks/useDocuments"
 import { useProject } from "@/contexts/ProjectContext"
 import {
   useDeliveryNotes,
   useDeleteDeliveryNote,
-  useRemoveSignedDn,
-  useUploadSignedDn,
+  useDeliveryNoteFiles,
 } from "@/hooks/useDeliveryNotes"
+import { DeliveryNoteFilesDialog } from "@/components/DeliveryNoteFilesDialog"
+import { ManualDeliveryNoteDialog } from "@/components/ManualDeliveryNoteDialog"
 import { useProfiles } from "@/hooks/useItems"
-import { printDeliveryNote } from "@/lib/deliveryNotePdf"
+import { printDeliveryNote, type DeliveryNotePrintData } from "@/lib/deliveryNotePdf"
 import { DeliveryNoteDialog } from "@/components/DeliveryNoteDialog"
 import type { DeliveryNote } from "@/lib/types"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
+import { cn, errorMessage } from "@/lib/utils"
 import { SignatureBadge } from "@/components/SignatureBadge"
 
 type SignFilter = "all" | "unsigned" | "signed"
-
-async function openSigned(path: string) {
-  try {
-    const url = await getSignedUrl(path)
-    window.open(url, "_blank", "noopener")
-  } catch (e) {
-    toast.error("Could not open file", {
-      description: e instanceof Error ? e.message : "Unknown error",
-    })
-  }
-}
-
-// ── Signed copy dialog ────────────────────────────────────────────────────────
-
-function SignedCopyDialog({
-  note,
-  who,
-  onClose,
-}: {
-  note: DeliveryNote | null
-  who: (id: string | null) => string
-  onClose: () => void
-}) {
-  const upload = useUploadSignedDn()
-  const remove = useRemoveSignedDn()
-  const confirm = useConfirm()
-
-  async function onFiles([file]: File[]) {
-    if (!note || !file) return
-    try {
-      await upload.mutateAsync({ note, file })
-      toast.success(`${note.dn_number} marked as signed`)
-      onClose()
-    } catch (e) {
-      toast.error("Upload failed", {
-        description: e instanceof Error ? e.message : "Unknown error",
-      })
-    }
-  }
-
-  async function askRemove() {
-    if (!note) return
-    const ok = await confirm({
-      title: "Remove signed copy?",
-      description: `The signed file will be deleted and ${note.dn_number} goes back to Unsigned.`,
-      confirmText: "Remove",
-      destructive: true,
-    })
-    if (!ok) return
-    try {
-      await remove.mutateAsync(note)
-      toast.success("Signed copy removed")
-      onClose()
-    } catch (e) {
-      toast.error("Could not remove", {
-        description: e instanceof Error ? e.message : "Unknown error",
-      })
-    }
-  }
-
-  const signed = !!note?.signed_storage_path
-
-  return (
-    <Dialog open={!!note} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {note?.dn_number} <SignatureBadge signed={signed} />
-          </DialogTitle>
-          <DialogDescription>
-            Upload the scan of the delivery note signed by the recipient.
-          </DialogDescription>
-        </DialogHeader>
-
-        {note && signed && (
-          <div className="flex items-start gap-2 rounded-lg border border-emerald-600/40 bg-emerald-50/40 p-2.5 dark:bg-emerald-950/20">
-            <FileCheck2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium">{note.signed_file_name}</div>
-              <div className="text-xs text-muted-foreground">
-                {who(note.signed_uploaded_by)}
-                {note.signed_uploaded_at &&
-                  ` · ${format(parseISO(note.signed_uploaded_at), "d MMM yyyy, HH:mm")}`}
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7"
-              aria-label="Open signed copy"
-              onClick={() => openSigned(note.signed_storage_path!)}
-            >
-              <Download className="size-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 text-destructive"
-              aria-label="Remove signed copy"
-              onClick={askRemove}
-              disabled={remove.isPending}
-            >
-              {remove.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-            </Button>
-          </div>
-        )}
-
-        <FileDropzone
-          accept=".pdf,image/*"
-          onFiles={onFiles}
-          busy={upload.isPending}
-          title={signed ? "Drop a file to replace the signed copy" : "Drop the signed copy or click to browse"}
-          hint="PDF or image"
-        />
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
@@ -201,8 +74,17 @@ export default function DeliveryNotesPage() {
   const [toDate, setToDate] = useState("")
   const [createOpen, setCreateOpen] = useState(false)
   const [signFilter, setSignFilter] = useState<SignFilter>("all")
-  const [signingId, setSigningId] = useState<string | null>(null)
-  const signingNote = notes.find((n) => n.id === signingId) ?? null
+  const [manualOpen, setManualOpen] = useState(false)
+  const [filesId, setFilesId] = useState<string | null>(null)
+  const filesNote = notes.find((n) => n.id === filesId) ?? null
+  const { data: allFiles = [] } = useDeliveryNoteFiles()
+  // A note is Signed when any of its files is marked signed.
+  const filesByNote = useMemo(() => {
+    const m = new Map<string, typeof allFiles>()
+    for (const f of allFiles) m.set(f.delivery_note_id, [...(m.get(f.delivery_note_id) ?? []), f])
+    return m
+  }, [allFiles])
+  const isSigned = (n: DeliveryNote) => !!filesByNote.get(n.id)?.some((f) => f.kind === "signed")
 
   function who(id: string | null) {
     if (!id) return "—"
@@ -217,13 +99,13 @@ export default function DeliveryNotesPage() {
         .filter(Boolean).some((v) => (v as string).toLowerCase().includes(q))) return false
       if (fromDate && n.dn_date < fromDate) return false
       if (toDate && n.dn_date > toDate) return false
-      if (signFilter !== "all" && (signFilter === "signed") !== !!n.signed_storage_path) return false
+      if (signFilter !== "all" && (signFilter === "signed") !== isSigned(n)) return false
       return true
     })
   }, [notes, search, fromDate, toDate, signFilter])
 
-  function reprint(note: DeliveryNote) {
-    printDeliveryNote({
+  function printDataFor(note: DeliveryNote): DeliveryNotePrintData {
+    return {
       dnNumber: note.dn_number,
       date: note.dn_date,
       projectName: currentProject?.name ?? "",
@@ -233,8 +115,10 @@ export default function DeliveryNotesPage() {
       location: note.location ?? "",
       contact: note.contact ?? "",
       items: note.items,
-    })
+    }
   }
+
+  const reprint = (note: DeliveryNote) => printDeliveryNote(printDataFor(note))
 
   async function askDelete(note: DeliveryNote) {
     const ok = await confirm({
@@ -249,13 +133,13 @@ export default function DeliveryNotesPage() {
       toast.success("Delivery note deleted")
     } catch (e) {
       toast.error("Could not delete", {
-        description: e instanceof Error ? e.message : "Unknown error",
+        description: errorMessage(e),
       })
     }
   }
 
   const activeFilters = !!(search || fromDate || toDate || signFilter !== "all")
-  const unsignedCount = notes.filter((n) => !n.signed_storage_path).length
+  const unsignedCount = notes.filter((n) => !isSigned(n)).length
 
   return (
     <div className="flex flex-col gap-4">
@@ -302,6 +186,13 @@ export default function DeliveryNotesPage() {
             >
               Clear
             </Button>
+          )}
+          {editable && (
+            <ActionButton
+              icon={Upload}
+              label="Upload existing note"
+              onClick={() => setManualOpen(true)}
+            />
           )}
           {editable && (
             <ActionButton
@@ -374,7 +265,7 @@ export default function DeliveryNotesPage() {
                   <span className="font-mono text-sm font-semibold">
                     {note.dn_number}
                   </span>
-                  <SignatureBadge signed={!!note.signed_storage_path} />
+                  <SignatureBadge signed={isSigned(note)} />
                   <Badge variant="secondary" className="text-xs">
                     {note.items.length} item{note.items.length !== 1 ? "s" : ""}
                   </Badge>
@@ -412,30 +303,15 @@ export default function DeliveryNotesPage() {
 
               {/* Actions */}
               <div className="flex shrink-0 gap-1">
-                {note.signed_storage_path && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 text-emerald-600"
-                        onClick={() => openSigned(note.signed_storage_path!)}
-                      >
-                        <FileCheck2 className="size-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Open signed copy</TooltipContent>
-                  </Tooltip>
-                )}
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   className="h-8"
-                  onClick={() => setSigningId(note.id)}
+                  onClick={() => setFilesId(note.id)}
                 >
-                  {note.signed_storage_path ? "Signed copy" : "Upload signed"}
+                  <Paperclip className="size-3.5" />
+                  Files{(filesByNote.get(note.id)?.length ?? 0) + (note.items.length ? 1 : 0) > 0 ? ` (${(filesByNote.get(note.id)?.length ?? 0) + (note.items.length ? 1 : 0)})` : ""}
                 </Button>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -471,7 +347,15 @@ export default function DeliveryNotesPage() {
         </div>
       )}
 
-      <SignedCopyDialog note={signingNote} who={who} onClose={() => setSigningId(null)} />
+      <DeliveryNoteFilesDialog
+        note={filesNote}
+        files={allFiles}
+        printData={filesNote ? printDataFor(filesNote) : null}
+        who={who}
+        canEdit={editable}
+        onClose={() => setFilesId(null)}
+      />
+      <ManualDeliveryNoteDialog open={manualOpen} onOpenChange={setManualOpen} />
 
       {/* Manual create */}
       <DeliveryNoteDialog

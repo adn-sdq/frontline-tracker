@@ -48,7 +48,7 @@ import { DocumentDialog } from "@/components/DocumentDialog"
 import { DocumentDrawer } from "@/components/DocumentDrawer"
 import { DataTable } from "@/components/ui/data-table"
 import { Checkbox } from "@/components/ui/checkbox"
-import { cn } from "@/lib/utils"
+import { cn, errorMessage } from "@/lib/utils"
 import {
   useDeleteDocument,
   useDocuments,
@@ -228,7 +228,7 @@ export default function DocumentsPage() {
       exitSelectMode()
     } catch (e) {
       toast.error("Could not update some documents", {
-        description: e instanceof Error ? e.message : "Unknown error",
+        description: errorMessage(e),
       })
     } finally {
       setBulkBusy(false)
@@ -242,7 +242,7 @@ export default function DocumentsPage() {
       toast.success("Document deleted")
     } catch (e) {
       toast.error("Could not delete", {
-        description: e instanceof Error ? e.message : "Unknown error",
+        description: errorMessage(e),
       })
     } finally {
       setDeleteDoc(null)

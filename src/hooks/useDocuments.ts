@@ -191,7 +191,8 @@ export function useUploadDocumentFile() {
         rev_label: args.revLabel || null,
         note: args.note || null,
         dated: args.dated || undefined,
-        review_code: args.reviewCode ?? null,
+        // Only sent when set, so plain uploads work even before migration 0018.
+        ...(args.reviewCode ? { review_code: args.reviewCode } : {}),
       })
       if (error) {
         await supabase.storage.from("documents").remove([path])

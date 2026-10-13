@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { errorMessage } from "@/lib/utils"
 import { toast } from "sonner"
 
 import { ROLE_LABELS, type Profile, type Role } from "@/lib/types"
@@ -20,7 +21,7 @@ export async function withToast(work: () => Promise<unknown>, success: string, f
     toast.success(success)
     return true
   } catch (e) {
-    toast.error(failure, { description: e instanceof Error ? e.message : "Unknown error" })
+    toast.error(failure, { description: errorMessage(e) })
     return false
   }
 }

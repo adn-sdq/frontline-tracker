@@ -1,4 +1,5 @@
 import { format } from "date-fns"
+import { errorMessage } from "@/lib/utils"
 import { CheckCircle2, Clock, Pencil, PlayCircle, PlusCircle, RotateCcw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -72,7 +73,7 @@ export function SlaIssueSheet({
       toast.success("Issue deleted")
       onClose()
     } catch (e) {
-      toast.error("Could not delete", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not delete", { description: errorMessage(e) })
     }
   }
 

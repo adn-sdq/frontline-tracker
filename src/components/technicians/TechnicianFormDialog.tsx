@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -79,7 +80,7 @@ export function TechnicianFormDialog({
       }
       onOpenChange(false)
     } catch (e) {
-      toast.error("Could not save", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not save", { description: errorMessage(e) })
     } finally {
       setBusy(false)
     }

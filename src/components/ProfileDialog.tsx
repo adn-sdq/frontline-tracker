@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { avatarColor, initials } from "@/components/UserAvatar"
 import { useFileDrop } from "@/components/ui/file-dropzone"
-import { cn } from "@/lib/utils"
+import { cn, errorMessage } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -93,7 +93,7 @@ export function ProfileDialog({ profile: initial, open, onClose, defaultTab = "o
       setPreviewUrl(null)
       if (isSelf) await refetchProfile()
     } catch (e) {
-      toast.error("Upload failed", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Upload failed", { description: errorMessage(e) })
     } finally {
       setAvatarBusy(false)
     }
@@ -107,7 +107,7 @@ export function ProfileDialog({ profile: initial, open, onClose, defaultTab = "o
       toast.success("Photo removed")
       if (isSelf) await refetchProfile()
     } catch (e) {
-      toast.error("Could not remove photo", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not remove photo", { description: errorMessage(e) })
     } finally {
       setAvatarBusy(false)
     }

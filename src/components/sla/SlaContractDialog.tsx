@@ -27,7 +27,7 @@ import { useSaveSlaContract, type SlaContractInput } from "@/hooks/useSla"
 import { useAllProjects } from "@/hooks/useProjects"
 import { useAllProfiles } from "@/hooks/useAdmin"
 import { useSystems } from "@/hooks/useSystems"
-import { cn } from "@/lib/utils"
+import { cn, errorMessage } from "@/lib/utils"
 import {
   SLA_CONTRACT_STATUSES,
   SLA_CONTRACT_STATUS_LABELS,
@@ -115,7 +115,7 @@ export function SlaContractDialog({
       onSaved?.(id)
     } catch (e) {
       toast.error("Could not save contract", {
-        description: e instanceof Error ? e.message : "Unknown error",
+        description: errorMessage(e),
       })
     }
   }

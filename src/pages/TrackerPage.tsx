@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
 import {
   Download,
@@ -214,7 +215,7 @@ export default function TrackerPage() {
       toast.success("Item deleted")
     } catch (e) {
       toast.error("Could not delete", {
-        description: e instanceof Error ? e.message : "Unknown error",
+        description: errorMessage(e),
       })
     } finally {
       setDeleteItem(null)

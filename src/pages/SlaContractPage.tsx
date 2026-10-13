@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { addMonths, format, parseISO } from "date-fns"
 import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react"
@@ -62,7 +63,7 @@ export default function SlaContractPage() {
       toast.success("Contract deleted")
       navigate("/sla?tab=contracts")
     } catch (e) {
-      toast.error("Could not delete", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not delete", { description: errorMessage(e) })
     }
   }
 

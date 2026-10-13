@@ -39,7 +39,7 @@ import { DocStatusSelect } from "@/components/DocStatus"
 import { DatePicker } from "@/components/DatePicker"
 import { DocumentHistoryList } from "@/components/DocumentHistoryList"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { FileViewerModal } from "@/components/FileViewerModal"
+import { FileViewerModal, isPreviewable } from "@/components/FileViewerModal"
 import {
   getSignedUrl,
   useAddComment,
@@ -51,7 +51,7 @@ import {
   useUpdateFileDate,
   useUploadDocumentFile,
 } from "@/hooks/useDocuments"
-import { cn } from "@/lib/utils"
+import { cn, errorMessage } from "@/lib/utils"
 import {
   DOC_STATUS_HINTS,
   DOC_STATUS_LABELS,
@@ -70,11 +70,6 @@ function fmtSize(bytes: number | null) {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-}
-
-function isViewable(name: string) {
-  const ext = name.split(".").pop()?.toLowerCase() ?? ""
-  return ["pdf", "csv", "xlsx", "xls"].includes(ext)
 }
 
 /** Keep the original extension when the user types a new base name. */
@@ -127,7 +122,7 @@ function FileRow({
       }
     } catch (err) {
       toast.error("Could not open file", {
-        description: err instanceof Error ? err.message : "Unknown error",
+        description: errorMessage(err),
       })
     } finally {
       setBusy(null)
@@ -147,7 +142,7 @@ function FileRow({
       setEditing(false)
     } catch (err) {
       toast.error("Could not rename", {
-        description: err instanceof Error ? err.message : "Unknown error",
+        description: errorMessage(err),
       })
     }
   }
@@ -165,7 +160,7 @@ function FileRow({
       toast.success("File deleted")
     } catch (err) {
       toast.error("Could not delete file", {
-        description: err instanceof Error ? err.message : "Unknown error",
+        description: errorMessage(err),
       })
     }
   }
@@ -242,7 +237,7 @@ function FileRow({
         </div>
         {!editing && (
           <div className="-mt-0.5 flex shrink-0 gap-0.5">
-            {isViewable(f.file_name) && (
+            {isPreviewable(f.file_name) && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon" className="size-7" disabled={busy === "view"} onClick={() => open("view")}>
@@ -364,7 +359,7 @@ export function DocumentDrawer({
         done++
       } catch (err) {
         toast.error(`Upload failed: ${file.name}`, {
-          description: err instanceof Error ? err.message : "Unknown error",
+          description: errorMessage(err),
         })
       }
     }
@@ -389,7 +384,7 @@ export function DocumentDrawer({
       toast.success(`Status set to ${DOC_STATUS_LABELS[v] ?? v}`)
     } catch (err) {
       toast.error("Could not update status", {
-        description: err instanceof Error ? err.message : "Unknown error",
+        description: errorMessage(err),
       })
     }
   }
@@ -402,7 +397,7 @@ export function DocumentDrawer({
       toast.success("Comment posted")
     } catch (err) {
       toast.error("Could not post comment", {
-        description: err instanceof Error ? err.message : "Unknown error",
+        description: errorMessage(err),
       })
     }
   }

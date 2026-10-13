@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { PageHeader } from "@/components/PageHeader"
-import { cn } from "@/lib/utils"
+import { cn, errorMessage } from "@/lib/utils"
 
 // ── Changelog tab helpers ─────────────────────────────────────────────────────
 
@@ -323,7 +323,7 @@ function FeatureRequestsTab() {
       await updateFR.mutateAsync({ id, patch: { status } })
       toast.success(`Moved to ${FR_STATUS_LABELS[status]}`)
     } catch (e) {
-      toast.error("Could not update", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error("Could not update", { description: errorMessage(e) })
     }
   }
 

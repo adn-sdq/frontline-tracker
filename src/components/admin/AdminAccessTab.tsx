@@ -10,7 +10,9 @@ import {
 } from "@/components/ui/table"
 import { displayName, roleOf, withToast } from "@/components/profile/shared"
 import { useAccessRoles, useAllProfiles, useUpdateProfile } from "@/hooks/useAdmin"
-import { roleFor } from "@/lib/access"
+import { pageAccessFor, roleFor } from "@/lib/access"
+import { Badge } from "@/components/ui/badge"
+import { Lock } from "lucide-react"
 import { PageAccessBadge } from "@/components/admin/PageAccessBadge"
 import {
   Select,
@@ -47,8 +49,11 @@ export function AdminAccessTab() {
 
   // The super admin's access is self-managed, so their row is never listed.
   const listed = profiles.filter((p) => !p.is_super_admin)
-  const configurable = listed.filter((p) => roleOf(p) !== "admin" && p.org !== "firstfix" && p.status !== "suspended")
-  const fixed = listed.filter((p) => !configurable.includes(p))
+  /** Access that can't be edited here: admins (everything), Firstfix (Documents) and suspended accounts. */
+  const lockedReason = (p: Profile) =>
+    p.status === "suspended" ? "Suspended" : roleOf(p) === "admin" ? "Admin" : p.org === "firstfix" ? "Firstfix" : null
+  const isLocked = (p: Profile) => lockedReason(p) !== null
+  const rows = [...listed].sort((a, b) => Number(isLocked(a)) - Number(isLocked(b)) || displayName(a).localeCompare(displayName(b)))
   const isMember = (uid: string, pid: string) => memberships.some((m) => m.user_id === uid && m.project_id === pid)
 
   function togglePage(p: Profile, page: AppPage) {
@@ -85,7 +90,7 @@ export function AdminAccessTab() {
       <section className="flex flex-col gap-2">
         <div>
           <h2 className="text-sm font-semibold">Pages & capabilities</h2>
-          <p className="text-xs text-muted-foreground">Changes save instantly. Users on a role follow that role’s None / View / Edit levels; switch them to Individual to set pages directly.</p>
+          <p className="text-xs text-muted-foreground">Changes save instantly. Admins, Firstfix and suspended accounts are shown locked. Users on a role follow that role’s None / View / Edit levels; switch them to Individual to set pages directly.</p>
         </div>
         <div className="overflow-x-auto rounded-lg border">
           <Table>
@@ -99,9 +104,29 @@ export function AdminAccessTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {configurable.map((p) => {
+              {rows.map((p) => {
+                const reason = lockedReason(p)
                 const role = roleFor(p, roles)
                 const allowed = allowedPagesFor(p, role)
+                if (reason) {
+                  // Read-only row: shows the access they effectively have.
+                  const suspended = p.status === "suspended"
+                  return (
+                    <TableRow key={p.id} className="bg-muted/20">
+                      <TableCell className={`${STICKY} bg-muted/20 font-medium whitespace-nowrap`}>{displayName(p)}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <Badge variant="outline" className="gap-1 font-normal"><Lock className="size-3" /> {reason}</Badge>
+                      </TableCell>
+                      {APP_PAGES.map((pg) => (
+                        <TableCell key={pg} className="text-center">
+                          <PageAccessBadge level={suspended ? "none" : pageAccessFor(p, null, pg)} />
+                        </TableCell>
+                      ))}
+                      <TableCell className="border-l text-center"><Checkbox checked={!suspended && roleOf(p) === "admin" || p.is_tech_manager} disabled aria-label="Technicians manager" /></TableCell>
+                      <TableCell className="text-center"><Checkbox checked={!suspended && roleOf(p) === "admin" || p.is_sla_manager} disabled aria-label="SLA manager" /></TableCell>
+                    </TableRow>
+                  )
+                }
                 return (
                   <TableRow key={p.id}>
                     <TableCell className={`${STICKY} font-medium whitespace-nowrap`}>{displayName(p)}</TableCell>
@@ -124,16 +149,16 @@ export function AdminAccessTab() {
                       </TableCell>
                     ))}
                     <TableCell className="border-l text-center">
-                      <Checkbox aria-label="Technicians manager" checked={p.is_tech_manager} onCheckedChange={() => toggleFlag(p, "is_tech_manager")} />
+                      <Checkbox aria-label="Technicians manager" checked={p.is_tech_manager || !!role?.is_tech_manager} disabled={!!role?.is_tech_manager} onCheckedChange={() => toggleFlag(p, "is_tech_manager")} />
                     </TableCell>
                     <TableCell className="text-center">
-                      <Checkbox aria-label="SLA manager" checked={p.is_sla_manager} onCheckedChange={() => toggleFlag(p, "is_sla_manager")} />
+                      <Checkbox aria-label="SLA manager" checked={p.is_sla_manager || !!role?.is_sla_manager} disabled={!!role?.is_sla_manager} onCheckedChange={() => toggleFlag(p, "is_sla_manager")} />
                     </TableCell>
                   </TableRow>
                 )
               })}
-              {configurable.length === 0 && (
-                <TableRow><TableCell colSpan={APP_PAGES.length + 4} className="h-16 text-center text-muted-foreground">No configurable members.</TableCell></TableRow>
+              {rows.length === 0 && (
+                <TableRow><TableCell colSpan={APP_PAGES.length + 4} className="h-16 text-center text-muted-foreground">No members yet.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -159,33 +184,35 @@ export function AdminAccessTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {listed
-                  .filter((p) => roleOf(p) !== "admin" && p.status !== "suspended")
-                  .map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell className={`${STICKY} font-medium whitespace-nowrap`}>{displayName(p)}</TableCell>
-                      {projects.map((pr) => (
-                        <TableCell key={pr.id} className="text-center">
-                          <Checkbox
-                            aria-label={`${displayName(p)} — ${pr.name}`}
-                            checked={isMember(p.id, pr.id)}
-                            onCheckedChange={() => toggleProject(p, pr.id)}
-                          />
+                {rows
+                  .filter((p) => p.status !== "suspended")
+                  .map((p) => {
+                    const admin = roleOf(p) === "admin"
+                    return (
+                      <TableRow key={p.id} className={admin ? "bg-muted/20" : undefined}>
+                        <TableCell className={`${STICKY} ${admin ? "bg-muted/20" : ""} font-medium whitespace-nowrap`}>
+                          {displayName(p)}
+                          {admin && <Badge variant="outline" className="ml-2 gap-1 font-normal"><Lock className="size-3" /> Admin</Badge>}
                         </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
+                        {projects.map((pr) => (
+                          <TableCell key={pr.id} className="text-center">
+                            <Checkbox
+                              aria-label={`${displayName(p)} — ${pr.name}`}
+                              checked={admin || isMember(p.id, pr.id)}
+                              disabled={admin}
+                              onCheckedChange={() => toggleProject(p, pr.id)}
+                            />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    )
+                  })}
               </TableBody>
             </Table>
           </div>
         </section>
       )}
 
-      {fixed.length > 0 && (
-        <p className="text-xs text-muted-foreground">
-          Not shown above: {fixed.map((p) => `${displayName(p)} (${roleOf(p) === "admin" ? "admin — full access" : p.status === "suspended" ? "suspended" : "Firstfix — Documents only"})`).join(", ")}.
-        </p>
-      )}
     </div>
   )
 }

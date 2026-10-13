@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { errorMessage } from "@/lib/utils"
 import {
   Boxes,
   Download,
@@ -81,7 +82,7 @@ function ItemAttachments({ itemId }: { itemId: string }) {
         done++
       } catch (err) {
         toast.error(`Upload failed: ${file.name}`, {
-          description: err instanceof Error ? err.message : "Unknown error",
+          description: errorMessage(err),
         })
       }
     }
@@ -104,7 +105,7 @@ function ItemAttachments({ itemId }: { itemId: string }) {
       document.body.removeChild(a)
     } catch (err) {
       toast.error("Could not open file", {
-        description: err instanceof Error ? err.message : "Unknown error",
+        description: errorMessage(err),
       })
     } finally {
       setDownloading(null)
@@ -124,7 +125,7 @@ function ItemAttachments({ itemId }: { itemId: string }) {
       toast.success("File removed")
     } catch (err) {
       toast.error("Could not remove file", {
-        description: err instanceof Error ? err.message : "Unknown error",
+        description: errorMessage(err),
       })
     }
   }
@@ -343,7 +344,7 @@ export function ItemDialog({
         })
       } else {
         toast.error("Could not save", {
-          description: e instanceof Error ? e.message : "Unknown error",
+          description: errorMessage(e),
         })
       }
     }
