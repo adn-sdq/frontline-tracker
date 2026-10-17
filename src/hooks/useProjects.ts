@@ -82,6 +82,8 @@ export type ProjectInput = {
   our_po?: string | null
   site_location?: string | null
   site_contact?: string | null
+  /** SKU abbreviation; blank = generated from the name. */
+  code?: string | null
 }
 
 export function useCreateProject() {
@@ -94,6 +96,7 @@ export function useCreateProject() {
           name: p.name,
           description: p.description ?? null,
           sort: p.sort ?? 0,
+          code: p.code?.trim() ? p.code.trim().toUpperCase() : null,
           client_name: p.client_name ?? null,
           client_po: p.client_po ?? null,
           our_po: p.our_po ?? null,

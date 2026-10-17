@@ -66,6 +66,7 @@ export function useUpsertSerial() {
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ["item_serials", vars.itemId] })
       qc.invalidateQueries({ queryKey: ["item_serials_batch"] })
+      qc.invalidateQueries({ queryKey: ["resolved_tag"] })
     },
   })
 }

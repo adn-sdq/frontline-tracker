@@ -1,14 +1,15 @@
 import { useState } from "react"
 import { formatDistanceToNow } from "date-fns"
-import { ChevronDown, ChevronRight, Hash, MapPin, PackagePlus } from "lucide-react"
+import { ChevronDown, ChevronRight, Hash, PackagePlus, QrCode } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
-import { StatusBadge } from "@/components/StatusControls"
+import { StageTrack } from "@/components/StageTrack"
 import { SerialSubPanel } from "@/components/SerialSubPanel"
+import { ItemLabelsDialog } from "@/components/ItemLabelsDialog"
 import { AddToDnPopover } from "@/components/AddToDnPopover"
 import { useItemSerials } from "@/hooks/useItemSerials"
 import { useSystems } from "@/hooks/useSystems"
@@ -80,130 +81,95 @@ function ItemCard({
   onCartChange?: (itemId: string, entry: DnCartEntry | null) => void
 }) {
   const [expanded, setExpanded] = useState(false)
-  const { data: serials = [] } = useItemSerials(expanded || false ? item.id : null)
+  const [labelsOpen, setLabelsOpen] = useState(false)
+  const { data: serials = [] } = useItemSerials(expanded ? item.id : null)
   const filledSerials = serials.filter((s) => s.serial_number).length
-  const hasSerials = Number(item.qty_required) > 0
-
-  function who(id: string | null) {
-    if (!id) return null
-    const p = profiles[id]
-    return p?.full_name ?? p?.username ?? null
-  }
+  const qty = Math.round(Number(item.qty_required))
+  const hasSerials = qty > 0 && item.tracking !== "lot"
 
   const title = [item.brand, item.model_no].filter(Boolean).join(" · ")
-  const updatedBy = who(item.updated_by)
+  const updatedBy = profiles[item.updated_by ?? ""]?.full_name ?? profiles[item.updated_by ?? ""]?.username ?? null
+  const updated = formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })
 
   return (
     <div
       className={[
         "group w-full overflow-hidden rounded-2xl border bg-card transition-all",
-        selected
-          ? "border-primary/60 bg-primary/5 shadow-sm"
-          : "hover:border-border/80 hover:shadow-sm",
+        selected ? "border-primary/60 bg-primary/5 shadow-sm" : "hover:border-border/80 hover:shadow-sm",
       ].join(" ")}
     >
-      {/* ── Main tappable area ── */}
+      {/* ── Main tappable area: what it is, and where it stands ── */}
       <button
         type="button"
         onClick={() => (selectable ? onToggle?.(item.id) : onView(item))}
-        className="w-full text-left active:scale-[0.99] transition-transform"
+        className="w-full p-4 text-left transition-transform active:scale-[0.99]"
       >
-        {/* Top section */}
-        <div className="p-4 pb-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-              {selectable && (
-                <Checkbox
-                  checked={selected}
-                  onCheckedChange={() => onToggle?.(item.id)}
-                  onClick={(e) => e.stopPropagation()}
-                  aria-label="Select item"
-                  className="shrink-0"
-                />
-              )}
-              <Badge variant="outline" className="shrink-0 text-xs font-semibold">
-                {systemLabel}
-              </Badge>
-              {item.unique_id && (
-                <span className="font-mono text-xs font-bold text-primary">
-                  {item.unique_id}
-                </span>
-              )}
-            </div>
-            <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5" />
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            {selectable && (
+              <Checkbox
+                checked={selected}
+                onCheckedChange={() => onToggle?.(item.id)}
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Select item"
+                className="shrink-0"
+              />
+            )}
+            <span className="truncate font-mono text-xs font-bold text-primary">{item.sku ?? "—"}</span>
+            <span className="text-muted-foreground/50">·</span>
+            <span className="truncate text-xs text-muted-foreground">{systemLabel}</span>
           </div>
-
-          <p className="mt-2.5 text-base font-semibold leading-snug">
-            {title || <span className="text-muted-foreground">—</span>}
-          </p>
-
-          {item.location && (
-            <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="size-3 shrink-0" />
-              <span className="truncate">{item.location}</span>
-            </div>
-          )}
+          <ChevronRight className="size-4 shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5" />
         </div>
 
-        {/* Status grid */}
-        <div className="grid grid-cols-3 gap-px border-t bg-border">
-          <StatusCell label="Procurement" status={item.procurement_status} />
-          <StatusCell label="Delivery" status={item.delivery_status} />
-          <StatusCell label="Installation" status={item.installation_status} />
-        </div>
+        <p className="mt-2 text-base leading-snug font-semibold">
+          {title || <span className="text-muted-foreground">—</span>}
+        </p>
+        {item.description && <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">{item.description}</p>}
 
-        {/* Footer */}
-        <div className="px-4 py-2.5">
-          <p className="text-xs text-muted-foreground">
-            {updatedBy ? (
-              <>
-                Updated by{" "}
-                <span className="font-medium text-foreground/80">{updatedBy}</span>
-                {" · "}
-              </>
-            ) : null}
-            {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
-          </p>
-        </div>
+        <StageTrack item={item} className="mt-4" />
       </button>
 
-      {/* ── Serial expand toggle ── */}
-      {hasSerials && (
-        <>
+      {/* ── One quiet footer: serials, QR, last update ── */}
+      <div className="flex items-center gap-1 border-t px-2 py-1">
+        {hasSerials ? (
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
             className={[
-              "flex w-full items-center gap-2 border-t px-4 py-2 text-xs transition-colors",
-              expanded
-                ? "bg-primary/5 text-primary"
-                : "text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+              "flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs transition-colors",
+              expanded ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
             ].join(" ")}
           >
             <Hash className="size-3 shrink-0" />
-            <span className="font-medium">Serial Numbers</span>
-            {filledSerials > 0 || expanded ? (
-              <Badge variant={expanded ? "default" : "secondary"} className="text-xs">
-                {filledSerials} / {item.qty_required}
-              </Badge>
-            ) : (
-              <span className="text-muted-foreground/60">
-                {item.qty_required} slot{Number(item.qty_required) !== 1 ? "s" : ""}
-              </span>
-            )}
-            <ChevronDown
-              className={[
-                "ml-auto size-3.5 transition-transform",
-                expanded ? "rotate-180" : "",
-              ].join(" ")}
-            />
+            <span className="font-medium">Serials</span>
+            <Badge variant={expanded ? "default" : "secondary"} className="px-1.5 py-0 text-[10px]">
+              {expanded ? `${filledSerials} / ${qty}` : qty}
+            </Badge>
+            <ChevronDown className={["size-3.5 transition-transform", expanded ? "rotate-180" : ""].join(" ")} />
           </button>
+        ) : item.tracking === "lot" ? (
+          <span className="px-2 text-xs text-muted-foreground">Bulk · one tag</span>
+        ) : null}
 
-          {expanded && (
-            <SerialSubPanel itemId={item.id} qty={Number(item.qty_required)} />
-          )}
-        </>
-      )}
+        <button
+          type="button"
+          onClick={() => setLabelsOpen(true)}
+          disabled={!item.sku}
+          aria-label="QR labels"
+          title="QR labels"
+          className="ml-1 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:opacity-40"
+        >
+          <QrCode className="size-4" />
+        </button>
+
+        <span className="ml-auto truncate px-2 text-[11px] text-muted-foreground" title={updatedBy ? `Updated by ${updatedBy}` : undefined}>
+          {updated}
+        </span>
+      </div>
+
+      {expanded && hasSerials && <SerialSubPanel item={item} />}
 
       {/* ── Add to DN ── */}
       {onCartChange && (
@@ -217,17 +183,8 @@ function ItemCard({
           />
         </div>
       )}
-    </div>
-  )
-}
 
-function StatusCell({ label, status }: { label: string; status: string }) {
-  return (
-    <div className="flex flex-col gap-1.5 bg-card px-3 py-2.5">
-      <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </span>
-      <StatusBadge status={status} />
+      <ItemLabelsDialog items={labelsOpen ? [item] : []} onClose={() => setLabelsOpen(false)} />
     </div>
   )
 }

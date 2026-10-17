@@ -117,6 +117,7 @@ function ProjectCard({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
                 <h3 className="truncate font-semibold">{p.name}</h3>
+                {p.code && <Badge variant="outline" className="px-1.5 py-0 font-mono text-[10px]" title="SKU abbreviation">{p.code}</Badge>}
                 <Badge
                   className={cn(
                     "border-transparent text-[10px]",
@@ -352,6 +353,7 @@ export function AdminProjectsTab() {
           editProject
             ? {
                 name: editProject.name,
+                code: editProject.code ?? "",
                 description: editProject.description,
                 client_name: editProject.client_name,
                 client_po: editProject.client_po,

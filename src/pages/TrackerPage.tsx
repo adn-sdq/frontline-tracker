@@ -6,6 +6,8 @@ import {
   Filter,
   MoreHorizontal,
   Plus,
+  QrCode,
+  ScanLine,
   Search,
   Truck,
   Upload,
@@ -49,6 +51,8 @@ import { ItemsTable, ItemsTableSkeleton } from "@/components/ItemsTable"
 import { ItemsCards, ItemsCardsSkeleton } from "@/components/ItemsCards"
 import { ItemDialog } from "@/components/ItemDialog"
 import { ItemDetailSheet } from "@/components/ItemDetailSheet"
+import { ItemLabelsDialog } from "@/components/ItemLabelsDialog"
+import { ScanDialog } from "@/components/scan/ScanDialog"
 import { DeliveryNoteDialog } from "@/components/DeliveryNoteDialog"
 import { HistoryDrawer } from "@/components/HistoryDrawer"
 import { ImportDialog } from "@/components/ImportDialog"
@@ -114,6 +118,8 @@ export default function TrackerPage() {
   const [historyItem, setHistoryItem] = useState<Item | null>(null)
   const [importOpen, setImportOpen] = useState(false)
   const [deleteItem, setDeleteItem] = useState<Item | null>(null)
+  const [labelItems, setLabelItems] = useState<Item[]>([])
+  const [scanOpen, setScanOpen] = useState(false)
 
   // Delivery-note cart + mode
   const [dnMode, setDnMode] = useState(false)
@@ -177,7 +183,7 @@ export default function TrackerPage() {
       if (system !== "ALL" && i.system !== system) return false
       if (brandFilter !== "ALL" && i.brand !== brandFilter) return false
       if (modelFilter !== "ALL" && i.model_no !== modelFilter) return false
-      if (q && ![i.brand, i.model_no, i.description, i.location, i.supplier, i.unique_id]
+      if (q && ![i.brand, i.model_no, i.description, i.location, i.supplier, i.unique_id, i.sku]
         .filter(Boolean).some((v) => (v as string).toLowerCase().includes(q))) return false
       if (fc > 0) {
         const p = statusFilters.procurement
@@ -283,7 +289,7 @@ export default function TrackerPage() {
           <div className="relative flex-1">
             <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search brand, model, room, UID…"
+              placeholder="Search SKU, brand, model, room…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-8"
@@ -393,6 +399,8 @@ export default function TrackerPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          <ActionButton icon={ScanLine} label="Scan" onClick={() => setScanOpen(true)} />
+
           {/* Delivery-note mode toggle */}
           {editable && <ActionButton
             icon={Truck}
@@ -416,6 +424,9 @@ export default function TrackerPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setImportOpen(true)} disabled={!editable}>
                 <Upload className="size-4" /> Import CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLabelItems(filtered)} disabled={filtered.length === 0}>
+                <QrCode className="size-4" /> QR labels ({filtered.length})
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => exportItemsCsv(filtered)}
@@ -506,6 +517,8 @@ export default function TrackerPage() {
         defaultSystem={system === "ALL" ? activeSystems[0]?.key ?? "AV" : system}
       />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
+      <ItemLabelsDialog items={labelItems} onClose={() => setLabelItems([])} />
+      <ScanDialog open={scanOpen} onOpenChange={setScanOpen} />
       <DeliveryNoteDialog
         open={dnOpen}
         onOpenChange={setDnOpen}

@@ -202,6 +202,7 @@ type FormState = {
   system: System
   location: string
   unique_id: string
+  tracking: "unit" | "lot"
   brand: string
   model_no: string
   description: string
@@ -222,6 +223,7 @@ function blank(system: System = "AV"): FormState {
     system,
     location: "",
     unique_id: "",
+    tracking: "unit",
     brand: "",
     model_no: "",
     description: "",
@@ -243,6 +245,7 @@ function fromItem(i: Item): FormState {
     system: i.system,
     location: i.location ?? "",
     unique_id: i.unique_id ?? "",
+    tracking: i.tracking ?? "unit",
     brand: i.brand ?? "",
     model_no: i.model_no ?? "",
     description: i.description ?? "",
@@ -310,6 +313,7 @@ export function ItemDialog({
       system: form.system,
       location: form.location || null,
       unique_id: form.unique_id || null,
+      tracking: form.tracking,
       brand: form.brand || null,
       model_no: form.model_no || null,
       description: form.description || null,
@@ -354,6 +358,24 @@ export function ItemDialog({
 
   const detailsForm = (
     <>
+      <div className="grid gap-3 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[auto_1fr] sm:items-center sm:gap-4">
+        <div>
+          <div className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">SKU</div>
+          <div className="font-mono text-base font-bold text-primary">
+            {item?.sku ?? <span className="text-sm font-normal text-muted-foreground">Assigned when saved</span>}
+          </div>
+        </div>
+        <Field label="How is it tracked?">
+          <Select value={form.tracking} onValueChange={(v) => set("tracking", v as "unit" | "lot")}>
+            <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unit">Device — every unit has its own QR (and serial number)</SelectItem>
+              <SelectItem value="lot">Accessory / small part — one QR for the whole line</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+      </div>
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Field label="System">
           <Select value={form.system} onValueChange={(v) => set("system", v as System)}>
@@ -372,11 +394,11 @@ export function ItemDialog({
         <Field label="Location / Room">
           <Input value={form.location} onChange={(e) => set("location", e.target.value)} />
         </Field>
-        <Field label="Unique ID">
+        <Field label="Your reference">
           <Input
             value={form.unique_id}
             onChange={(e) => set("unique_id", e.target.value)}
-            placeholder="e.g. SN-001 or AV-003"
+            placeholder="e.g. BOQ line AV-003"
           />
         </Field>
         <Field label="Brand">
@@ -455,7 +477,7 @@ export function ItemDialog({
           <Tabs defaultValue="details" className="w-full">
             <TabsList className="w-full justify-start">
               <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="serials">Serials</TabsTrigger>
+              {form.tracking === "unit" && <TabsTrigger value="serials">Serials</TabsTrigger>}
               <TabsTrigger value="files">Attachments</TabsTrigger>
               <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>

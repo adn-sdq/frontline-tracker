@@ -1,8 +1,7 @@
 import { useState } from "react"
 import { formatDistanceToNow } from "date-fns"
-import { ChevronDown, ChevronRight, Hash, MapPin } from "lucide-react"
+import { ChevronDown, Hash } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StatusBadge } from "@/components/StatusControls"
@@ -23,29 +22,26 @@ interface Props {
   onCartChange?: (itemId: string, entry: DnCartEntry | null) => void
 }
 
+// One shared column template so the header and every row line up exactly.
+const COLS = "lg:grid-cols-[8rem_minmax(0,1fr)_7rem_7rem_8rem_9rem]"
+const COLS_SELECTABLE = "lg:grid-cols-[1.5rem_8rem_minmax(0,1fr)_7rem_7rem_8rem_9rem]"
+
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
 export function ItemsTableSkeleton() {
   return (
-    <div className="rounded-xl border bg-card overflow-hidden divide-y">
+    <div className="overflow-hidden rounded-xl border bg-card divide-y">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 px-4 py-3.5">
-          <div className="flex-1 flex items-center gap-3 min-w-0">
-            <div className="space-y-1.5 min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-5 w-12 rounded-full" />
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-3 w-24 ml-1" />
-              </div>
-              <Skeleton className="h-4 w-52" />
-            </div>
+        <div key={i} className={`grid items-center gap-x-4 px-4 py-3.5 ${COLS}`}>
+          <div className="space-y-1.5">
+            <Skeleton className="h-3.5 w-20" />
+            <Skeleton className="h-3 w-12" />
           </div>
-          <div className="flex gap-1.5 shrink-0">
-            <Skeleton className="h-5 w-16 rounded-full" />
-            <Skeleton className="h-5 w-16 rounded-full" />
-            <Skeleton className="h-5 w-20 rounded-full" />
-          </div>
-          <Skeleton className="size-4 rounded shrink-0" />
+          <Skeleton className="h-4 w-52 max-w-full" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-5 w-20 rounded-full" />
+          <Skeleton className="h-3.5 w-24" />
         </div>
       ))}
     </div>
@@ -65,14 +61,14 @@ export function ItemsTable({
   onCartChange,
 }: Props) {
   const { labelFor } = useSystems()
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const cols = selectable ? COLS_SELECTABLE : COLS
 
   function who(id: string | null) {
     if (!id) return null
     const p = profiles[id]
     return p?.full_name ?? p?.username ?? null
   }
-
-  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   if (items.length === 0) {
     return (
@@ -83,107 +79,118 @@ export function ItemsTable({
   }
 
   return (
-    <div className="rounded-xl border bg-card overflow-hidden divide-y">
-      {items.map((item) => {
-        const selected = selectedIds?.has(item.id) ?? false
-        const title = [item.brand, item.model_no].filter(Boolean).join(" · ")
-        const updatedBy = who(item.updated_by)
-        const expanded = expandedId === item.id
-        const hasSerials = Number(item.qty_required) > 0
+    <div className="overflow-hidden rounded-xl border bg-card">
+      {/* ── Column headers ── */}
+      <div className="hidden items-stretch border-b bg-muted/40 text-[11px] font-medium tracking-wide text-muted-foreground uppercase lg:flex">
+        <div className={`grid min-w-0 flex-1 items-center gap-x-4 px-4 py-2 ${cols}`}>
+          {selectable && <span />}
+          <span>SKU</span>
+          <span>Item</span>
+          <span>Procurement</span>
+          <span>Delivery</span>
+          <span>Installation</span>
+          <span>Updated</span>
+        </div>
+        <div className="flex w-14 shrink-0 items-center justify-center border-l">Serials</div>
+        {onCartChange && <div className="w-14 shrink-0 border-l" />}
+      </div>
 
-        return (
-          <div key={item.id}>
-            <div
-              className={[
-                "group flex items-stretch transition-colors",
-                selected ? "bg-primary/5" : expanded ? "bg-muted/30" : "hover:bg-accent/30",
-              ].join(" ")}
-            >
-              {/* ── Main clickable area ── */}
-              <button
-                type="button"
-                onClick={() => (selectable ? onToggle?.(item.id) : onView(item))}
-                className="flex min-w-0 flex-1 items-center gap-4 px-4 py-3.5 text-left"
+      <div className="divide-y">
+        {items.map((item) => {
+          const selected = selectedIds?.has(item.id) ?? false
+          const title = [item.brand, item.model_no].filter(Boolean).join(" · ")
+          const updatedBy = who(item.updated_by)
+          const expanded = expandedId === item.id
+          const hasSerials = Number(item.qty_required) > 0 && item.tracking !== "lot"
+          const system = labelFor(item.system) || SYSTEM_LABELS[item.system] || item.system
+
+          return (
+            <div key={item.id}>
+              <div
+                className={[
+                  "group flex items-stretch transition-colors",
+                  selected ? "bg-primary/5" : expanded ? "bg-muted/30" : "hover:bg-accent/30",
+                ].join(" ")}
               >
-                {selectable && (
-                  <Checkbox
-                    checked={selected}
-                    onCheckedChange={() => onToggle?.(item.id)}
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label="Select item"
-                    className="shrink-0"
-                  />
-                )}
+                {/* ── Main clickable area ── */}
+                <button
+                  type="button"
+                  onClick={() => (selectable ? onToggle?.(item.id) : onView(item))}
+                  className={`grid min-w-0 flex-1 items-center gap-x-4 gap-y-2 px-4 py-3 text-left ${cols}`}
+                >
+                  {selectable && (
+                    <Checkbox
+                      checked={selected}
+                      onCheckedChange={() => onToggle?.(item.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="Select item"
+                    />
+                  )}
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <Badge variant="outline" className="shrink-0 py-0 text-xs font-semibold">
-                      {labelFor(item.system) || SYSTEM_LABELS[item.system] || item.system}
-                    </Badge>
-                    {item.unique_id && (
-                      <span className="font-mono text-xs font-bold text-primary shrink-0">
-                        {item.unique_id}
-                      </span>
-                    )}
-                    {item.location && (
-                      <span className="flex items-center gap-0.5 text-xs text-muted-foreground min-w-0">
-                        <MapPin className="size-3 shrink-0" />
-                        <span className="truncate max-w-45">{item.location}</span>
-                      </span>
+                  {/* SKU + system */}
+                  <div className="flex items-baseline gap-2 lg:block">
+                    <div className="font-mono text-xs font-bold text-primary">{item.sku ?? "—"}</div>
+                    <div className="truncate text-xs text-muted-foreground lg:mt-0.5">{system}</div>
+                  </div>
+
+                  {/* Item */}
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {title || <span className="text-muted-foreground">—</span>}
+                    </p>
+                    {item.description && (
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.description}</p>
                     )}
                   </div>
-                  <p className="mt-1 truncate text-sm font-medium">
-                    {title || <span className="text-muted-foreground">—</span>}
-                  </p>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {updatedBy
-                      ? `${updatedBy} · ${formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}`
-                      : formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
-                  </p>
-                </div>
 
-                <div className="hidden shrink-0 items-center gap-1.5 lg:flex">
-                  <StatusBadge status={item.procurement_status} />
-                  <span className="text-xs text-muted-foreground/40">·</span>
-                  <StatusBadge status={item.delivery_status} />
-                  <span className="text-xs text-muted-foreground/40">·</span>
-                  <StatusBadge status={item.installation_status} />
-                </div>
-                <div className="shrink-0 lg:hidden">
-                  <StatusBadge status={item.delivery_status} />
-                </div>
+                  {/* Statuses — one column each on desktop, a single row on small screens */}
+                  <div className="flex flex-wrap items-center gap-1.5 lg:contents">
+                    <div className="min-w-0"><StatusBadge status={item.procurement_status} /></div>
+                    <div className="min-w-0"><StatusBadge status={item.delivery_status} /></div>
+                    <div className="min-w-0"><StatusBadge status={item.installation_status} /></div>
+                  </div>
 
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
-              </button>
+                  {/* Updated */}
+                  <div className="hidden min-w-0 text-xs lg:block">
+                    <div className="truncate">{formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}</div>
+                    {updatedBy && <div className="mt-0.5 truncate text-muted-foreground">{updatedBy}</div>}
+                  </div>
+                </button>
 
-              {/* ── Serial expand toggle ── */}
-              {hasSerials && (
-                <SerialToggle
-                  itemId={item.id}
-                  qty={Number(item.qty_required)}
-                  expanded={expanded}
-                  onToggle={() => setExpandedId(expanded ? null : item.id)}
-                />
-              )}
+                {/* ── Serial expand toggle ── */}
+                {hasSerials ? (
+                  <SerialToggle
+                    itemId={item.id}
+                    qty={Number(item.qty_required)}
+                    expanded={expanded}
+                    onToggle={() => setExpandedId(expanded ? null : item.id)}
+                  />
+                ) : (
+                  <div
+                    className="flex w-14 shrink-0 items-center justify-center border-l text-[10px] text-muted-foreground/60"
+                    title={item.tracking === "lot" ? "Tracked as one lot" : undefined}
+                  >
+                    {item.tracking === "lot" ? `Lot ${Math.round(Number(item.qty_required))}` : "—"}
+                  </div>
+                )}
 
-              {/* ── Add to DN ── */}
-              {onCartChange && (
-                <AddToDnPopover
-                  item={item}
-                  entry={cartMap?.get(item.id)}
-                  onSave={(e) => onCartChange(item.id, e)}
-                  onRemove={() => onCartChange(item.id, null)}
-                />
-              )}
+                {/* ── Add to DN ── */}
+                {onCartChange && (
+                  <AddToDnPopover
+                    item={item}
+                    entry={cartMap?.get(item.id)}
+                    onSave={(e) => onCartChange(item.id, e)}
+                    onRemove={() => onCartChange(item.id, null)}
+                  />
+                )}
+              </div>
+
+              {/* ── Serial sub-panel ── */}
+              {expanded && hasSerials && <SerialSubPanel item={item} />}
             </div>
-
-            {/* ── Serial sub-panel ── */}
-            {expanded && hasSerials && (
-              <SerialSubPanel itemId={item.id} qty={Number(item.qty_required)} />
-            )}
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -211,21 +218,14 @@ function SerialToggle({
       title={expanded ? "Hide serial numbers" : "Show serial numbers"}
       className={[
         "flex w-14 shrink-0 flex-col items-center justify-center gap-0.5 border-l transition-colors",
-        expanded
-          ? "bg-primary/5 text-primary"
-          : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+        expanded ? "bg-primary/5 text-primary" : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
       ].join(" ")}
     >
       <Hash className="size-3.5" />
-      <span className="text-[10px] tabular-nums leading-none">
+      <span className="text-[10px] leading-none tabular-nums">
         {filled}/{qty}
       </span>
-      <ChevronDown
-        className={[
-          "size-2.5 transition-transform",
-          expanded ? "rotate-180" : "",
-        ].join(" ")}
-      />
+      <ChevronDown className={["size-2.5 transition-transform", expanded ? "rotate-180" : ""].join(" ")} />
     </button>
   )
 }

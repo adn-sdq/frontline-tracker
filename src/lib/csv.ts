@@ -3,9 +3,11 @@ import Papa from "papaparse"
 import { STATUS_LABELS, type Item, type SystemRow } from "@/lib/types"
 
 const EXPORT_COLUMNS: { key: keyof Item; header: string }[] = [
+  { key: "sku", header: "SKU" },
   { key: "system", header: "System" },
   { key: "location", header: "Location" },
-  { key: "unique_id", header: "Unique ID" },
+  { key: "unique_id", header: "Reference" },
+  { key: "tracking", header: "Tracking" },
   { key: "brand", header: "Brand" },
   { key: "model_no", header: "Model No" },
   { key: "description", header: "Description" },
