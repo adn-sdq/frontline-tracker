@@ -70,6 +70,10 @@ export interface Item {
   project_id: string
   system: System
   location: string | null
+  /** Our SKU, unique across all projects ("MP-0042"). Assigned once by the database. */
+  sku: string | null
+  /** 'unit' = devices, each unit tagged + QR'd; 'lot' = accessories, one tag for the whole line. */
+  tracking: "unit" | "lot"
   unique_id: string | null
   brand: string | null
   model_no: string | null
@@ -96,6 +100,7 @@ export type ItemPatch = Partial<
     Item,
     | "system"
     | "location"
+    | "tracking"
     | "unique_id"
     | "brand"
     | "model_no"
@@ -148,11 +153,34 @@ export interface Project {
   site_location: string | null
   site_contact:  string | null
   logo_url?:     string | null
+  /** Short abbreviation used in SKUs (e.g. "MP"). */
+  code?:         string
 }
 
 export interface ProjectMember {
   project_id: string
   user_id: string
+  created_at: string
+}
+
+export type UnitEventKind = "received" | "moved" | "installed" | "issue" | "note"
+
+export const UNIT_EVENT_LABELS: Record<UnitEventKind, string> = {
+  received: "Received",
+  moved: "Moved",
+  installed: "Installed",
+  issue: "Issue",
+  note: "Note",
+}
+
+export interface UnitEvent {
+  id: number
+  item_id: string
+  unit_index: number | null
+  kind: UnitEventKind
+  location: string | null
+  note: string | null
+  created_by: string | null
   created_at: string
 }
 

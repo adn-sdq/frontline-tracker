@@ -104,6 +104,7 @@ export function ProjectFullView({
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <DialogPrimitive.Title className="truncate text-2xl font-semibold tracking-tight">{p.name}</DialogPrimitive.Title>
+                      {p.code && <Badge variant="outline" className="font-mono" title="SKU abbreviation">{p.code}</Badge>}
                       <Badge
                         className={cn(
                           "border-transparent",

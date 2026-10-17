@@ -17,6 +17,52 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.21.0",
+    date: "2026-10-18",
+    type: "minor",
+    summary: "SKUs and QR labels for every item, an in-app scanner, a cleaner tracker list, and a fix for saving PO/VO documents.",
+    sections: [
+      {
+        title: "SKUs",
+        items: [
+          "Every item gets its own SKU, unique across all projects — a project abbreviation plus a number, e.g. MP-0042. It's assigned once and never changes",
+          "Each project has an abbreviation (auto-created, editable in the project dialog; 2–6 letters or numbers)",
+          "Your old Unique ID is kept and renamed “Your reference”. SKU is searchable and included in CSV export",
+          "Choose how an item is tracked: a device (every unit has its own tag and QR, with an optional serial number) or an accessory / small part (one tag for the whole line)",
+        ],
+      },
+      {
+        title: "QR labels & scanning",
+        items: [
+          "Print QR labels for an item, a single unit, or everything you've filtered. Labels are a clean square layout in one sans-serif font",
+          "The QR holds only a short code, not a link — a normal phone camera shows nothing useful. Details open only in the in-app Scan button (tracker) for signed-in members of that project",
+          "Scan with the camera, or type a SKU, unit tag or serial number to find a unit",
+          "On a scanned unit: see its status and serial number, and record Received, Moved, Installed, Issue or Note with a location. History shows who did what and when. Scans themselves are never logged",
+        ],
+      },
+      {
+        title: "Tracker",
+        items: [
+          "The list is now a proper table with column headings: SKU, Item, Procurement, Delivery, Installation, Updated and Serials, so statuses line up row to row",
+          "Removed the ×quantity from items — the serials box already shows the count",
+          "Cards are simpler: SKU first, then the item, a three-step Procure → Deliver → Install progress track, and one quiet footer. Location is no longer shown on cards or rows (still in the item details)",
+        ],
+      },
+      {
+        title: "Fixes",
+        items: [
+          "Saving a document of type PO or VO failed with an error (the database never allowed those types). Fixed — this is why uploading documents appeared to do nothing",
+        ],
+      },
+      {
+        title: "Database",
+        items: [
+          "0027: project codes, item SKUs, tracking mode and the unit update log. 0028: PO / VO document types",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.20.0",
     date: "2026-10-14",
     type: "minor",

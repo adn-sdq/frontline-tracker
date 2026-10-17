@@ -1,9 +1,19 @@
-import { Loader2 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { useItemSerials } from "@/hooks/useItemSerials"
+import { useState } from "react"
+import { Loader2, QrCode } from "lucide-react"
 
-export function SerialSubPanel({ itemId, qty }: { itemId: string; qty: number }) {
-  const { data: serials = [], isLoading } = useItemSerials(itemId)
+import { Badge } from "@/components/ui/badge"
+import { ItemLabelsDialog } from "@/components/ItemLabelsDialog"
+import { ScanDialog } from "@/components/scan/ScanDialog"
+import { useItemSerials } from "@/hooks/useItemSerials"
+import { unitTag } from "@/lib/tags"
+import type { Item } from "@/lib/types"
+
+/** One slot per unit: its number, serial (optional) and a QR label for that exact unit. */
+export function SerialSubPanel({ item }: { item: Item }) {
+  const qty = Math.round(Number(item.qty_required))
+  const { data: serials = [], isLoading } = useItemSerials(item.id)
+  const [labelUnit, setLabelUnit] = useState<number | null>(null)
+  const [openTag, setOpenTag] = useState<string | null>(null)
   const filled = serials.filter((s) => s.serial_number).length
 
   return (
@@ -13,10 +23,7 @@ export function SerialSubPanel({ itemId, qty }: { itemId: string; qty: number })
           Serial Numbers
         </span>
         {!isLoading && (
-          <Badge
-            variant={filled === qty && qty > 0 ? "default" : "secondary"}
-            className="text-xs"
-          >
+          <Badge variant={filled === qty && qty > 0 ? "default" : "secondary"} className="text-xs">
             {filled} / {qty}
           </Badge>
         )}
@@ -32,6 +39,7 @@ export function SerialSubPanel({ itemId, qty }: { itemId: string; qty: number })
           {Array.from({ length: qty }, (_, i) => {
             const unitIndex = i + 1
             const serial = serials.find((s) => s.unit_index === unitIndex)?.serial_number ?? null
+            const tag = item.sku ? unitTag(item.sku, unitIndex) : null
             return (
               <div
                 key={unitIndex}
@@ -40,9 +48,18 @@ export function SerialSubPanel({ itemId, qty }: { itemId: string; qty: number })
                   serial ? "bg-background" : "border-dashed bg-muted/30",
                 ].join(" ")}
               >
-                <span className="w-5 shrink-0 text-right font-mono text-[10px] font-bold text-muted-foreground">
-                  {unitIndex}
-                </span>
+                {tag ? (
+                  <button
+                    type="button"
+                    onClick={() => setOpenTag(tag)}
+                    title={`Open ${tag}`}
+                    className="w-5 shrink-0 text-right font-mono text-[10px] font-bold text-muted-foreground hover:text-primary"
+                  >
+                    {unitIndex}
+                  </button>
+                ) : (
+                  <span className="w-5 shrink-0 text-right font-mono text-[10px] font-bold text-muted-foreground">{unitIndex}</span>
+                )}
                 <span
                   className={[
                     "min-w-0 flex-1 truncate font-mono text-xs",
@@ -51,11 +68,25 @@ export function SerialSubPanel({ itemId, qty }: { itemId: string; qty: number })
                 >
                   {serial ?? "—"}
                 </span>
+                {tag && (
+                  <button
+                    type="button"
+                    onClick={() => setLabelUnit(unitIndex)}
+                    aria-label={`QR label for unit ${unitIndex}`}
+                    title="QR label"
+                    className="shrink-0 rounded p-0.5 text-muted-foreground/60 transition-colors hover:text-primary"
+                  >
+                    <QrCode className="size-3.5" />
+                  </button>
+                )}
               </div>
             )
           })}
         </div>
       )}
+
+      <ScanDialog open={!!openTag} onOpenChange={(o) => !o && setOpenTag(null)} initialTag={openTag} />
+      <ItemLabelsDialog items={labelUnit ? [item] : []} unit={labelUnit ?? undefined} onClose={() => setLabelUnit(null)} />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { format } from "date-fns"
-import { Hash, History, Pencil, Trash2 } from "lucide-react"
+import { Hash, History, Pencil, QrCode, Trash2 } from "lucide-react"
+import { useState } from "react"
 
 import {
   Dialog,
@@ -14,6 +15,9 @@ import { StatusBadge } from "@/components/StatusControls"
 import { DetailSection, Property, PropertyList } from "@/components/PropertyList"
 import { useSystems } from "@/hooks/useSystems"
 import { useItemSerials } from "@/hooks/useItemSerials"
+import { ItemLabelsDialog } from "@/components/ItemLabelsDialog"
+import { ScanDialog } from "@/components/scan/ScanDialog"
+import { unitTag } from "@/lib/tags"
 import { SYSTEM_LABELS, type Item, type Profile } from "@/lib/types"
 
 interface Props {
@@ -40,6 +44,9 @@ export function ItemDetailSheet({
   const { labelFor } = useSystems()
   const { data: serials = [] } = useItemSerials(item?.id ?? null)
   const filledSerials = serials.filter((s) => s.serial_number).length
+  const [labelUnit, setLabelUnit] = useState<number | "all" | null>(null)
+  const [openTag, setOpenTag] = useState<string | null>(null)
+  const isLot = item?.tracking === "lot"
 
   function who(id: string | null) {
     if (!id) return "—"
@@ -59,10 +66,8 @@ export function ItemDetailSheet({
                   <Badge variant="outline" className="font-medium">
                     {labelFor(item.system) || SYSTEM_LABELS[item.system ?? ""] || item.system}
                   </Badge>
-                  {item.unique_id && (
-                    <span className="font-mono text-sm font-semibold text-primary">
-                      {item.unique_id}
-                    </span>
+                  {item.sku && (
+                    <span className="font-mono text-sm font-semibold text-primary">{item.sku}</span>
                   )}
                 </div>
                 <DialogTitle className="mt-1.5 text-lg leading-snug">
@@ -73,6 +78,9 @@ export function ItemDetailSheet({
                 )}
               </div>
               <div className="flex shrink-0 items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setLabelUnit("all")} disabled={!item.sku}>
+                  <QrCode className="size-4" /> QR labels
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -129,7 +137,15 @@ export function ItemDetailSheet({
                     </div>
                   </DetailSection>
 
-                  {item.qty_required > 0 && (
+                  {isLot && item.sku && (
+                    <DetailSection title="Tracking" icon={Hash}>
+                      <p className="text-sm text-muted-foreground">
+                        Tracked as one lot — a single QR label ({item.sku}) covers all {Math.round(Number(item.qty_required))} pieces.
+                      </p>
+                    </DetailSection>
+                  )}
+
+                  {!isLot && item.qty_required > 0 && (
                     <DetailSection
                       title="Serial Numbers"
                       icon={Hash}
@@ -142,7 +158,7 @@ export function ItemDetailSheet({
                         </Badge>
                       }
                     >
-                      {filledSerials === 0 ? (
+                      {filledSerials === 0 && !item.sku ? (
                         <p className="text-sm text-muted-foreground">No serials recorded yet.</p>
                       ) : (
                         <div className="overflow-hidden rounded-lg border">
@@ -161,6 +177,25 @@ export function ItemDetailSheet({
                                 <span className={serial ? "font-mono" : "text-muted-foreground/40"}>
                                   {serial ?? "—"}
                                 </span>
+                                {item.sku && (
+                                  <span className="ml-auto flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setOpenTag(unitTag(item.sku!, unitIndex))}
+                                      className="font-mono text-xs text-muted-foreground hover:text-primary"
+                                    >
+                                      {unitTag(item.sku, unitIndex)}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setLabelUnit(unitIndex)}
+                                      aria-label={`QR label for unit ${unitIndex}`}
+                                      className="text-muted-foreground/60 hover:text-primary"
+                                    >
+                                      <QrCode className="size-3.5" />
+                                    </button>
+                                  </span>
+                                )}
                               </div>
                             )
                           })}
@@ -183,7 +218,10 @@ export function ItemDetailSheet({
                     <Property label="System">
                       {labelFor(item.system) || SYSTEM_LABELS[item.system ?? ""] || item.system}
                     </Property>
-                    <Property label="ID">
+                    <Property label="SKU">
+                      {item.sku && <span className="font-mono font-semibold">{item.sku}</span>}
+                    </Property>
+                    <Property label="Reference">
                       {item.unique_id && <span className="font-mono">{item.unique_id}</span>}
                     </Property>
                     <Property label="Location">{item.location}</Property>
@@ -219,6 +257,12 @@ export function ItemDetailSheet({
           </>
         )}
       </DialogContent>
+      <ScanDialog open={!!openTag} onOpenChange={(o) => !o && setOpenTag(null)} initialTag={openTag} />
+      <ItemLabelsDialog
+        items={labelUnit !== null && item ? [item] : []}
+        unit={typeof labelUnit === "number" ? labelUnit : undefined}
+        onClose={() => setLabelUnit(null)}
+      />
     </Dialog>
   )
 }

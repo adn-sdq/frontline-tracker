@@ -23,7 +23,7 @@ import { useProjectSystemKeys, useSetProjectSystems, useSystems } from "@/hooks/
 
 export function blankProjectInput(): ProjectInput {
   return {
-    name: "", description: "",
+    name: "", description: "", code: "",
     client_name: "", client_po: "", our_po: "", site_location: "", site_contact: "",
   }
 }
@@ -121,6 +121,9 @@ export function ProjectDialog({
     )
   }
 
+  const code = (form.code ?? "").trim().toUpperCase()
+  const codeValid = code === "" || /^[A-Z0-9]{2,6}$/.test(code)
+
   async function save() {
     setBusy(true)
     try {
@@ -133,6 +136,7 @@ export function ProjectDialog({
           id: projectId,
           patch: {
             name: form.name.trim(),
+            ...(code && code !== initial.code ? { code } : {}),
             description: form.description?.trim() || null,
             client_name: form.client_name?.trim() || null,
             client_po: form.client_po?.trim() || null,
@@ -196,6 +200,22 @@ export function ProjectDialog({
                 )}
               </div>
             </div>
+          </div>
+          <div className="grid gap-1.5 sm:grid-cols-[10rem_1fr] sm:items-start sm:gap-4">
+            <div className="grid gap-1.5">
+              <Label className="text-xs text-muted-foreground">SKU abbreviation</Label>
+              <Input
+                value={form.code ?? ""}
+                onChange={(e) => set("code", e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
+                placeholder={isNew ? "Auto" : ""}
+                className="font-mono uppercase"
+                aria-invalid={!codeValid}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground sm:pt-6">
+              Starts every SKU in this project, e.g. <span className="font-mono">{code || "MP"}-0042</span>. 2–6 letters or
+              numbers, unique across projects.{!isNew && " Changing it only affects new items; existing SKUs keep their code."}
+            </p>
           </div>
           <div className="grid gap-1.5">
             <Label className="text-xs text-muted-foreground">Description</Label>
@@ -261,7 +281,7 @@ export function ProjectDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
-          <Button onClick={save} disabled={busy || !form.name.trim()}>
+          <Button onClick={save} disabled={busy || !form.name.trim() || !codeValid || code.length === 1}>
             {busy && <Loader2 className="size-4 animate-spin" />}
             {isNew ? "Create project" : "Save changes"}
           </Button>

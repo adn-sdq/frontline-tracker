@@ -2,6 +2,34 @@
 
 ---
 
+## v2.21.0 — 2026-10-18
+
+SKUs and QR labels for every item, an in-app scanner, a cleaner tracker list, and a fix for saving PO/VO documents.
+
+Migrations `0027_sku_qr_tracking.sql` and `0028_doc_types_po_vo.sql` (already applied to the database). New packages: `qrcode`, `jsqr`.
+
+### SKUs
+- Every item gets its own SKU, unique across all projects — a project abbreviation plus a number, e.g. `MP-0042`. Assigned once, never changes
+- Each project has an abbreviation (auto-created, editable in the project dialog)
+- Old Unique ID kept as "Your reference"; SKU is searchable and in CSV export
+- Items are tracked as a device (per-unit tags and QR, optional serial) or an accessory (one tag for the line)
+
+### QR labels & scanning
+- Print QR labels for an item, one unit, or the filtered list — square layout, one sans-serif font
+- The QR holds only `FIT:<tag>`, not a link; details open only in the in-app Scan dialog for signed-in project members
+- Camera scan (native BarcodeDetector, jsQR fallback) or type a SKU / unit tag / serial
+- Scanned unit: status, serial, and Received / Moved / Installed / Issue / Note updates with history. Scans are never logged
+
+### Tracker
+- List is a real table with aligned columns and headings
+- Removed ×quantity; the serials box shows the count
+- Simpler cards with a Procure → Deliver → Install track; location hidden from cards and rows
+
+### Fixes
+- Saving a PO or VO document failed (DB check constraint never allowed them) — made document uploads look broken
+
+---
+
 ## v2.20.0 — 2026-10-14
 
 Project logos, a full-screen project view, a contact person on delivery notes, a steadier home page and a new animated loader.
