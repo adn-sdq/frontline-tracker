@@ -13,7 +13,18 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 }
 
-const DOMAIN = "ilmi.local"
+// Accounts are work emails. Add client/external domains here later
+// (and in src/lib/email.ts); the first entry is the default.
+const ALLOWED_DOMAINS = ["frontline.sa"]
+const DOMAIN = ALLOWED_DOMAINS[0]
+
+/** "khalid" or "khalid@frontline.sa" → username + email; anything else is refused. */
+function parseEmail(input: unknown): { username: string; email: string } | null {
+  const raw = String(input ?? "").trim().toLowerCase()
+  const [local, domain = DOMAIN, ...rest] = raw.split("@")
+  if (!local || rest.length || !ALLOWED_DOMAINS.includes(domain) || !/^[a-z0-9._-]+$/.test(local)) return null
+  return { username: local, email: `${local}@${domain}` }
+}
 
 function json(obj: unknown, status = 200) {
   return new Response(JSON.stringify(obj), {
@@ -64,10 +75,10 @@ Deno.serve(async (req) => {
     }
 
     if (action === "create") {
-      const username = String(body.username ?? "").trim().toLowerCase()
-      if (!username || !body.password)
-        return json({ error: "Username and password are required" }, 400)
-      const email = `${username}@${DOMAIN}`
+      const parsed = parseEmail(body.username)
+      if (!parsed) return json({ error: `A valid @${ALLOWED_DOMAINS.join(" / @")} email is required` }, 400)
+      if (!body.password) return json({ error: "Password is required" }, 400)
+      const { username, email } = parsed
       const { data, error } = await admin.auth.admin.createUser({
         email,
         password: String(body.password),
@@ -91,7 +102,7 @@ Deno.serve(async (req) => {
           job_title: text(body.job_title),
           department: text(body.department),
           phone: text(body.phone),
-          contact_email: text(body.contact_email),
+          contact_email: email,
         })
         .eq("id", data.user.id)
       return json({ ok: true, id: data.user.id })
@@ -121,12 +132,13 @@ Deno.serve(async (req) => {
       const profilePatch: Record<string, unknown> = {}
       if (body.full_name !== undefined) profilePatch.full_name = String(body.full_name ?? "").trim() || null
       if (body.username !== undefined) {
-        const newUsername = String(body.username ?? "").trim().toLowerCase()
-        if (!newUsername) return json({ error: "Username cannot be empty" }, 400)
-        const newEmail = `${newUsername}@${DOMAIN}`
+        const parsed = parseEmail(body.username)
+        if (!parsed) return json({ error: `A valid @${ALLOWED_DOMAINS.join(" / @")} email is required` }, 400)
+        const { username: newUsername, email: newEmail } = parsed
         const { error: authErr } = await admin.auth.admin.updateUserById(body.id, { email: newEmail })
         if (authErr) return json({ error: authErr.message }, 400)
         profilePatch.username = newUsername
+        profilePatch.contact_email = newEmail
       }
       if (Object.keys(profilePatch).length > 0) {
         const { error: profErr } = await admin.from("profiles").update(profilePatch).eq("id", body.id)

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import {
   ArrowRight,
   Building2,
@@ -278,13 +278,13 @@ export default function ProjectsPage() {
       {/* Top bar */}
       <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center border-b bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-5">
-          <div className="flex items-center gap-2.5">
+          <Link to="/projects" aria-label="Home" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
             <FitLogo size={28} />
             <div className="leading-tight">
               <div className="text-sm font-semibold">FIT</div>
               <div className="text-[10px] text-muted-foreground">Frontline Internal Tools</div>
             </div>
-          </div>
+          </Link>
           <div className="flex items-center gap-2">
             {profile && (
               <div className="flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1">

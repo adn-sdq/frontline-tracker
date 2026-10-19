@@ -2536,8 +2536,10 @@ export default function DocsPage() {
           </Link>
           <Separator orientation="vertical" className="mx-1 h-5" />
           <div className="flex min-w-0 items-center gap-2">
-            <FitLogo size={24} />
-            <span className="whitespace-nowrap text-sm font-semibold">FIT</span>
+            <Link to="/projects" aria-label="Home" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+              <FitLogo size={24} />
+              <span className="whitespace-nowrap text-sm font-semibold">FIT</span>
+            </Link>
             <span className="text-muted-foreground/50">/</span>
             <span className="truncate text-sm text-muted-foreground">Engineering Reference</span>
           </div>

@@ -405,15 +405,25 @@ export function SidebarContent({
       {/* Brand + collapse toggle */}
       {collapsed ? (
         <div className="flex h-14 shrink-0 items-center justify-center">
-          <FitLogo size={28} />
+          <Link to="/projects" onClick={onNavigate} aria-label="Home — all projects" title="Home" className="rounded-md outline-offset-4 transition-opacity hover:opacity-80">
+            <FitLogo size={28} />
+          </Link>
         </div>
       ) : (
         <div className="flex h-14 shrink-0 items-center gap-2.5 px-3">
-          <FitLogo size={30} />
-          <div className="min-w-0 flex-1 leading-tight">
-            <div className="text-sm font-semibold">FIT</div>
-            <div className="truncate text-[10px] text-muted-foreground">Frontline Tracker</div>
-          </div>
+          <Link
+            to="/projects"
+            onClick={onNavigate}
+            aria-label="Home — all projects"
+            title="Home"
+            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md outline-offset-4 transition-opacity hover:opacity-80"
+          >
+            <FitLogo size={30} />
+            <div className="min-w-0 flex-1 leading-tight">
+              <div className="text-sm font-semibold">FIT</div>
+              <div className="truncate text-[10px] text-muted-foreground">Frontline Tracker</div>
+            </div>
+          </Link>
           {onToggleCollapse && (
             <button
               type="button"

@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router-dom"
-import { Boxes, FolderOpen, KeyRound, Shield, ShieldCheck, Users } from "lucide-react"
+import { Boxes, FolderOpen, KeyRound, ScanLine, Shield, ShieldCheck, Users } from "lucide-react"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { PageHeader } from "@/components/PageHeader"
@@ -9,14 +9,16 @@ import { AdminRolesTab } from "@/components/admin/AdminRolesTab"
 import { AdminAccessTab } from "@/components/admin/AdminAccessTab"
 import { AdminProjectsTab } from "@/components/admin/AdminProjectsTab"
 import { AdminSystemsTab } from "@/components/admin/AdminSystemsTab"
+import { AdminScanTab } from "@/components/admin/AdminScanTab"
 
-type AdminTab = "users" | "roles" | "access" | "projects" | "systems"
+type AdminTab = "users" | "roles" | "access" | "projects" | "systems" | "scan"
 const ADMIN_TABS: { value: AdminTab; label: string; icon: typeof Users }[] = [
   { value: "users", label: "Users", icon: Users },
   { value: "roles", label: "Roles", icon: ShieldCheck },
   { value: "access", label: "Access", icon: KeyRound },
   { value: "projects", label: "Projects", icon: FolderOpen },
   { value: "systems", label: "Systems", icon: Boxes },
+  { value: "scan", label: "Scan", icon: ScanLine },
 ]
 
 export default function AdminPage() {
@@ -59,6 +61,7 @@ export default function AdminPage() {
         <TabsContent value="access" className="mt-4"><AdminAccessTab /></TabsContent>
         <TabsContent value="projects" className="mt-4"><AdminProjectsTab /></TabsContent>
         <TabsContent value="systems" className="mt-4"><AdminSystemsTab /></TabsContent>
+        <TabsContent value="scan" className="mt-4"><AdminScanTab /></TabsContent>
       </Tabs>
     </div>
   )

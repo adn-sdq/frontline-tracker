@@ -21,6 +21,7 @@ import UpdatesPage from "@/pages/UpdatesPage"
 import SlaPage from "@/pages/SlaPage"
 import SlaContractPage from "@/pages/SlaContractPage"
 import LegalPage from "@/pages/LegalPage"
+import OAuthConsentPage from "@/pages/OAuthConsentPage"
 import NotFoundPage from "@/pages/NotFoundPage"
 import { AppLayout } from "@/components/AppLayout"
 
@@ -216,6 +217,7 @@ export default function App() {
       <Route path="/changelog" element={<ChangelogPage />} />
       <Route path="/docs" element={<DocsPage />} />
       <Route path="/legal" element={<LegalPage />} />
+      <Route path="/oauth/consent" element={<OAuthConsentPage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )

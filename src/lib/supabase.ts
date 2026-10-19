@@ -11,10 +11,8 @@ if (!url || !anonKey) {
   )
 }
 
-// Usernames are mapped to a synthetic email so users sign in with just a name.
-export const EMAIL_DOMAIN = "ilmi.local"
-export const usernameToEmail = (username: string) =>
-  `${username.trim().toLowerCase()}@${EMAIL_DOMAIN}`
+// Accounts are work emails (see src/lib/email.ts); sign-in accepts the username part.
+export { signInEmail as usernameToEmail } from "@/lib/email"
 
 export const supabase = createClient(url ?? "", anonKey ?? "", {
   auth: {

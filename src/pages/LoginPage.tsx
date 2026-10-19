@@ -72,7 +72,7 @@ export default function LoginPage() {
             <form onSubmit={onSubmit} className="space-y-3">
               <Input
                 id="username-m"
-                placeholder="Username"
+                placeholder="Work email or username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -167,7 +167,7 @@ export default function LoginPage() {
                 <div className="space-y-1.5">
                   <Input
                     id="username"
-                    placeholder="Username"
+                    placeholder="Work email or username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     autoComplete="username"

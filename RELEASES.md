@@ -2,6 +2,31 @@
 
 ---
 
+## v2.22.0 — 2026-10-19
+
+Work-email accounts, an installable app, a read-only Claude connector, and the logo now takes you home.
+
+Migrations `0029_frontline_emails.sql` (moves logins to @frontline.sa) and `0030_oauth_clients_read_only.sql` (connector tokens can't write). Edge functions: `admin-users` redeployed, new `fit-mcp`.
+
+### Accounts
+- Accounts are @frontline.sa work emails (mandatory); the allowed domains are one list in `src/lib/email.ts` and the `admin-users` function, so client domains can be added later
+- Sign in with the full email or the name before the @
+- Admins can change a work email from the profile
+
+### Install & scanning
+- PWA: manifest, icons and a minimal service worker (production only)
+- Scanning moved to Admin Console → Scan
+
+### Claude connector
+- Hosted read-only MCP server (`supabase/functions/fit-mcp`) using Supabase's OAuth 2.1 server, approval page at `/oauth/consent` (plus `404.html` for GitHub Pages)
+- Local stdio version in `mcp/` for Claude Desktop / Claude Code; both share the same five tools
+- Setup steps: `docs/mcp-setup.md`
+
+### Navigation
+- Logo links to the Home Page (all projects)
+
+---
+
 ## v2.21.0 — 2026-10-18
 
 SKUs and QR labels for every item, an in-app scanner, a cleaner tracker list, and a fix for saving PO/VO documents.

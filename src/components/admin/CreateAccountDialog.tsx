@@ -14,6 +14,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import { WorkEmailInput } from "@/components/admin/WorkEmailInput"
+import { parseWorkEmail } from "@/lib/email"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -71,9 +73,10 @@ export function CreateAccountDialog({ open, onOpenChange }: { open: boolean; onO
     setF((s) => ({ ...s, [k]: e.target.value }))
 
   async function submit() {
-    const username = f.username.trim().toLowerCase()
-    if (!username || !password.trim()) return toast.error("Username and password are required")
-    if (!/^[a-z0-9._-]+$/.test(username)) return toast.error("Username: letters, numbers, dot, dash and underscore only")
+    const parsed = parseWorkEmail(f.username)
+    if ("error" in parsed) return toast.error(parsed.error)
+    const { username, email } = parsed
+    if (!password.trim()) return toast.error("Password is required")
     if (password.length < 8) return toast.error("Password must be at least 8 characters")
     try {
       const res = await create.mutateAsync({
@@ -85,13 +88,13 @@ export function CreateAccountDialog({ open, onOpenChange }: { open: boolean; onO
         job_title: f.jobTitle,
         department: f.department,
         phone: f.phone,
-        contact_email: f.email,
+        contact_email: email,
       })
       if (!isAdminRole && res?.id) {
         for (const projectId of projectIds) await assign.mutateAsync({ projectId, userId: res.id })
       }
-      toast.success(`Account "${username}" created`, {
-        description: "Share the username and password with them securely.",
+      toast.success(`Account ${email} created`, {
+        description: "Share the email and password with them securely.",
       })
       onOpenChange(false)
     } catch (e) {
@@ -106,13 +109,13 @@ export function CreateAccountDialog({ open, onOpenChange }: { open: boolean; onO
       <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Add account</DialogTitle>
-          <DialogDescription>They sign in with this username and password — no email needed.</DialogDescription>
+          <DialogDescription>They sign in with their work email (or just the part before @) and this password.</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-1.5">
-            <Label className="text-xs text-muted-foreground">Username *</Label>
-            <Input autoFocus value={f.username} onChange={set("username")} placeholder="e.g. khalid" autoCapitalize="none" />
+            <Label className="text-xs text-muted-foreground">Work email *</Label>
+            <WorkEmailInput autoFocus value={f.username} onChange={(v) => setF((s) => ({ ...s, username: v }))} />
           </div>
           <div className="grid gap-1.5">
             <Label className="text-xs text-muted-foreground">Full name</Label>
@@ -171,10 +174,6 @@ export function CreateAccountDialog({ open, onOpenChange }: { open: boolean; onO
           <div className="grid gap-1.5">
             <Label className="text-xs text-muted-foreground">Phone</Label>
             <Input type="tel" value={f.phone} onChange={set("phone")} />
-          </div>
-          <div className="grid gap-1.5">
-            <Label className="text-xs text-muted-foreground">Contact email</Label>
-            <Input type="email" value={f.email} onChange={set("email")} />
           </div>
         </div>
 
