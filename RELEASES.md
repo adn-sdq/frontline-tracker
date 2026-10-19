@@ -2,6 +2,15 @@
 
 ---
 
+## v2.22.1 — 2026-10-19
+
+Fixes the Claude connector sign-in link when it arrives with a double slash.
+
+### Fixes
+- `public/404.html` now ignores extra slashes, so `…/frontline-tracker//oauth/consent?authorization_id=…` (Site URL with a trailing slash + the `/oauth/consent` path) opens the approval page instead of the home page
+
+---
+
 ## v2.22.0 — 2026-10-19
 
 Work-email accounts, an installable app, a read-only Claude connector, and the logo now takes you home.

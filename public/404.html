@@ -9,9 +9,10 @@
       // turned into the matching #/ route. Anything else goes to the app home.
       var base = "/frontline-tracker/"
       var path = location.pathname
-      var rest = path.indexOf(base) === 0 ? path.slice(base.length) : ""
+      // Tolerate stray slashes: Supabase joins "<Site URL>/" + "/oauth/consent" into "//oauth/consent".
+      var rest = path.indexOf(base) === 0 ? path.slice(base.length).replace(/^\/+/, "") : ""
       if (rest.indexOf("oauth/") === 0) {
-        location.replace(base + "#/" + rest.replace(/\/$/, "") + location.search + location.hash)
+        location.replace(base + "#/" + rest.replace(/\/+$/, "") + location.search + location.hash)
       } else {
         location.replace(base)
       }
