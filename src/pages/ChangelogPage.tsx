@@ -17,6 +17,18 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.22.1",
+    date: "2026-10-19",
+    type: "patch",
+    summary: "Fixes the Claude connector sign-in link when it arrives with a double slash.",
+    sections: [
+      {
+        title: "Fixes",
+        items: ["The Claude connector approval page now opens correctly even if the sign-in link contains an extra slash (…//oauth/consent)"],
+      },
+    ],
+  },
+  {
     version: "v2.22.0",
     date: "2026-10-19",
     type: "minor",
