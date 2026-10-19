@@ -1,3 +1,5 @@
+import { WorkEmailInput } from "@/components/admin/WorkEmailInput"
+import { PRIMARY_EMAIL_DOMAIN, parseWorkEmail } from "@/lib/email"
 import { useState } from "react"
 import { format } from "date-fns"
 import { Ban, KeyRound, Loader2, RotateCcw, Trash2, UserPen } from "lucide-react"
@@ -59,12 +61,13 @@ export function ProfileSecurityTab({
   }
 
   async function changeUsername() {
-    const next = username.trim().toLowerCase()
-    if (!next || next === profile.username) return
-    if (!/^[a-z0-9._-]+$/.test(next)) {
-      return toast.error("Username: letters, numbers, dot, dash and underscore only")
-    }
-    await withToast(() => updateDetails.mutateAsync({ id: profile.id, username: next }), "Username changed — they sign in with the new one")
+    const parsed = parseWorkEmail(username)
+    if ("error" in parsed) return toast.error(parsed.error)
+    if (parsed.username === profile.username) return
+    await withToast(
+      () => updateDetails.mutateAsync({ id: profile.id, username: parsed.username }),
+      `Email changed — they now sign in as ${parsed.email}`
+    )
   }
 
   async function toggleSuspend() {
@@ -136,8 +139,8 @@ export function ProfileSecurityTab({
       <div>
         <SectionTitle>Sign-in</SectionTitle>
         <dl className="mb-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[8.5rem_1fr]">
-          <dt className="text-muted-foreground">Username</dt>
-          <dd className="font-mono">@{profile.username}</dd>
+          <dt className="text-muted-foreground">Work email</dt>
+          <dd className="font-mono">{profile.username}@{PRIMARY_EMAIL_DOMAIN}</dd>
           <dt className="text-muted-foreground">Member since</dt>
           <dd>{format(new Date(profile.created_at), "d MMM yyyy")}</dd>
           {profile.updated_at && (
@@ -151,8 +154,8 @@ export function ProfileSecurityTab({
         {perms.viewerAdmin && (
           <div className="mb-3 flex flex-wrap items-end gap-2">
             <div className="grid min-w-48 flex-1 gap-1.5">
-              <Label className="text-xs text-muted-foreground">Change username</Label>
-              <Input value={username} onChange={(e) => setUsername(e.target.value)} autoCapitalize="none" />
+              <Label className="text-xs text-muted-foreground">Change work email</Label>
+              <WorkEmailInput value={username} onChange={setUsername} />
             </div>
             <Button
               variant="outline"
@@ -160,7 +163,7 @@ export function ProfileSecurityTab({
               disabled={updateDetails.isPending || !username.trim() || username.trim().toLowerCase() === profile.username}
             >
               {updateDetails.isPending ? <Loader2 className="size-4 animate-spin" /> : <UserPen className="size-4" />}
-              Rename
+              Save
             </Button>
           </div>
         )}

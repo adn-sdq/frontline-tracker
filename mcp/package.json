@@ -1,0 +1,17 @@
+{
+  "name": "fit-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Read-only MCP server for FIT (Frontline Internal Tools)",
+  "type": "module",
+  "bin": {
+    "fit-mcp": "server.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0"
+  }
+}

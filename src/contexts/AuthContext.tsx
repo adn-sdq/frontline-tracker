@@ -154,10 +154,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       refetchProfile,
       signIn: async (username, password) => {
-        const { error } = await supabase.auth.signInWithPassword({
+        let { error } = await supabase.auth.signInWithPassword({
           email: usernameToEmail(username),
           password,
         })
+        // Accounts created before the @frontline.sa switch (0029) used a synthetic
+        // @ilmi.local address — try it once so nobody is locked out mid-migration.
+        if (error && !username.includes("@")) {
+          ;({ error } = await supabase.auth.signInWithPassword({
+            email: `${username.trim().toLowerCase()}@ilmi.local`,
+            password,
+          }))
+        }
         if (error) throw error
       },
       signOut: async () => {

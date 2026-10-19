@@ -7,7 +7,6 @@ import {
   MoreHorizontal,
   Plus,
   QrCode,
-  ScanLine,
   Search,
   Truck,
   Upload,
@@ -52,7 +51,6 @@ import { ItemsCards, ItemsCardsSkeleton } from "@/components/ItemsCards"
 import { ItemDialog } from "@/components/ItemDialog"
 import { ItemDetailSheet } from "@/components/ItemDetailSheet"
 import { ItemLabelsDialog } from "@/components/ItemLabelsDialog"
-import { ScanDialog } from "@/components/scan/ScanDialog"
 import { DeliveryNoteDialog } from "@/components/DeliveryNoteDialog"
 import { HistoryDrawer } from "@/components/HistoryDrawer"
 import { ImportDialog } from "@/components/ImportDialog"
@@ -119,7 +117,6 @@ export default function TrackerPage() {
   const [importOpen, setImportOpen] = useState(false)
   const [deleteItem, setDeleteItem] = useState<Item | null>(null)
   const [labelItems, setLabelItems] = useState<Item[]>([])
-  const [scanOpen, setScanOpen] = useState(false)
 
   // Delivery-note cart + mode
   const [dnMode, setDnMode] = useState(false)
@@ -399,8 +396,6 @@ export default function TrackerPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <ActionButton icon={ScanLine} label="Scan" onClick={() => setScanOpen(true)} />
-
           {/* Delivery-note mode toggle */}
           {editable && <ActionButton
             icon={Truck}
@@ -518,7 +513,6 @@ export default function TrackerPage() {
       />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
       <ItemLabelsDialog items={labelItems} onClose={() => setLabelItems([])} />
-      <ScanDialog open={scanOpen} onOpenChange={setScanOpen} />
       <DeliveryNoteDialog
         open={dnOpen}
         onOpenChange={setDnOpen}

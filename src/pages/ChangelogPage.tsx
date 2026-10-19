@@ -17,6 +17,41 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.22.0",
+    date: "2026-10-19",
+    type: "minor",
+    summary: "Work-email accounts, an installable app, a read-only Claude connector, and the logo now takes you home.",
+    sections: [
+      {
+        title: "Accounts",
+        items: [
+          "Every account is now a @frontline.sa work email, and it's mandatory. Adding an account takes the name before the @; any other domain is refused. Admins can change someone's work email in their profile",
+          "Sign in with your full work email or just the name before the @",
+          "Existing logins moved from @ilmi.local to @frontline.sa — same passwords",
+        ],
+      },
+      {
+        title: "Install & scanning",
+        items: [
+          "FIT can be installed like an app (Add to Home Screen on a phone, Install on a laptop) and opens full-screen with its own icon",
+          "Scanning now lives in Admin Console → Scan only, and is no longer on the tracker",
+        ],
+      },
+      {
+        title: "Claude connector (read-only)",
+        items: [
+          "Connect Claude to FIT and ask about projects, items, units and documents. It sees only what you can already see, and it can't change anything",
+          "claude.ai: add a custom connector with FIT's connector address and approve it on FIT's sign-in page. Claude Desktop and Claude Code can use the local version in the mcp folder",
+          "Tools: list projects, search items, find a unit by SKU / tag / serial, list documents, project summary",
+        ],
+      },
+      {
+        title: "Navigation",
+        items: ["The FIT logo in the sidebar and page headers now takes you to the Home Page (all projects)"],
+      },
+    ],
+  },
+  {
     version: "v2.21.0",
     date: "2026-10-18",
     type: "minor",
@@ -1443,10 +1478,10 @@ export default function ChangelogPage() {
             <ArrowLeft className="size-4" />
             Back
           </Link>
-          <div className="flex items-center gap-2">
+          <Link to="/projects" aria-label="Home" className="flex items-center gap-2 transition-opacity hover:opacity-80">
             <FitLogo size={28} />
             <span className="text-sm font-semibold">FIT</span>
-          </div>
+          </Link>
         </div>
       </header>
 
