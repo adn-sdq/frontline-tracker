@@ -15,6 +15,8 @@ import {
   MoreHorizontal,
   Package,
   Pencil,
+  Pin,
+  PinOff,
   Phone,
   Plus,
   Search,
@@ -70,6 +72,7 @@ function ProjectCard({
   onToggleActive,
   onView,
   onOpenWorkspace,
+  onTogglePin,
 }: {
   project: Project
   systems: string[]
@@ -78,6 +81,7 @@ function ProjectCard({
   onToggleActive: () => void
   onView: () => void
   onOpenWorkspace: () => void
+  onTogglePin: () => void
 }) {
   const { data: stats } = useProjectStats(p.id)
   const { labelFor } = useSystems()
@@ -117,6 +121,7 @@ function ProjectCard({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
                 <h3 className="truncate font-semibold">{p.name}</h3>
+                {p.pinned_at && <Pin className="size-3.5 shrink-0 fill-current text-primary" aria-label="Pinned" />}
                 {p.code && <Badge variant="outline" className="px-1.5 py-0 font-mono text-[10px]" title="SKU abbreviation">{p.code}</Badge>}
                 <Badge
                   className={cn(
@@ -146,6 +151,9 @@ function ProjectCard({
               <DropdownMenuItem onClick={onView}><Maximize2 className="size-4" /> View full screen</DropdownMenuItem>
               <DropdownMenuItem onClick={onOpenWorkspace}><ArrowRight className="size-4" /> Open workspace</DropdownMenuItem>
               <DropdownMenuItem onClick={onEdit}><Pencil className="size-4" /> Edit details</DropdownMenuItem>
+              <DropdownMenuItem onClick={onTogglePin}>
+                {p.pinned_at ? <><PinOff className="size-4" /> Unpin from home</> : <><Pin className="size-4" /> Pin to home</>}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onToggleActive}>
                 {p.active ? <><Archive className="size-4" /> Archive</> : <><ArchiveRestore className="size-4" /> Restore</>}
@@ -264,6 +272,20 @@ export function AdminProjectsTab() {
     navigate("/")
   }
 
+  const pinnedCount = projects.filter((p) => p.pinned_at).length
+
+  async function togglePin(p: Project) {
+    if (!p.pinned_at && pinnedCount >= 5) {
+      return toast.error("You can pin up to 5 projects", { description: "Unpin one first." })
+    }
+    try {
+      await update.mutateAsync({ id: p.id, patch: { pinned_at: p.pinned_at ? null : new Date().toISOString() } })
+      toast.success(p.pinned_at ? "Unpinned from the home page" : "Pinned to the top of the home page")
+    } catch (e) {
+      toast.error("Could not update", { description: errorMessage(e) })
+    }
+  }
+
   async function toggleActive(p: Project) {
     if (p.active) {
       const ok = await confirm({
@@ -331,6 +353,7 @@ export function AdminProjectsTab() {
               onToggleActive={() => toggleActive(p)}
               onView={() => setViewId(p.id)}
               onOpenWorkspace={() => openWorkspace(p.id)}
+              onTogglePin={() => togglePin(p)}
             />
           ))}
         </div>

@@ -259,8 +259,10 @@ export function DeliveryNoteDialog({
                 {people.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     <UserAvatar name={displayName(p)} src={p.avatar_url} seed={p.id} className="size-5" fallbackClassName="text-[8px]" />
-                    {displayName(p)}
-                    {p.job_title && <span className="text-muted-foreground">· {p.job_title}</span>}
+                    <span className="max-w-56 truncate">
+                      {displayName(p)}
+                      {p.job_title && <span className="text-muted-foreground"> · {p.job_title}</span>}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -175,7 +175,7 @@ export function ProfileDialog({ profile: initial, open, onClose, defaultTab = "o
               )}
 
               <div className="w-full">
-                <p className="text-base font-semibold">{name}</p>
+                <p className="text-base font-semibold break-words">{name}</p>
                 <p className="font-mono text-xs text-muted-foreground">@{p.username}</p>
                 {p.job_title && <p className="mt-1 text-sm">{p.job_title}</p>}
                 <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">

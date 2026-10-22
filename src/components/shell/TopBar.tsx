@@ -1,17 +1,22 @@
 import { useEffect, useState } from "react"
-import { Menu, Search } from "lucide-react"
+import { PanelLeft, Search } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { SidebarContent } from "@/components/shell/AppSidebar"
+import { Breadcrumbs } from "@/components/shell/Breadcrumbs"
 import { CommandPalette } from "@/components/shell/CommandPalette"
+import { useShell } from "@/contexts/ShellContext"
 
+/**
+ * One row, three jobs, by how often they're used:
+ *   left   — sidebar toggle + where you are (breadcrumb; the project crumb switches project)
+ *   centre — search / jump (⌘K), compact so it doesn't compete with the page
+ *   right  — this page's own actions (Create lives in the sidebar's Quick actions)
+ */
 export function TopBar({
   actionsContainerRef,
 }: {
   actionsContainerRef?: ((el: HTMLDivElement | null) => void) | null
 }) {
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const { toggleSidebar } = useShell()
   const [paletteOpen, setPaletteOpen] = useState(false)
 
   useEffect(() => {
@@ -27,40 +32,37 @@ export function TopBar({
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-background px-3 md:px-4">
-        {/* Left group grows to fill, keeping the search a fixed max width so it
-            never resizes as page actions change on the right. */}
-        <div className="flex flex-1 items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8 md:hidden"
-            onClick={() => setMobileOpen(true)}
-          >
-            <Menu className="size-5" />
-          </Button>
-
+      <header className="grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-3 md:px-5">
+        <div className="flex min-w-0 items-center gap-2">
           <button
             type="button"
-            onClick={() => setPaletteOpen(true)}
-            className="flex h-9 w-full max-w-md items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm text-muted-foreground transition-colors hover:border-primary-hover"
+            onClick={toggleSidebar}
+            aria-label="Toggle sidebar"
+            title="Toggle sidebar"
+            className="grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <Search className="size-4 shrink-0" />
-            <span className="flex-1 truncate text-left">Search pages, projects…</span>
-            <span className="hidden text-xs text-muted-foreground sm:inline">⌘ K</span>
+            <PanelLeft className="size-4.5" />
           </button>
+          <span className="hidden h-5 w-px shrink-0 bg-border sm:block" />
+          <Breadcrumbs />
         </div>
 
-        {/* Page-specific action buttons, injected per-page via <PageActions> portal */}
-        <div ref={actionsContainerRef} className="flex shrink-0 items-center gap-1.5" />
-      </header>
+        <button
+          type="button"
+          onClick={() => setPaletteOpen(true)}
+          aria-label="Search"
+          className="flex h-8 items-center gap-2 rounded-lg border border-input bg-background px-2.5 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground md:w-64 lg:w-80"
+        >
+          <Search className="size-4 shrink-0" />
+          <span className="hidden flex-1 text-left md:inline">Search or jump to…</span>
+          <kbd className="hidden rounded border bg-muted px-1.5 font-sans text-[10px] lg:inline">⌘K</kbd>
+        </button>
 
-      {/* Mobile nav sheet */}
-      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-64 p-0">
-          <SidebarContent onNavigate={() => setMobileOpen(false)} />
-        </SheetContent>
-      </Sheet>
+        <div className="flex min-w-0 items-center justify-end gap-1.5">
+          {/* Page-specific actions, injected per page via <PageActions> */}
+          <div ref={actionsContainerRef} className="flex min-w-0 items-center gap-1.5" />
+        </div>
+      </header>
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </>

@@ -2,6 +2,11 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
   ArrowRight,
+  ChevronDown,
+  Zap,
+  BarChart3,
+  Pin,
+  Truck,
   Building2,
   ClipboardList,
   FileText,
@@ -23,13 +28,22 @@ import { useAllProfiles } from "@/hooks/useAdmin"
 import { useProjectSystemKeys } from "@/hooks/useSystems"
 import { useSystems } from "@/hooks/useSystems"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useHoverMenu } from "@/hooks/useHoverMenu"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { FitLogo } from "@/components/FitLogo"
 import { ProjectLogo } from "@/components/ProjectLogo"
 import { Skeleton } from "@/components/ui/skeleton"
 import { FullPageLoader, useMinDelay } from "@/components/shell/PageGate"
-import type { Project } from "@/lib/types"
+import type { AppPage, Project } from "@/lib/types"
 
 function greeting() {
   const h = new Date().getHours()
@@ -57,12 +71,14 @@ function StatCell({ value, label, icon: Icon }: { value: number | undefined; lab
 function ProjectDetail({
   project,
   onOpen,
+  onGo,
   isAdmin,
   profiles,
   memberships,
 }: {
   project: Project
   onOpen: () => void
+  onGo: (to: string) => void
   isAdmin: boolean
   profiles: ReturnType<typeof useAllProfiles>["data"]
   memberships: ReturnType<typeof useAllProjectMembers>["data"]
@@ -85,7 +101,7 @@ function ProjectDetail({
           <ProjectLogo project={project} size={52} />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-semibold tracking-tight">{project.name}</h2>
+              <h2 className="line-clamp-2 min-w-0 text-xl font-semibold tracking-tight break-words">{project.name}</h2>
               {!project.active && (
                 <Badge variant="secondary">Inactive</Badge>
               )}
@@ -96,6 +112,7 @@ function ProjectDetail({
           </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <QuickActions onGo={onGo} />
             <Button size="sm" onClick={onOpen}>
               Open project <ArrowRight className="size-4" />
             </Button>
@@ -208,6 +225,58 @@ function ProjectDetail({
   )
 }
 
+// ── Quick actions for the selected project (hover to see them) ──────────────
+function QuickActions({ onGo }: { onGo: (to: string) => void }) {
+  const { pageAccess, canEdit } = useAuth()
+  const { open, setOpen, hoverProps } = useHoverMenu()
+  const can = (p: AppPage) => pageAccess(p) !== "none"
+  const groups = [
+    {
+      label: "Create",
+      items: [
+        { show: canEdit("tracker"), to: "/?new=1", icon: Plus, label: "Procurement item" },
+        { show: canEdit("tracker"), to: "/delivery-notes?new=1", icon: Truck, label: "Delivery note" },
+        { show: canEdit("documents"), to: "/documents?new=1", icon: FileText, label: "Document" },
+        { show: can("tickets"), to: "/tickets?new=1", icon: TicketIcon, label: "Ticket" },
+      ],
+    },
+    {
+      label: "Go to",
+      items: [
+        { show: can("tracker"), to: "/", icon: Package, label: "Procurement" },
+        { show: can("tracker"), to: "/delivery-notes", icon: ClipboardList, label: "Delivery notes" },
+        { show: can("documents"), to: "/documents", icon: FileText, label: "Documentation" },
+        { show: can("dashboard"), to: "/dashboard", icon: BarChart3, label: "Dashboard" },
+      ],
+    },
+  ]
+    .map((g) => ({ ...g, items: g.items.filter((i) => i.show) }))
+    .filter((g) => g.items.length)
+  if (!groups.length) return null
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+      <DropdownMenuTrigger asChild {...hoverProps}>
+        <Button variant="outline" size="sm" className="h-8">
+          <Zap className="size-3.5" /> Quick actions <ChevronDown className="size-3.5 text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56" {...hoverProps}>
+        {groups.map((g, gi) => (
+          <div key={g.label}>
+            {gi > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuLabel className="text-[11px] font-normal text-muted-foreground">{g.label}</DropdownMenuLabel>
+            {g.items.map((i) => (
+              <DropdownMenuItem key={i.label} onClick={() => onGo(i.to)}>
+                <i.icon className="size-4" /> {i.label}
+              </DropdownMenuItem>
+            ))}
+          </div>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
 // ── Compact project row in the left list ────────────────────────────────────
 function ProjectRow({
   project,
@@ -262,9 +331,20 @@ export default function ProjectsPage() {
 
   // For display: admins see all projects, members see assigned projects
   const displayProjects = isAdmin ? allProjects : projects
-  // Always show a project on the right so the layout never jumps.
-  const selectedProject = displayProjects.find((p) => p.id === pickedId) ?? displayProjects[0] ?? null
+  // Nothing selected until you pick one; clicking the selected project again clears it.
+  // The panes have a fixed height, so selecting or clearing never shifts the layout.
+  const selectedProject = displayProjects.find((p) => p.id === pickedId) ?? null
   const selectedId = selectedProject?.id ?? null
+  // Admin-pinned projects (max 5) sit at the top, in the order they were pinned.
+  const pinned = displayProjects
+    .filter((p) => p.pinned_at)
+    .sort((a, b) => (a.pinned_at ?? "").localeCompare(b.pinned_at ?? ""))
+  const unpinned = displayProjects.filter((p) => !p.pinned_at)
+
+  function go(projectId: string, to: string) {
+    setCurrentProject(projectId)
+    navigate(to)
+  }
 
   function open(id: string) {
     setCurrentProject(id)
@@ -277,20 +357,20 @@ export default function ProjectsPage() {
     <div className="flex min-h-svh flex-col bg-background">
       {/* Top bar */}
       <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center border-b bg-background/95 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-5">
-          <Link to="/projects" aria-label="Home" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-5">
+          <Link to="/projects" aria-label="Home" className="flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-80">
             <FitLogo size={28} />
             <div className="leading-tight">
               <div className="text-sm font-semibold">FIT</div>
-              <div className="text-[10px] text-muted-foreground">Frontline Internal Tools</div>
+              <div className="hidden text-[10px] text-muted-foreground sm:block">Frontline Internal Tools</div>
             </div>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
             {profile && (
-              <div className="flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1">
-                <UserCircle className="size-4 text-muted-foreground" />
-                <span className="text-xs font-medium">{name}</span>
-                <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
+              <div className="flex min-w-0 items-center gap-2 rounded-full border bg-muted/40 px-2.5 py-1 sm:px-3">
+                <UserCircle className="size-4 shrink-0 text-muted-foreground" />
+                <span className="min-w-0 truncate text-xs font-medium">{name}</span>
+                <Badge variant="secondary" className="h-4 max-w-24 shrink-0 truncate px-1.5 text-[10px]">
                   {profile.is_admin ? "Admin" : accessRole?.name ?? "No access"}
                 </Badge>
               </div>
@@ -298,10 +378,11 @@ export default function ProjectsPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground"
+              className="shrink-0 px-2 text-muted-foreground sm:px-3"
               onClick={() => void signOut()}
+              aria-label="Sign out"
             >
-              <LogOut className="size-4" /> Sign out
+              <LogOut className="size-4" /> <span className="hidden sm:inline">Sign out</span>
             </Button>
           </div>
         </div>
@@ -362,23 +443,33 @@ export default function ProjectsPage() {
                 </span>
               </div>
               <div className="flex max-h-80 flex-col gap-1 overflow-y-auto p-2 lg:max-h-none lg:flex-1">
-                {displayProjects.map((p) => (
-                  <ProjectRow
-                    key={p.id}
-                    project={p}
-                    selected={selectedId === p.id}
-                    onClick={() => setPickedId(p.id)}
-                  />
+                {pinned.length > 0 && (
+                  <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    <Pin className="size-3" /> Pinned
+                  </div>
+                )}
+                {[...pinned, ...unpinned].map((p, i) => (
+                  <div key={p.id}>
+                    {pinned.length > 0 && i === pinned.length && (
+                      <div className="px-2 pt-2 pb-0.5 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">All projects</div>
+                    )}
+                    <ProjectRow
+                      project={p}
+                      selected={selectedId === p.id}
+                      onClick={() => setPickedId(p.id === pickedId ? null : p.id)}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
 
             {/* Right pane — detail or empty state */}
-            <div className="min-w-0 rounded-xl border lg:min-h-0 lg:flex-1 lg:rounded-none lg:border-0">
+            <div className={`min-w-0 rounded-xl border lg:block lg:min-h-0 lg:flex-1 lg:rounded-none lg:border-0 ${selectedProject ? "" : "hidden"}`}>
               {selectedProject ? (
                 <ProjectDetail
                   project={selectedProject}
                   onOpen={() => open(selectedProject.id)}
+                  onGo={(to) => go(selectedProject.id, to)}
                   isAdmin={isAdmin}
                   profiles={profiles}
                   memberships={memberships}
@@ -387,6 +478,7 @@ export default function ProjectsPage() {
                 <div className="flex h-full min-h-48 flex-col items-center justify-center gap-2 text-center text-muted-foreground">
                   <FolderOpen className="size-8 opacity-30" />
                   <p className="text-sm">Select a project to see details</p>
+                  <p className="text-xs">Click it again to clear the selection.</p>
                 </div>
               )}
             </div>

@@ -10,6 +10,9 @@ import { ProjectProvider } from "@/contexts/ProjectContext"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ConfirmProvider } from "@/components/ui/confirm-dialog"
+import { applySavedTheme } from "@/hooks/useTheme"
+
+applySavedTheme()
 
 const queryClient = new QueryClient({
   defaultOptions: {

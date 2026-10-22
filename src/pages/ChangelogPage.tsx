@@ -17,6 +17,54 @@ export interface ReleaseEntry {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    version: "v2.23.0",
+    date: "2026-10-22",
+    type: "minor",
+    summary: "New layout and navigation, a full item page with in-place editing, smarter tables, a real dashboard, pinned projects and redesigned QR labels.",
+    sections: [
+      {
+        title: "Layout & navigation",
+        items: [
+          "Rounded sidebar that collapses to icons; the top bar shows where you are (the project crumb switches project) with search in the centre",
+          "Sections renamed: Logistics (Procurement, Delivery Notes, Technicians) and Operations (Documentation, Tickets, SLA)",
+          "Quick actions at the top of the sidebar: create items, delivery notes, documents or tickets, or jump to all projects — opens on hover",
+          "Feedback and Settings sit above your profile. Settings has Appearance (light/dark/device), Navigation, Connected accounts and more to come",
+        ],
+      },
+      {
+        title: "Procurement",
+        items: [
+          "Clicking an item opens its own full page; Edit works right on that page — no popup",
+          "Hover an item's name for a quick card with quantities, progress, supplier, ETA and more",
+          "One Filter button with multi-select for status, brand and model; Import, Export, QR labels and Columns live in the ⋯ menu",
+          "Description is an optional column; Last updated is hidden by default",
+        ],
+      },
+      {
+        title: "Tables everywhere",
+        items: [
+          "Procurement, Documentation, Users, Technicians and SLA contracts: sort any column, show/hide columns, select rows for bulk delete, and a ⋯ menu per row for view, edit and delete",
+          "Long names now shorten neatly instead of overflowing",
+        ],
+      },
+      {
+        title: "Home, dashboard & delivery notes",
+        items: [
+          "Admins can pin up to 5 projects to the top of the home page; Quick actions on the selected project",
+          "Dashboard with charts: all projects at a glance, or one project with a focusable per-system view",
+          "Clicking a delivery note opens its details, items and files",
+        ],
+      },
+      {
+        title: "QR labels",
+        items: [
+          "Rounded black-and-white labels with project, system, SKU, model, description, serial and unit, plus proper print margins",
+          "QR with the FIT mark opens the unit's tracking page — sign-in required, and only project members can see it",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.22.1",
     date: "2026-10-19",
     type: "patch",

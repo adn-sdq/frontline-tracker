@@ -155,6 +155,8 @@ export interface Project {
   logo_url?:     string | null
   /** Short abbreviation used in SKUs (e.g. "MP"). */
   code?:         string
+  /** Set when an admin pins it to the top of the home page (max 5). */
+  pinned_at?:    string | null
 }
 
 export interface ProjectMember {

@@ -292,7 +292,7 @@ export function TicketDialog({ open, onOpenChange, ticket }: Props) {
                   <SelectItem value="__none__">— Unassigned —</SelectItem>
                   {profiles.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.full_name ?? p.username ?? p.id}
+                      <span className="block max-w-64 truncate">{p.full_name ?? p.username ?? p.id}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>

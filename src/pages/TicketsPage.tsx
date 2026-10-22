@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react"
+import { useOpenOnNew } from "@/hooks/useOpenOnNew"
 import { useAuth } from "@/contexts/AuthContext"
 import {
   Plus,
@@ -67,6 +68,7 @@ export default function TicketsPage() {
   const [categoryFilter, setCategoryFilter] = useState<TicketCategory | "ALL">("ALL")
 
   const [dialogOpen, setDialogOpen] = useState(false)
+  useOpenOnNew(() => setDialogOpen(true))
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
 

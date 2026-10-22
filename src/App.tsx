@@ -1,5 +1,5 @@
-import type { ReactNode } from "react"
-import { Navigate, Route, Routes } from "react-router-dom"
+import { lazy, Suspense, type ReactNode } from "react"
+import { Navigate, Route, Routes, useLocation } from "react-router-dom"
 import { FullPageLoader } from "@/components/shell/PageGate"
 
 import { useAuth } from "@/contexts/AuthContext"
@@ -9,7 +9,6 @@ import type { AppPage } from "@/lib/types"
 import LoginPage from "@/pages/LoginPage"
 import TrackerPage from "@/pages/TrackerPage"
 import DocumentsPage from "@/pages/DocumentsPage"
-import DashboardPage from "@/pages/DashboardPage"
 import ProjectsPage from "@/pages/ProjectsPage"
 import AdminPage from "@/pages/AdminPage"
 import DeliveryNotesPage from "@/pages/DeliveryNotesPage"
@@ -22,14 +21,35 @@ import SlaPage from "@/pages/SlaPage"
 import SlaContractPage from "@/pages/SlaContractPage"
 import LegalPage from "@/pages/LegalPage"
 import OAuthConsentPage from "@/pages/OAuthConsentPage"
+import TrackPage from "@/pages/TrackPage"
+import ItemPage from "@/pages/ItemPage"
+import { clearReturnTo, peekReturnTo, rememberReturnTo } from "@/lib/returnTo"
 import NotFoundPage from "@/pages/NotFoundPage"
 import { AppLayout } from "@/components/AppLayout"
+
+// Charts are heavy; load the dashboard only when it is opened.
+const DashboardPage = lazy(() => import("@/pages/DashboardPage"))
 
 function FullScreen({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-svh items-center justify-center bg-background">
       {children}
     </div>
+  )
+}
+
+function TrackRoute({ session, canTrack, home }: { session: boolean; canTrack: boolean; home: string }) {
+  const location = useLocation()
+  if (!session) {
+    rememberReturnTo(location.pathname)
+    return <Navigate to="/login" replace />
+  }
+  clearReturnTo()
+  if (!canTrack) return <Navigate to={home} replace />
+  return (
+    <AppLayout>
+      <TrackPage />
+    </AppLayout>
   )
 }
 
@@ -89,7 +109,7 @@ export default function App() {
     <Routes>
       <Route
         path="/login"
-        element={session ? <Navigate to={homeRedirect} replace /> : <LoginPage />}
+        element={session ? <Navigate to={peekReturnTo() ?? homeRedirect} replace /> : <LoginPage />}
       />
       <Route
         path="/projects"
@@ -126,7 +146,7 @@ export default function App() {
             <Navigate to={pageRedirect} replace />
           ) : (
             <AppLayout>
-              <DashboardPage />
+              <Suspense fallback={null}><DashboardPage /></Suspense>
             </AppLayout>
           )
         )}
@@ -156,6 +176,23 @@ export default function App() {
             </AppLayout>
           )
         )}
+      />
+      <Route
+        path="/item/:id"
+        element={withProject(
+          !canAccess("tracker") ? (
+            <Navigate to={pageRedirect} replace />
+          ) : (
+            <AppLayout>
+              <ItemPage />
+            </AppLayout>
+          )
+        )}
+      />
+      {/* Scanned FIT labels. Needs a session; RLS limits it to project members. */}
+      <Route
+        path="/t/:tag"
+        element={<TrackRoute session={!!session} canTrack={canAccess("tracker")} home={homeRedirect} />}
       />
       <Route
         path="/tickets"

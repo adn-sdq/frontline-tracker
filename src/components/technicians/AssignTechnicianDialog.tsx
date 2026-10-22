@@ -113,7 +113,7 @@ export function AssignTechnicianDialog({
               <SelectContent>
                 {activeTechs.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
-                    {t.full_name}{t.trade ? ` · ${t.trade}` : ""}
+                    <span className="block max-w-72 truncate">{t.full_name}{t.trade ? ` · ${t.trade}` : ""}</span>
                   </SelectItem>
                 ))}
               </SelectContent>

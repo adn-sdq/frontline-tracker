@@ -128,9 +128,40 @@ export function DeliveryNoteFilesDialog({
               {note?.dn_number} <SignatureBadge signed={signed} />
             </DialogTitle>
             <DialogDescription>
-              All versions of this delivery note. A note is Signed once any file is marked signed.
+              Details, items and every version of this note. A note is Signed once any file is marked signed.
             </DialogDescription>
           </DialogHeader>
+
+          {note && (
+            <div className="grid gap-x-4 gap-y-1 rounded-lg border bg-muted/30 p-3 text-sm sm:grid-cols-2">
+              <div><span className="text-muted-foreground">Date:</span> {format(parseISO(note.dn_date), "d MMM yyyy")}</div>
+              {note.deliver_to && <div><span className="text-muted-foreground">Delivered to:</span> {note.deliver_to}</div>}
+              {note.location && <div><span className="text-muted-foreground">Location:</span> {note.location}</div>}
+              {note.po && <div><span className="text-muted-foreground">PO:</span> {note.po}</div>}
+              {note.contact && <div><span className="text-muted-foreground">Site contact:</span> {note.contact}</div>}
+              {note.company_contact && (
+                <div className="sm:col-span-2"><span className="text-muted-foreground">Our contact:</span> {note.company_contact.split("\n").join(" · ")}</div>
+              )}
+            </div>
+          )}
+
+          {note && note.items.length > 0 && (
+            <div className="overflow-hidden rounded-lg border">
+              <div className="grid grid-cols-[2rem_minmax(0,1fr)_3.5rem_minmax(0,9rem)] gap-2 border-b bg-muted/40 px-3 py-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                <span>#</span><span>Item</span><span className="text-right">Qty</span><span>Serial</span>
+              </div>
+              <div className="max-h-56 divide-y overflow-y-auto">
+                {note.items.map((it, i) => (
+                  <div key={i} className="grid grid-cols-[2rem_minmax(0,1fr)_3.5rem_minmax(0,9rem)] gap-2 px-3 py-2 text-sm">
+                    <span className="text-muted-foreground tabular-nums">{i + 1}</span>
+                    <span className="min-w-0 whitespace-pre-line break-words">{it.description || "—"}</span>
+                    <span className="text-right tabular-nums">{it.qty || "—"}</span>
+                    <span className="min-w-0 font-mono text-xs break-all whitespace-pre-line text-muted-foreground">{it.serial || "—"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             {hasGenerated && printData && (

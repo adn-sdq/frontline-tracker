@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import { useOpenOnNew } from "@/hooks/useOpenOnNew"
 import { useAuth } from "@/contexts/AuthContext"
 import { format, parseISO } from "date-fns"
 import {
@@ -73,6 +74,7 @@ export default function DeliveryNotesPage() {
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
   const [createOpen, setCreateOpen] = useState(false)
+  useOpenOnNew(() => setCreateOpen(true))
   const [signFilter, setSignFilter] = useState<SignFilter>("all")
   const [manualOpen, setManualOpen] = useState(false)
   const [filesId, setFilesId] = useState<string | null>(null)
@@ -253,7 +255,16 @@ export default function DeliveryNotesPage() {
           {filtered.map((note) => (
             <div
               key={note.id}
-              className="group flex items-start gap-3 rounded-xl border bg-card p-4 transition-colors hover:bg-accent/20"
+              role="button"
+              tabIndex={0}
+              onClick={() => setFilesId(note.id)}
+              onKeyDown={(e) => {
+                if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault()
+                  setFilesId(note.id)
+                }
+              }}
+              className="group flex cursor-pointer items-start gap-3 rounded-xl border bg-card p-4 text-left transition-colors outline-none hover:bg-accent/20 focus-visible:ring-2 focus-visible:ring-ring"
             >
               {/* Icon */}
               <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -303,7 +314,7 @@ export default function DeliveryNotesPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex shrink-0 gap-1">
+              <div className="flex shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
                 <Button
                   type="button"
                   variant="outline"

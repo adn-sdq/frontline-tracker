@@ -1,22 +1,13 @@
 import { useState } from "react"
-import { Link, NavLink, useNavigate, useMatch, useResolvedPath } from "react-router-dom"
+import { Link, NavLink, useMatch, useResolvedPath } from "react-router-dom"
 import {
-  Check,
+  BookOpen,
   ChevronsUpDown,
-  FileText,
-  FolderKanban,
-  FolderOpen,
-  LayoutGrid,
-  LifeBuoy,
   LogOut,
-  Moon,
-  Newspaper,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Plus,
+  MessageSquareText,
+  Settings,
   ShieldCheck,
-  Sun,
-  Truck,
+  Sparkles,
   UserCircle,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -35,144 +26,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useAuth } from "@/contexts/AuthContext"
-import { useProject } from "@/contexts/ProjectContext"
-import { useTheme } from "@/hooks/useTheme"
-import { ProjectLogo } from "@/components/ProjectLogo"
+import { useShell } from "@/contexts/ShellContext"
+import { QuickActionsMenu } from "@/components/shell/QuickActionsMenu"
 import { navSectionsFor, type NavItem } from "@/lib/navigation"
 import { APP_VERSION } from "@/lib/version"
 import { cn } from "@/lib/utils"
 
-const COLLAPSE_KEY = "sidebar_collapsed"
-
-// ── Project switcher ──────────────────────────────────────────────────────────
-
-function ProjectSwitcher({ collapsed }: { collapsed?: boolean }) {
-  const { projects, currentProject, currentProjectId, setCurrentProject } = useProject()
-  const navigate = useNavigate()
-
-  function switchProject(id: string) {
-    const p = projects.find((p) => p.id === id)
-    setCurrentProject(id)
-    if (p) toast.success(`Switched to ${p.name}`)
-  }
-
-  const menu = (
-    <DropdownMenuContent align="start" side={collapsed ? "right" : "bottom"} className="w-56">
-      <DropdownMenuLabel>Switch project</DropdownMenuLabel>
-      <DropdownMenuSeparator />
-      {projects.map((p) => (
-        <DropdownMenuItem key={p.id} onClick={() => switchProject(p.id)} className="gap-2">
-          <ProjectLogo project={p} size={20} className="rounded-[4px] text-[9px]" />
-          <span className="flex-1 truncate">{p.name}</span>
-          {p.id === currentProjectId && <Check className="size-4 text-primary" />}
-        </DropdownMenuItem>
-      ))}
-      <DropdownMenuSeparator />
-      <DropdownMenuItem onClick={() => navigate("/projects")} className="gap-2">
-        <FolderKanban className="size-4 text-muted-foreground" />
-        All projects
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  )
-
-  if (collapsed) {
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            aria-label={currentProject?.name ?? "Select project"}
-            className="grid size-9 place-items-center rounded-lg text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-          >
-            {currentProject ? <ProjectLogo project={currentProject} size={26} className="rounded-md" /> : <FolderOpen className="size-4.5" />}
-          </button>
-        </DropdownMenuTrigger>
-        {menu}
-      </DropdownMenu>
-    )
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="flex h-8 w-full items-center gap-2 rounded-sm border border-input bg-background px-2.5 text-left text-sm transition-colors hover:bg-accent"
-        >
-          {currentProject ? (
-            <ProjectLogo project={currentProject} size={20} className="rounded-[4px]" />
-          ) : (
-            <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
-          )}
-          <span className="flex-1 truncate font-medium">
-            {currentProject?.name ?? "Select project"}
-          </span>
-          <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
-        </button>
-      </DropdownMenuTrigger>
-      {menu}
-    </DropdownMenu>
-  )
-}
-
 // ── "New" quick-create CTA ────────────────────────────────────────────────────
-
-function NewMenu({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
-  const navigate = useNavigate()
-  const { profile, accessRole } = useAuth()
-  const sections = navSectionsFor(profile, accessRole)
-  const reachable = new Set(sections.flatMap((s) => s.items.filter((i) => !i.soon).map((i) => i.to)))
-
-  function go(to: string) {
-    navigate(to)
-    onNavigate?.()
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        {collapsed ? (
-          <button
-            type="button"
-            aria-label="New"
-            className="grid size-9 place-items-center rounded-lg text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-          >
-            <Plus className="size-4.5" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="flex h-8 w-full items-center gap-2 rounded-md px-2.5 text-sm text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-          >
-            <Plus className="size-4 shrink-0" /> New
-          </button>
-        )}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" side={collapsed ? "right" : "bottom"} className="w-52">
-        {reachable.has("/") && (
-          <DropdownMenuItem onClick={() => go("/")}>
-            <LayoutGrid className="size-4" /> Tracker item
-          </DropdownMenuItem>
-        )}
-        {reachable.has("/delivery-notes") && (
-          <DropdownMenuItem onClick={() => go("/delivery-notes")}>
-            <Truck className="size-4" /> Delivery note
-          </DropdownMenuItem>
-        )}
-        {reachable.has("/documents") && (
-          <DropdownMenuItem onClick={() => go("/documents")}>
-            <FileText className="size-4" /> Document
-          </DropdownMenuItem>
-        )}
-        {reachable.has("/tickets") && (
-          <DropdownMenuItem onClick={() => go("/tickets")}>
-            <LifeBuoy className="size-4" /> Ticket
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
 
 // ── Nav row ───────────────────────────────────────────────────────────────────
 
@@ -361,6 +221,16 @@ function FooterProfile({ collapsed }: { collapsed?: boolean }) {
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link to="/docs"><BookOpen className="size-4" /> Guides</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/changelog">
+              <Sparkles className="size-4" /> <span className="flex-1">What's new</span>
+              <span className="font-mono text-[10px] text-muted-foreground">{APP_VERSION}</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => {
               toast.success("Signed out")
@@ -389,213 +259,122 @@ function FooterProfile({ collapsed }: { collapsed?: boolean }) {
 export function SidebarContent({
   onNavigate,
   collapsed,
-  onToggleCollapse,
 }: {
   onNavigate?: () => void
   collapsed?: boolean
-  onToggleCollapse?: () => void
 }) {
   const { profile, accessRole } = useAuth()
-  const { dark, toggle } = useTheme()
+  const { openSettings } = useShell()
   const sections = navSectionsFor(profile, accessRole)
-  const updatesActive = Boolean(useMatch("/updates"))
+  const feedbackActive = Boolean(useMatch("/updates"))
+
+  const utility = [
+    {
+      key: "feedback",
+      label: "Feedback",
+      icon: MessageSquareText,
+      active: feedbackActive,
+      to: "/updates?tab=requests",
+    },
+    { key: "settings", label: "Settings", icon: Settings, active: false, onClick: () => openSettings() },
+  ]
 
   return (
-    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      {/* Brand + collapse toggle */}
-      {collapsed ? (
-        <div className="flex h-14 shrink-0 items-center justify-center">
-          <Link to="/projects" onClick={onNavigate} aria-label="Home — all projects" title="Home" className="rounded-md outline-offset-4 transition-opacity hover:opacity-80">
-            <FitLogo size={28} />
-          </Link>
-        </div>
-      ) : (
-        <div className="flex h-14 shrink-0 items-center gap-2.5 px-3">
-          <Link
-            to="/projects"
-            onClick={onNavigate}
-            aria-label="Home — all projects"
-            title="Home"
-            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md outline-offset-4 transition-opacity hover:opacity-80"
-          >
-            <FitLogo size={30} />
-            <div className="min-w-0 flex-1 leading-tight">
+    <div className="flex h-full flex-col text-sidebar-foreground">
+      {/* Brand */}
+      <div className={cn("flex h-14 shrink-0 items-center", collapsed ? "justify-center" : "px-4")}>
+        <Link
+          to="/projects"
+          onClick={onNavigate}
+          aria-label="Home — all projects"
+          title="Home"
+          className="flex min-w-0 items-center gap-2.5 rounded-md outline-offset-4 transition-opacity hover:opacity-80"
+        >
+          <FitLogo size={collapsed ? 28 : 30} />
+          {!collapsed && (
+            <div className="min-w-0 leading-tight">
               <div className="text-sm font-semibold">FIT</div>
-              <div className="truncate text-[10px] text-muted-foreground">Frontline Tracker</div>
+              <div className="truncate text-[10px] text-muted-foreground">Frontline Internal Tools</div>
             </div>
-          </Link>
-          {onToggleCollapse && (
-            <button
-              type="button"
-              onClick={onToggleCollapse}
-              aria-label="Collapse sidebar"
-              className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-foreground"
-            >
-              <PanelLeftClose className="size-4" />
-            </button>
           )}
-        </div>
-      )}
+        </Link>
+      </div>
 
-      {collapsed && onToggleCollapse && (
-        <div className="px-3.5 pb-1">
-          <button
-            type="button"
-            onClick={onToggleCollapse}
-            aria-label="Expand sidebar"
-            className="grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-foreground"
-          >
-            <PanelLeftOpen className="size-4.5" />
-          </button>
-        </div>
-      )}
-
-      {/* Project switcher */}
-      <div className={cn("pb-2", collapsed ? "px-3.5" : "px-3")}>
-        <ProjectSwitcher collapsed={collapsed} />
+      {/* Quick actions (create, all projects) */}
+      <div className={cn("shrink-0 pb-1", collapsed ? "flex justify-center px-2" : "px-3")}>
+        <QuickActionsMenu collapsed={collapsed} onNavigate={onNavigate} />
       </div>
 
       {/* Nav sections */}
       <nav
         className={cn(
-          "flex-1 overflow-y-auto overflow-x-hidden py-2",
-          collapsed ? "scrollbar-none flex flex-col gap-1 px-3.5" : "px-3"
+          "flex-1 overflow-x-hidden overflow-y-auto py-2",
+          collapsed ? "scrollbar-none flex flex-col items-center gap-1 px-2" : "px-3"
         )}
       >
         {sections.map((section, i) => (
-          <div
-            key={section.label ?? i}
-            className={cn(collapsed ? "flex flex-col gap-1" : i > 0 && "mt-4")}
-          >
+          <div key={section.label ?? i} className={cn(collapsed ? "flex flex-col items-center gap-1" : i > 0 && "mt-5")}>
             {section.label && !collapsed && (
-              <p className="mb-1 px-2.5 text-xs font-normal text-muted-foreground">
-                {section.label}
-              </p>
+              <p className="mb-1 px-2.5 text-[11px] font-medium tracking-wide text-muted-foreground">{section.label}</p>
             )}
-            {collapsed && i > 0 && <div className="my-1 h-px bg-sidebar-border" />}
-            <div className={cn("flex flex-col gap-0.5", collapsed && "gap-1")}>
+            {collapsed && i > 0 && <div className="my-1 h-px w-6 bg-sidebar-border" />}
+            <div className={cn("flex flex-col gap-0.5", collapsed && "items-center gap-1")}>
               {section.items.map((item) => (
-                <NavRow
-                  key={item.to}
-                  item={item}
-                  collapsed={collapsed}
-                  onNavigate={onNavigate}
-                />
+                <NavRow key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
               ))}
             </div>
           </div>
         ))}
       </nav>
 
-      {/* New — above the footer separator in both modes */}
-      <div className={cn("pb-1.5", collapsed ? "px-3.5" : "px-3")}>
-        <NewMenu collapsed={collapsed} onNavigate={onNavigate} />
+      {/* Feedback + Settings, then the profile */}
+      <div className={cn("shrink-0 space-y-0.5 pt-2", collapsed ? "flex flex-col items-center px-2" : "px-3")}>
+        {utility.map((u) => {
+          const cls = cn(
+            "flex items-center rounded-lg text-sm transition-colors",
+            collapsed ? "size-9 justify-center" : "w-full gap-2 px-2.5 py-1.5",
+            u.active ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+          )
+          const inner = (
+            <>
+              <u.icon className={collapsed ? "size-4.5" : "size-4 shrink-0"} />
+              {!collapsed && <span className="truncate">{u.label}</span>}
+            </>
+          )
+          const el = u.to ? (
+            <Link key={u.key} to={u.to} onClick={onNavigate} className={cls} aria-label={u.label}>{inner}</Link>
+          ) : (
+            <button key={u.key} type="button" onClick={() => { onNavigate?.(); u.onClick?.() }} className={cls} aria-label={u.label}>{inner}</button>
+          )
+          return collapsed ? (
+            <Tooltip key={u.key}>
+              <TooltipTrigger asChild>{el}</TooltipTrigger>
+              <TooltipContent side="right">{u.label}</TooltipContent>
+            </Tooltip>
+          ) : (
+            el
+          )
+        })}
       </div>
-
-      {/* Footer */}
-      <div
-        className={cn(
-          "shrink-0 border-t border-sidebar-border py-2.5",
-          collapsed ? "flex flex-col gap-1 px-3.5" : "space-y-0.5 px-3"
-        )}
-      >
+      <div className={cn("mt-1 shrink-0 border-t border-sidebar-border py-2.5", collapsed ? "flex justify-center px-2" : "px-3")}>
         <FooterProfile collapsed={collapsed} />
-
-        {collapsed ? (
-          <>
-            {/* Updates */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <NavLink
-                  to="/updates"
-                  onClick={onNavigate}
-                  className={cn(
-                    "grid size-9 place-items-center rounded-lg transition-colors",
-                    updatesActive
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                  )}
-                >
-                  <Newspaper className="size-4.5" />
-                </NavLink>
-              </TooltipTrigger>
-              <TooltipContent side="right">Updates</TooltipContent>
-            </Tooltip>
-
-            {/* Theme */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={toggle}
-                  aria-label={dark ? "Light mode" : "Dark mode"}
-                  className="grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-foreground"
-                >
-                  {dark ? <Sun className="size-4.5" /> : <Moon className="size-4.5" />}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">{dark ? "Light mode" : "Dark mode"}</TooltipContent>
-            </Tooltip>
-          </>
-        ) : (
-          /* Meta row — Docs + Updates links, minimal theme toggle, version */
-          <div className="flex items-center gap-2.5 px-2.5 py-1 text-[11px] text-muted-foreground">
-            <Link to="/docs" onClick={onNavigate} className="transition-colors hover:text-foreground">
-              Docs
-            </Link>
-            <NavLink
-              to="/updates"
-              onClick={onNavigate}
-              className={({ isActive }) =>
-                cn(
-                  "transition-colors hover:text-foreground",
-                  isActive && "font-medium text-foreground"
-                )
-              }
-            >
-              Updates
-            </NavLink>
-            <button
-              type="button"
-              onClick={toggle}
-              aria-label={dark ? "Light mode" : "Dark mode"}
-              className="ml-auto grid size-6 place-items-center rounded transition-colors hover:text-foreground"
-            >
-              {dark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
-            </button>
-            <Link to="/changelog" onClick={onNavigate} className="font-mono transition-colors hover:text-foreground" title="What's new">
-              {APP_VERSION}
-            </Link>
-          </div>
-        )}
       </div>
     </div>
   )
 }
 
-// ── Desktop rail ──────────────────────────────────────────────────────────────
+// ── Desktop rail: a rounded panel floating beside the content ─────────────────
 
 export function AppSidebar() {
-  const [collapsed, setCollapsed] = useState(
-    () => typeof window !== "undefined" && localStorage.getItem(COLLAPSE_KEY) === "1"
-  )
-
-  function toggleCollapse() {
-    setCollapsed((c) => {
-      const next = !c
-      localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0")
-      return next
-    })
-  }
-
+  const { collapsed } = useShell()
   return (
     <aside
       className={cn(
-        "hidden shrink-0 border-r border-sidebar-border transition-[width] duration-200 md:block",
+        "hidden shrink-0 overflow-hidden rounded-xl border bg-sidebar shadow-sm transition-[width] duration-200 md:block",
         collapsed ? "w-16" : "w-60"
       )}
     >
-      <SidebarContent collapsed={collapsed} onToggleCollapse={toggleCollapse} />
+      <SidebarContent collapsed={collapsed} />
     </aside>
   )
 }
