@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react"
+import { useOpenOnNew } from "@/hooks/useOpenOnNew"
 import { useAuth } from "@/contexts/AuthContext"
 import { formatDistanceToNow } from "date-fns"
 import {
   CheckSquare,
+  Eye,
   FileText,
   LayoutGrid,
   MoreHorizontal,
@@ -47,7 +49,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { DocumentDialog } from "@/components/DocumentDialog"
 import { DocumentDrawer } from "@/components/DocumentDrawer"
 import { DataTable } from "@/components/ui/data-table"
-import { Checkbox } from "@/components/ui/checkbox"
 import { cn, errorMessage } from "@/lib/utils"
 import {
   useDeleteDocument,
@@ -90,6 +91,10 @@ export default function DocumentsPage() {
   const [editDoc, setEditDoc] = useState<DocumentRow | null>(null)
   const [openDoc, setOpenDoc] = useState<DocumentRow | null>(null)
   const [deleteDoc, setDeleteDoc] = useState<DocumentRow | null>(null)
+  useOpenOnNew(() => {
+    setEditDoc(null)
+    setDialogOpen(true)
+  })
 
   // Bulk selection state
   const [selectMode, setSelectMode] = useState(false)
@@ -112,35 +117,6 @@ export default function DocumentsPage() {
 
   const columns = useMemo<ColumnDef<DocumentRow, unknown>[]>(
     () => [
-      ...(selectMode
-        ? [
-            {
-              id: "select",
-              enableSorting: false,
-              header: () => (
-                <Checkbox
-                  aria-label="Select all"
-                  checked={
-                    filtered.length > 0 && selected.size === filtered.length
-                      ? true
-                      : selected.size > 0
-                        ? "indeterminate"
-                        : false
-                  }
-                  onCheckedChange={() => toggleAll()}
-                />
-              ),
-              cell: ({ row }: { row: { original: DocumentRow } }) => (
-                <Checkbox
-                  aria-label={`Select ${row.original.title}`}
-                  checked={selected.has(row.original.id)}
-                  onClick={(e) => e.stopPropagation()}
-                  onCheckedChange={() => toggleSelect(row.original.id)}
-                />
-              ),
-            } satisfies ColumnDef<DocumentRow, unknown>,
-          ]
-        : []),
       {
         accessorKey: "title",
         header: "Document",
@@ -180,8 +156,7 @@ export default function DocumentsPage() {
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [labelFor, selectMode, selected, filtered]
+    [labelFor]
   )
 
   // Keep the drawer's document in sync with refreshed data.
@@ -252,12 +227,12 @@ export default function DocumentsPage() {
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
-        title="Documents"
+        title="Documentation"
         subtitle="Submittals & reviews between Frontline and First Fix."
       />
 
-      {/* Bulk action bar */}
-      {selectMode && (
+      {/* Bulk action bar (card view — the table has its own) */}
+      {selectMode && view === "cards" && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 px-4 py-3">
           <button
             type="button"
@@ -364,7 +339,7 @@ export default function DocumentsPage() {
               <Table2 className="size-4" />
             </button>
           </div>
-          {editable && <ActionButton
+          {editable && view === "cards" && <ActionButton
             icon={CheckSquare}
             label={selectMode ? "Cancel selection" : "Select"}
             active={selectMode}
@@ -400,11 +375,36 @@ export default function DocumentsPage() {
         />
       ) : view === "table" ? (
         <DataTable
+          tableId="documents"
           columns={columns}
           data={filtered}
-          onRowClick={(d) => (selectMode ? toggleSelect(d.id) : setOpenDoc(d))}
-          isRowSelected={selectMode ? (d) => selected.has(d.id) : undefined}
+          getRowId={(d) => d.id}
+          noun="document"
+          onRowClick={(d) => setOpenDoc(d)}
           emptyMessage="No documents match your filters."
+          selection={editable ? { selected, onChange: setSelected } : undefined}
+          bulkActions={() => (
+            <span className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">Set status</span>
+              <DocStatusSelect value={bulkStatus} onChange={(v) => setBulkStatus(v as DocStatus)} className="h-7 w-32" />
+              <Button size="sm" variant="secondary" className="h-7" disabled={bulkBusy} onClick={applyBulkStatus}>
+                {bulkBusy ? <Spinner className="size-4 text-current" /> : null} Apply
+              </Button>
+            </span>
+          )}
+          onBulkDelete={async (rows) => {
+            try {
+              await Promise.all(rows.map((d) => del.mutateAsync(d.id)))
+              toast.success(`Deleted ${rows.length} document${rows.length > 1 ? "s" : ""}`)
+            } catch (e) {
+              toast.error("Could not delete some documents", { description: errorMessage(e) })
+            }
+          }}
+          rowActions={(d) => [
+            { label: "View", icon: Eye, onClick: () => setOpenDoc(d) },
+            { label: "Edit", icon: Pencil, onClick: () => { setEditDoc(d); setDialogOpen(true) }, hidden: !editable },
+            { label: "Delete", icon: Trash2, onClick: () => setDeleteDoc(d), destructive: true, separator: true, hidden: !editable },
+          ]}
         />
       ) : (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">

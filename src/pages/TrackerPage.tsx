@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { useOpenOnNew } from "@/hooks/useOpenOnNew"
 import { errorMessage } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
 import {
   Download,
-  Filter,
   MoreHorizontal,
   Plus,
   QrCode,
@@ -19,14 +20,6 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -36,20 +29,16 @@ import {
 } from "@/components/ui/dialog"
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Loader2 } from "lucide-react"
-import { ActionButton } from "@/components/shell/ActionButton"
+import { FilterMenu, type FilterGroup } from "@/components/FilterMenu"
 import { PageHeader } from "@/components/PageHeader"
 import { ItemsTable, ItemsTableSkeleton } from "@/components/ItemsTable"
 import { ItemsCards, ItemsCardsSkeleton } from "@/components/ItemsCards"
 import { ItemDialog } from "@/components/ItemDialog"
-import { ItemDetailSheet } from "@/components/ItemDetailSheet"
 import { ItemLabelsDialog } from "@/components/ItemLabelsDialog"
 import { DeliveryNoteDialog } from "@/components/DeliveryNoteDialog"
 import { HistoryDrawer } from "@/components/HistoryDrawer"
@@ -70,27 +59,17 @@ import {
   STATUS_LABELS,
   type DeliveryNoteItem,
   type DnCartEntry,
-  type DeliveryStatus,
-  type InstallationStatus,
   type Item,
-  type ProcurementStatus,
   type System,
 } from "@/lib/types"
 
-// ── Status filter state ───────────────────────────────────────────────────────
+// ── Filters: one map of multi-select groups ───────────────────────────────────
 
-type StatusFilters = {
-  procurement: Set<ProcurementStatus>
-  delivery: Set<DeliveryStatus>
-  installation: Set<InstallationStatus>
-}
+type FilterKey = "procurement" | "delivery" | "installation" | "brand" | "model"
+type Filters = Record<FilterKey, Set<string>>
 
-function emptyFilters(): StatusFilters {
-  return { procurement: new Set(), delivery: new Set(), installation: new Set() }
-}
-
-function activeFilterCount(f: StatusFilters) {
-  return f.procurement.size + f.delivery.size + f.installation.size
+function emptyFilters(): Filters {
+  return { procurement: new Set(), delivery: new Set(), installation: new Set(), brand: new Set(), model: new Set() }
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -106,11 +85,10 @@ export default function TrackerPage() {
 
   const [system, setSystem] = useState<System | "ALL">("ALL")
   const [search, setSearch] = useState("")
-  const [statusFilters, setStatusFilters] = useState<StatusFilters>(emptyFilters())
-  const [brandFilter, setBrandFilter] = useState("ALL")
-  const [modelFilter, setModelFilter] = useState("ALL")
+  const [filters, setFilters] = useState<Filters>(emptyFilters())
 
-  const [viewItem, setViewItem] = useState<Item | null>(null)
+  const navigate = useNavigate()
+  const setViewItem = (item: Item) => navigate(`/item/${item.id}`)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editItem, setEditItem] = useState<Item | null>(null)
   const [historyItem, setHistoryItem] = useState<Item | null>(null)
@@ -143,22 +121,17 @@ export default function TrackerPage() {
     serial: e.serials.join(" / "),
   }))
 
-  function toggleStatusFilter<K extends keyof StatusFilters>(
-    category: K,
-    value: StatusFilters[K] extends Set<infer V> ? V : never
-  ) {
-    setStatusFilters((prev) => {
-      const next = new Set(prev[category]) as StatusFilters[K]
-      // @ts-expect-error — value is the correct element type
-      next.has(value) ? next.delete(value) : next.add(value)
-      return { ...prev, [category]: next }
+  function toggleFilter(group: string, value: string) {
+    setFilters((prev) => {
+      const next = new Set(prev[group as FilterKey])
+      if (next.has(value)) next.delete(value)
+      else next.add(value)
+      return { ...prev, [group]: next }
     })
   }
 
   function clearFilters() {
-    setStatusFilters(emptyFilters())
-    setBrandFilter("ALL")
-    setModelFilter("ALL")
+    setFilters(emptyFilters())
   }
 
   const brands = useMemo(() => {
@@ -175,24 +148,28 @@ export default function TrackerPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    const fc = activeFilterCount(statusFilters)
+    const pass = (set: Set<string>, v: string | null) => set.size === 0 || (v != null && set.has(v))
     return items.filter((i) => {
       if (system !== "ALL" && i.system !== system) return false
-      if (brandFilter !== "ALL" && i.brand !== brandFilter) return false
-      if (modelFilter !== "ALL" && i.model_no !== modelFilter) return false
+      if (!pass(filters.brand, i.brand) || !pass(filters.model, i.model_no)) return false
+      if (!pass(filters.procurement, i.procurement_status)) return false
+      if (!pass(filters.delivery, i.delivery_status)) return false
+      if (!pass(filters.installation, i.installation_status)) return false
       if (q && ![i.brand, i.model_no, i.description, i.location, i.supplier, i.unique_id, i.sku]
         .filter(Boolean).some((v) => (v as string).toLowerCase().includes(q))) return false
-      if (fc > 0) {
-        const p = statusFilters.procurement
-        const d = statusFilters.delivery
-        const ins = statusFilters.installation
-        if (p.size > 0 && !p.has(i.procurement_status)) return false
-        if (d.size > 0 && !d.has(i.delivery_status)) return false
-        if (ins.size > 0 && !ins.has(i.installation_status)) return false
-      }
       return true
     })
-  }, [items, system, search, statusFilters, brandFilter, modelFilter])
+  }, [items, system, search, filters])
+
+  const filterGroups: FilterGroup[] = [
+    { key: "procurement", label: "Procurement", options: PROCUREMENT_STATUSES.map((v) => ({ value: v, label: STATUS_LABELS[v] })) },
+    { key: "delivery", label: "Delivery", options: DELIVERY_STATUSES.map((v) => ({ value: v, label: STATUS_LABELS[v] })) },
+    { key: "installation", label: "Installation", options: INSTALLATION_STATUSES.map((v) => ({ value: v, label: STATUS_LABELS[v] })) },
+    { key: "brand", label: "Brand", options: brands.map((v) => ({ value: v, label: v })) },
+    { key: "model", label: "Model", options: models.map((v) => ({ value: v, label: v })) },
+  ]
+  const chipLabel = (group: FilterKey, v: string) =>
+    group === "brand" || group === "model" ? v : STATUS_LABELS[v] ?? v
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { ALL: items.length }
@@ -206,9 +183,11 @@ export default function TrackerPage() {
     setDialogOpen(true)
   }
 
+  useOpenOnNew(() => editable && openAdd())
+
+  // Editing happens on the item's own page — no second layer.
   function openEdit(item: Item) {
-    setEditItem(item)
-    setDialogOpen(true)
+    navigate(`/item/${item.id}?edit=1`)
   }
 
   async function confirmDelete() {
@@ -225,17 +204,58 @@ export default function TrackerPage() {
     }
   }
 
-  const filterCount = activeFilterCount(statusFilters) + (brandFilter !== "ALL" ? 1 : 0) + (modelFilter !== "ALL" ? 1 : 0)
+  const filterCount = Object.values(filters).reduce((n, set) => n + set.size, 0)
   // CSV label: show count so users know what they're exporting
   const exportLabel = items.length === filtered.length
     ? `Export (${filtered.length})`
     : `Export (${filtered.length} of ${items.length})`
 
+  const controls = (
+    <>
+      <div className="relative min-w-40 flex-1 md:max-w-sm">
+        <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input placeholder="Search SKU, brand, model…" value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 pl-8" />
+      </div>
+      <FilterMenu groups={filterGroups} selected={filters} onToggle={toggleFilter} onClear={clearFilters} />
+    </>
+  )
+
+  const endActions = editable ? (
+    <>
+      <Button
+        variant={dnMode ? "secondary" : "outline"}
+        size="sm"
+        className="h-9"
+        onClick={() => (dnMode ? exitDnMode() : enterDnMode())}
+        title={dnMode ? "Cancel delivery note" : "Pick items for a delivery note"}
+      >
+        <Truck className="size-4" /> <span className="hidden lg:inline">{dnMode ? "Cancel delivery" : "Delivery note"}</span>
+      </Button>
+      <Button size="sm" className="h-9" onClick={openAdd}>
+        <Plus className="size-4" /> <span className="hidden sm:inline">Add item</span>
+      </Button>
+    </>
+  ) : null
+
+  const moreItems = (
+    <>
+      <DropdownMenuItem onClick={() => setImportOpen(true)} disabled={!editable}>
+        <Upload className="size-4" /> Import CSV
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => exportItemsCsv(filtered)} disabled={filtered.length === 0}>
+        <Download className="size-4" /> {exportLabel}
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => setLabelItems(filtered)} disabled={filtered.length === 0}>
+        <QrCode className="size-4" /> QR labels ({filtered.length})
+      </DropdownMenuItem>
+    </>
+  )
+
   return (
     <div className="flex flex-col gap-4">
       {/* ── Header ── */}
       <PageHeader
-        title="Procurement Tracker"
+        title="Procurement"
         subtitle="Line-by-line delivery & installation status."
       />
 
@@ -281,181 +301,38 @@ export default function TrackerPage() {
           </Tabs>
         </div>
 
-        {/* Search + filter row */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search SKU, brand, model, room…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8"
-            />
-          </div>
-
-          {/* Brand filter */}
-          {brands.length > 0 && (
-            <Select value={brandFilter} onValueChange={setBrandFilter}>
-              <SelectTrigger className="hidden w-36 sm:flex">
-                <SelectValue placeholder="Brand" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All brands</SelectItem>
-                {brands.map((b) => (
-                  <SelectItem key={b} value={b}>{b}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {/* Model filter */}
-          {models.length > 0 && (
-            <Select value={modelFilter} onValueChange={setModelFilter}>
-              <SelectTrigger className="hidden w-40 sm:flex">
-                <SelectValue placeholder="Model" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All models</SelectItem>
-                {models.map((m) => (
-                  <SelectItem key={m} value={m}>{m}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {/* Status filter dropdown */}
+        {/* Mobile toolbar (the desktop one lives in the table's own toolbar row) */}
+        <div className="flex items-center gap-2 md:hidden">
+          {controls}
+          {endActions}
           <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant={filterCount > 0 ? "default" : "outline"}
-                    size="icon"
-                    className="shrink-0"
-                  >
-                    <Filter className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent>{filterCount > 0 ? `${filterCount} filter${filterCount > 1 ? "s" : ""} active` : "Filter by status"}</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuLabel className="flex items-center justify-between">
-                Filter by status
-                {filterCount > 0 && (
-                  <button
-                    className="text-xs text-muted-foreground hover:text-foreground"
-                    onClick={clearFilters}
-                  >
-                    Clear all
-                  </button>
-                )}
-              </DropdownMenuLabel>
-
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                Procurement
-              </DropdownMenuLabel>
-              {PROCUREMENT_STATUSES.map((s) => (
-                <DropdownMenuCheckboxItem
-                  key={s}
-                  checked={statusFilters.procurement.has(s)}
-                  onCheckedChange={() => toggleStatusFilter("procurement", s)}
-                >
-                  {STATUS_LABELS[s]}
-                </DropdownMenuCheckboxItem>
-              ))}
-
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                Delivery
-              </DropdownMenuLabel>
-              {DELIVERY_STATUSES.map((s) => (
-                <DropdownMenuCheckboxItem
-                  key={s}
-                  checked={statusFilters.delivery.has(s)}
-                  onCheckedChange={() => toggleStatusFilter("delivery", s)}
-                >
-                  {STATUS_LABELS[s]}
-                </DropdownMenuCheckboxItem>
-              ))}
-
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                Installation
-              </DropdownMenuLabel>
-              {INSTALLATION_STATUSES.map((s) => (
-                <DropdownMenuCheckboxItem
-                  key={s}
-                  checked={statusFilters.installation.has(s)}
-                  onCheckedChange={() => toggleStatusFilter("installation", s)}
-                >
-                  {STATUS_LABELS[s]}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="size-9 shrink-0" aria-label="More options">
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">{moreItems}</DropdownMenuContent>
           </DropdownMenu>
-
-          {/* Delivery-note mode toggle */}
-          {editable && <ActionButton
-            icon={Truck}
-            label={dnMode ? "Cancel delivery" : "Delivery note"}
-            active={dnMode}
-            onClick={() => (dnMode ? exitDnMode() : enterDnMode())}
-          />}
-
-          {/* Import / Export overflow */}
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="size-9 shrink-0">
-                    <MoreHorizontal className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent>More actions</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setImportOpen(true)} disabled={!editable}>
-                <Upload className="size-4" /> Import CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLabelItems(filtered)} disabled={filtered.length === 0}>
-                <QrCode className="size-4" /> QR labels ({filtered.length})
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => exportItemsCsv(filtered)}
-                disabled={filtered.length === 0}
-              >
-                <Download className="size-4" /> {exportLabel}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Primary add */}
-          {editable && <ActionButton icon={Plus} label="Add item" primary onClick={openAdd} />}
         </div>
 
         {/* Active filter chips */}
         {filterCount > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {(["procurement", "delivery", "installation"] as const).map((cat) =>
-              [...statusFilters[cat]].map((s) => (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {(Object.keys(filters) as FilterKey[]).map((g) =>
+              [...filters[g]].map((v) => (
                 <Badge
-                  key={`${cat}-${s}`}
+                  key={`${g}-${v}`}
                   variant="secondary"
-                  className="gap-1 pr-1 cursor-pointer"
-                  onClick={() => toggleStatusFilter(cat, s as never)}
+                  className="cursor-pointer gap-1 pr-1"
+                  onClick={() => toggleFilter(g, v)}
                 >
-                  {STATUS_LABELS[s]}
+                  <span className="text-muted-foreground">{filterGroups.find((x) => x.key === g)?.label}:</span>
+                  <span className="max-w-40 truncate">{chipLabel(g, v)}</span>
                   <X className="size-3" />
                 </Badge>
               ))
             )}
-            <button
-              className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
-              onClick={clearFilters}
-            >
+            <button className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground" onClick={clearFilters}>
               Clear all
             </button>
           </div>
@@ -479,8 +356,24 @@ export default function TrackerPage() {
               items={filtered}
               profiles={profiles}
               onView={setViewItem}
+              editable={editable}
+              onEdit={openEdit}
+              onHistory={setHistoryItem}
+              onDelete={setDeleteItem}
+              onLabels={setLabelItems}
+              onBulkDelete={async (rows) => {
+                try {
+                  await Promise.all(rows.map((i) => del.mutateAsync(i.id)))
+                  toast.success(`Deleted ${rows.length} item${rows.length > 1 ? "s" : ""}`)
+                } catch (e) {
+                  toast.error("Could not delete some items", { description: errorMessage(e) })
+                }
+              }}
               cartMap={dnMode ? cart : undefined}
               onCartChange={dnMode ? handleCartChange : undefined}
+              toolbar={controls}
+              toolbarEnd={endActions}
+              menuItems={moreItems}
             />
           </div>
           <div className="md:hidden">
@@ -497,14 +390,6 @@ export default function TrackerPage() {
       )}
 
       {/* ── Dialogs / sheets ── */}
-      <ItemDetailSheet
-        item={viewItem}
-        profiles={profiles}
-        onEdit={(item) => { setViewItem(null); openEdit(item) }}
-        onHistory={(item) => { setViewItem(null); setHistoryItem(item) }}
-        onDelete={(item) => { setViewItem(null); setDeleteItem(item) }}
-        onClose={() => setViewItem(null)}
-      />
       <ItemDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}

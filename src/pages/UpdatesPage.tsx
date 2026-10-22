@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import {
   ArrowUp,
   ChevronDown,
@@ -497,11 +498,12 @@ function FeatureRequestsTab() {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function UpdatesPage() {
+  const [params] = useSearchParams()
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title="Updates" />
+      <PageHeader title="Feedback" subtitle="Ideas and requests, plus what's new in FIT." />
 
-      <Tabs defaultValue="whats-new" className="mt-6">
+      <Tabs defaultValue={params.get("tab") === "requests" ? "requests" : "whats-new"} className="mt-6">
         <TabsList className="mb-6">
           <TabsTrigger value="whats-new" className="gap-1.5">
             <Newspaper className="size-3.5" />

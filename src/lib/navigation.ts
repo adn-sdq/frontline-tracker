@@ -2,10 +2,8 @@ import {
   BarChart3,
   CalendarCheck2,
   FileText,
-  FolderKanban,
   LayoutGrid,
   LifeBuoy,
-  PenTool,
   Shield,
   Truck,
   UsersRound,
@@ -37,24 +35,19 @@ export interface NavSection {
 
 const SECTIONS: NavSection[] = [
   {
-    // Home — the project picker. Always reachable from inside a project.
-    items: [{ to: "/projects", label: "All projects", icon: FolderKanban }],
-  },
-  {
-    label: "Procurement",
+    label: "Logistics",
     items: [
-      { to: "/", label: "Tracker", icon: LayoutGrid, page: "tracker" },
+      { to: "/", label: "Procurement", icon: LayoutGrid, page: "tracker" },
       { to: "/delivery-notes", label: "Delivery Notes", icon: Truck, page: "tracker" },
-      { to: "/documents", label: "Documents", icon: FileText, page: "documents" },
+      { to: "/technicians", label: "Technicians", icon: UsersRound, page: "technicians" },
     ],
   },
   {
     label: "Operations",
     items: [
+      { to: "/documents", label: "Documentation", icon: FileText, page: "documents" },
       { to: "/tickets", label: "Tickets", icon: LifeBuoy, page: "tickets" },
-      { to: "/technicians", label: "Technicians", icon: UsersRound, page: "technicians" },
       { to: "/sla", label: "SLA", icon: CalendarCheck2, page: "sla" },
-      { to: "/schematics", label: "Schematics", icon: PenTool, soon: true },
     ],
   },
   {
@@ -90,7 +83,7 @@ export function navSectionsFor(profile: Profile | null, role?: AccessRole | null
 
 const EXTRA_LABELS: Record<string, string> = {
   "/changelog": "Changelog",
-  "/updates": "Updates",
+  "/updates": "Feedback",
   "/docs": "Docs",
   "/legal": "Legal",
 }
@@ -101,11 +94,14 @@ export function pageLabelFor(pathname: string): string | undefined {
     if (hit) return hit.label
   }
   if (pathname.startsWith("/sla/")) return "SLA"
+  if (pathname.startsWith("/item/")) return "Procurement"
+  if (pathname.startsWith("/t/")) return "Unit tracking"
   return EXTRA_LABELS[pathname]
 }
 
 /** The access-controlled page a route belongs to, if any. */
 export function pageForPath(pathname: string): AppPage | undefined {
+  if (pathname.startsWith("/item/") || pathname.startsWith("/t/")) return "tracker"
   for (const section of SECTIONS) {
     for (const i of section.items) {
       if (!i.page) continue

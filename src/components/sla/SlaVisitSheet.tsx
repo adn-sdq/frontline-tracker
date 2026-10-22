@@ -320,8 +320,8 @@ export function SlaVisitSheet({
                             )
                           }
                         >
-                          {t.full_name}
-                          {t.trade && <span className="ml-auto text-xs text-muted-foreground">{t.trade}</span>}
+                          <span className="min-w-0 truncate">{t.full_name}</span>
+                          {t.trade && <span className="ml-auto shrink-0 text-xs text-muted-foreground">{t.trade}</span>}
                         </DropdownMenuCheckboxItem>
                       ))}
                     </DropdownMenuContent>

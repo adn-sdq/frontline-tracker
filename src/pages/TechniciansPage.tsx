@@ -59,14 +59,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { DataTable } from "@/components/ui/data-table"
+import type { ColumnDef } from "@tanstack/react-table"
 import {
   Dialog,
   DialogContent,
@@ -622,125 +616,121 @@ function iqamaState(expiry: string | null): "expired" | "soon" | "ok" | null {
 function Roster() {
   const { data: technicians = [] } = useTechnicians()
   const deleteTech = useDeleteTechnician()
+  const confirm = useConfirm()
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Technician | null>(null)
-  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   function openNew() { setEditing(null); setFormOpen(true) }
   function openEdit(t: Technician) { setEditing(t); setFormOpen(true) }
 
-  async function remove(id: string) {
+  async function remove(t: Technician) {
+    const ok = await confirm({
+      title: `Remove ${t.full_name}?`,
+      description: "They're removed from the roster along with their assignments.",
+      confirmText: "Remove",
+      destructive: true,
+    })
+    if (!ok) return
     try {
-      await deleteTech.mutateAsync(id)
+      await deleteTech.mutateAsync(t.id)
       toast.success("Technician removed")
-      setConfirmId(null)
     } catch (e) {
       toast.error("Could not remove", { description: errorMessage(e) })
     }
   }
 
+  const columns: ColumnDef<Technician, unknown>[] = [
+    {
+      id: "name",
+      accessorFn: (t) => t.full_name,
+      header: "Name",
+      cell: ({ row }) => (
+        <span className="font-medium">
+          {row.original.full_name}
+          {row.original.nationality && <span className="ml-2 text-xs font-normal text-muted-foreground">{row.original.nationality}</span>}
+        </span>
+      ),
+    },
+    { id: "trade", accessorFn: (t) => t.trade ?? "—", header: "Trade" },
+    {
+      id: "phone",
+      accessorFn: (t) => t.phone ?? "",
+      header: "Phone",
+      cell: ({ row }) =>
+        row.original.phone ? (
+          <span className="flex items-center gap-1 text-muted-foreground"><Phone className="size-3" /> {row.original.phone}</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
+    {
+      id: "iqama",
+      accessorFn: (t) => t.iqama_expiry ?? "",
+      header: "Iqama",
+      cell: ({ row }) => {
+        const t = row.original
+        const iq = iqamaState(t.iqama_expiry)
+        if (!t.iqama_number) return <span className="text-muted-foreground">—</span>
+        return (
+          <div className="flex flex-col">
+            <span className="font-mono text-xs">{t.iqama_number}</span>
+            {t.iqama_expiry && (
+              <span
+                className={`flex items-center gap-1 text-[11px] ${
+                  iq === "expired" ? "text-red-600 dark:text-red-400" : iq === "soon" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"
+                }`}
+              >
+                {(iq === "expired" || iq === "soon") && <AlertTriangle className="size-3" />}
+                exp {format(new Date(t.iqama_expiry), "d MMM yyyy")}
+              </span>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      id: "status",
+      accessorFn: (t) => (t.active ? "Active" : "Inactive"),
+      header: "Status",
+      cell: ({ row }) =>
+        row.original.active ? <Badge variant="secondary">Active</Badge> : <Badge variant="outline" className="text-muted-foreground">Inactive</Badge>,
+    },
+  ]
+
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
-        <Button size="sm" onClick={openNew}>
-          <UserPlus className="size-4" /> Add technician
-        </Button>
-      </div>
-
       {technicians.length === 0 ? (
-        <EmptyState icon={UsersRound} title="No technicians" subtitle="Add your first technician to build the roster." />
+        <>
+          <div className="flex justify-end">
+            <Button size="sm" onClick={openNew}><UserPlus className="size-4" /> Add technician</Button>
+          </div>
+          <EmptyState icon={UsersRound} title="No technicians" subtitle="Add your first technician to build the roster." />
+        </>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Trade</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Iqama</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {technicians.map((t) => {
-                const iq = iqamaState(t.iqama_expiry)
-                return (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-medium">
-                      {t.full_name}
-                      {t.nationality && (
-                        <span className="ml-2 text-xs text-muted-foreground">{t.nationality}</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{t.trade ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {t.phone ? (
-                        <span className="flex items-center gap-1"><Phone className="size-3" /> {t.phone}</span>
-                      ) : "—"}
-                    </TableCell>
-                    <TableCell>
-                      {t.iqama_number ? (
-                        <div className="flex flex-col">
-                          <span className="font-mono text-xs">{t.iqama_number}</span>
-                          {t.iqama_expiry && (
-                            <span
-                              className={`flex items-center gap-1 text-[11px] ${
-                                iq === "expired"
-                                  ? "text-red-600 dark:text-red-400"
-                                  : iq === "soon"
-                                    ? "text-amber-600 dark:text-amber-400"
-                                    : "text-muted-foreground"
-                              }`}
-                            >
-                              {(iq === "expired" || iq === "soon") && <AlertTriangle className="size-3" />}
-                              exp {format(new Date(t.iqama_expiry), "d MMM yyyy")}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {t.active ? (
-                        <Badge variant="secondary">Active</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-muted-foreground">Inactive</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {confirmId === t.id ? (
-                        <span className="inline-flex items-center gap-1">
-                          <Button size="sm" variant="destructive" className="h-7" onClick={() => remove(t.id)}>
-                            Delete
-                          </Button>
-                          <Button size="sm" variant="ghost" className="h-7" onClick={() => setConfirmId(null)}>
-                            Cancel
-                          </Button>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-0.5">
-                          <Button size="icon" variant="ghost" className="size-8" onClick={() => openEdit(t)}>
-                            <Pencil className="size-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="size-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => setConfirmId(t.id)}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable
+          tableId="technicians"
+          columns={columns}
+          data={technicians}
+          getRowId={(t) => t.id}
+          noun="technician"
+          pageSize={50}
+          onRowClick={openEdit}
+          toolbar={<Button size="sm" onClick={openNew}><UserPlus className="size-4" /> Add technician</Button>}
+          selection={{ selected, onChange: setSelected }}
+          onBulkDelete={async (rows) => {
+            try {
+              await Promise.all(rows.map((t) => deleteTech.mutateAsync(t.id)))
+              toast.success(`Removed ${rows.length} technician${rows.length > 1 ? "s" : ""}`)
+            } catch (e) {
+              toast.error("Could not remove some technicians", { description: errorMessage(e) })
+            }
+          }}
+          rowActions={(t) => [
+            { label: "Edit", icon: Pencil, onClick: () => openEdit(t) },
+            { label: "Remove", icon: Trash2, onClick: () => void remove(t), destructive: true, separator: true },
+          ]}
+        />
       )}
 
       <TechnicianFormDialog open={formOpen} onOpenChange={setFormOpen} technician={editing} />

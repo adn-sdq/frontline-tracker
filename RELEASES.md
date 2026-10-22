@@ -2,6 +2,33 @@
 
 ---
 
+## v2.23.0 — 2026-10-22
+
+New layout and navigation, a full item page with in-place editing, smarter tables, a real dashboard, pinned projects and redesigned QR labels.
+
+Migration `0031_project_pins.sql` (run in the SQL editor). New dependency: `recharts` (dashboard, lazy-loaded).
+
+### Layout & navigation
+- Floating rounded sidebar (collapses to icons); top bar = toggle + breadcrumb/project switcher, centred search, page actions
+- Logistics / Operations sections; Procurement and Documentation naming
+- Quick actions (hover) at the top of the sidebar replaces All projects and the New button
+- Feedback + Settings above the profile; Settings window (Appearance, Navigation, Connected accounts, Advanced; others placeholders)
+
+### Procurement
+- Full item page (`/item/:id`) with in-place editing; hover card on item names
+- Single multi-select Filter (status, brand, model); Columns, import, export and labels in the ⋯ menu
+
+### Tables
+- Shared DataTable: sorting, show/hide columns, selection + bulk delete, row ⋯ actions
+
+### Home, dashboard, delivery notes
+- Pin up to 5 projects (admin); quick actions; Recharts dashboard; delivery note detail popup
+
+### QR labels
+- Styled QR with logo (error correction H, decode-tested), rounded B/W labels, 15/12 mm print margins, tracking page `/t/:tag`
+
+---
+
 ## v2.22.1 — 2026-10-19
 
 Fixes the Claude connector sign-in link when it arrives with a double slash.

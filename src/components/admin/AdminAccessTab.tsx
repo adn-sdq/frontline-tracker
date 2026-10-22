@@ -94,7 +94,7 @@ export function AdminAccessTab() {
                 return (
                   <TableRow key={p.id} className={suspended ? "opacity-60" : undefined}>
                     <TableCell className={`${STICKY} whitespace-nowrap`}>
-                      <div className="font-medium">{displayName(p)}</div>
+                      <div className="max-w-48 truncate font-medium">{displayName(p)}</div>
                       <div className="text-xs text-muted-foreground">
                         {[p.org ? ORG_LABELS[p.org] : null, p.job_title].filter(Boolean).join(" · ") || "—"}
                       </div>
@@ -151,7 +151,7 @@ export function AdminAccessTab() {
                     const admin = roleFor(p, roles)?.key === "admin"
                     return (
                       <TableRow key={p.id}>
-                        <TableCell className={`${STICKY} font-medium whitespace-nowrap`}>{displayName(p)}</TableCell>
+                        <TableCell className={`${STICKY} font-medium whitespace-nowrap`}><span className="block max-w-48 truncate">{displayName(p)}</span></TableCell>
                         {projects.map((pr) => (
                           <TableCell key={pr.id} className="text-center">
                             <Checkbox

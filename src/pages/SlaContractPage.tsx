@@ -91,7 +91,7 @@ export default function SlaContractPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold">{contract.name}</h1>
+            <h1 className="min-w-0 text-xl font-semibold break-words">{contract.name}</h1>
             <ContractStatusBadge status={contract.status} />
           </div>
           <p className="mt-1 text-sm text-muted-foreground">

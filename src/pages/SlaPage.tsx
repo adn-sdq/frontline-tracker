@@ -2,6 +2,9 @@ import { useMemo, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   AlertTriangle,
+  ExternalLink,
+  Pencil,
+  Trash2,
   CalendarCheck2,
   CalendarClock,
   FileWarning,
@@ -26,20 +29,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { DataTable } from "@/components/ui/data-table"
+import { useConfirm } from "@/components/ui/confirm-dialog"
+import type { ColumnDef } from "@tanstack/react-table"
+import { toast } from "sonner"
+import { useDeleteSlaContract } from "@/hooks/useSla"
 import { ContractStatusBadge, PeriodStateBadge } from "@/components/sla/SlaBadges"
 import { SlaContractDialog } from "@/components/sla/SlaContractDialog"
 import { SlaIssueRow } from "@/components/sla/SlaIssueRow"
 import { useSlaWorkspace } from "@/components/sla/useSlaWorkspace"
 import { contractStats, isUnresolved, periodLabel, periodState, type PeriodState } from "@/lib/sla"
-import { cn } from "@/lib/utils"
+import { cn, errorMessage } from "@/lib/utils"
 import {
   SLA_FREQUENCY_LABELS,
   SLA_ISSUE_STATUSES,
@@ -70,6 +70,10 @@ export default function SlaPage() {
   const [search, setSearch] = useState("")
   const [issueStatus, setIssueStatus] = useState("UNRESOLVED")
   const [severity, setSeverity] = useState("ALL")
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [editContract, setEditContract] = useState<SlaContract | null>(null)
+  const delContract = useDeleteSlaContract()
+  const confirm = useConfirm()
 
   const contracts = useMemo(() => ws.contracts.data ?? [], [ws.contracts.data])
   const issues = useMemo(() => ws.issues.data ?? [], [ws.issues.data])
@@ -118,6 +122,57 @@ export default function SlaPage() {
     if (q && ![i.title, i.description, i.location, ws.contractsById.get(i.contract_id)?.name].some((v) => v?.toLowerCase().includes(q))) return false
     return true
   })
+
+  const contractColumns: ColumnDef<SlaContract, unknown>[] = [
+    {
+      id: "contract",
+      accessorFn: (c) => c.name,
+      header: "Contract",
+      cell: ({ row }) => (
+        <div>
+          <div className="font-medium">{row.original.name}</div>
+          <div className="text-xs text-muted-foreground">
+            {[row.original.client, row.original.site, row.original.contract_ref].filter(Boolean).join(" · ") || "—"}
+          </div>
+        </div>
+      ),
+    },
+    { id: "frequency", accessorFn: (c) => c.frequency_months, header: "Frequency", cell: ({ row }) => <span className="whitespace-nowrap">{SLA_FREQUENCY_LABELS[row.original.frequency_months]}</span> },
+    { id: "status", accessorFn: (c) => c.status, header: "Status", cell: ({ row }) => <ContractStatusBadge status={row.original.status} /> },
+    {
+      id: "period",
+      header: "This period",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const st = stats.get(row.original.id)!
+        return st.currentState ? <PeriodStateBadge state={st.overdue.length ? "overdue" : st.currentState} /> : <span className="text-xs text-muted-foreground">Not started</span>
+      },
+    },
+    {
+      id: "last_visit",
+      accessorFn: (c) => stats.get(c.id)?.lastVisit?.period ?? "",
+      header: "Last visit",
+      cell: ({ row }) => {
+        const st = stats.get(row.original.id)!
+        return <span className="whitespace-nowrap text-muted-foreground">{st.lastVisit ? periodLabel(st.lastVisit.period) : "—"}</span>
+      },
+    },
+    {
+      id: "compliance",
+      accessorFn: (c) => stats.get(c.id)?.compliance ?? -1,
+      header: "Compliance",
+      cell: ({ row }) => {
+        const v = stats.get(row.original.id)!.compliance
+        return <span className={cn("tabular-nums", v !== null && v < 80 && "text-destructive")}>{v === null ? "—" : `${v}%`}</span>
+      },
+    },
+    {
+      id: "open_issues",
+      accessorFn: (c) => stats.get(c.id)?.openIssues ?? 0,
+      header: "Open issues",
+      cell: ({ row }) => <span className="tabular-nums">{stats.get(row.original.id)!.openIssues || "—"}</span>,
+    },
+  ]
 
   const setTab = (t: string) => setParams((p) => { p.set("tab", t); return p }, { replace: true })
 
@@ -227,48 +282,51 @@ export default function SlaPage() {
 
             {/* ── Contracts ──────────────────────────────────────────── */}
             <TabsContent value="contracts" className="mt-4">
-              <div className="overflow-x-auto rounded-lg border">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/40 hover:bg-muted/40">
-                      <TableHead>Contract</TableHead>
-                      <TableHead>Frequency</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>This period</TableHead>
-                      <TableHead>Last visit</TableHead>
-                      <TableHead className="text-right">Compliance</TableHead>
-                      <TableHead className="text-right">Open issues</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredContracts.map((c) => {
-                      const s = stats.get(c.id)!
-                      return (
-                        <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/sla/${c.id}`)}>
-                          <TableCell>
-                            <div className="font-medium">{c.name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {[c.client, c.site, c.contract_ref].filter(Boolean).join(" · ") || "—"}
-                            </div>
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">{SLA_FREQUENCY_LABELS[c.frequency_months]}</TableCell>
-                          <TableCell><ContractStatusBadge status={c.status} /></TableCell>
-                          <TableCell>
-                            {s.currentState ? <PeriodStateBadge state={s.overdue.length ? "overdue" : s.currentState} /> : <span className="text-xs text-muted-foreground">Not started</span>}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap text-muted-foreground">
-                            {s.lastVisit ? periodLabel(s.lastVisit.period) : "—"}
-                          </TableCell>
-                          <TableCell className={cn("text-right tabular-nums", s.compliance !== null && s.compliance < 80 && "text-destructive")}>
-                            {s.compliance === null ? "—" : `${s.compliance}%`}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">{s.openIssues || "—"}</TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+              <DataTable
+                tableId="sla-contracts"
+                columns={contractColumns}
+                data={filteredContracts}
+                getRowId={(c) => c.id}
+                noun="contract"
+                pageSize={50}
+                emptyMessage="No contracts match."
+                onRowClick={(c) => navigate(`/sla/${c.id}`)}
+                selection={ws.canManage ? { selected, onChange: setSelected } : undefined}
+                onBulkDelete={ws.canManage ? async (rows) => {
+                  try {
+                    await Promise.all(rows.map((c) => delContract.mutateAsync(c.id)))
+                    toast.success(`Deleted ${rows.length} contract${rows.length > 1 ? "s" : ""}`)
+                  } catch (e) {
+                    toast.error("Could not delete some contracts", { description: errorMessage(e) })
+                  }
+                } : undefined}
+                rowActions={(c) => [
+                  { label: "Open", icon: ExternalLink, onClick: () => navigate(`/sla/${c.id}`) },
+                  { label: "Edit", icon: Pencil, onClick: () => setEditContract(c), hidden: !ws.canManage },
+                  {
+                    label: "Delete",
+                    icon: Trash2,
+                    destructive: true,
+                    separator: true,
+                    hidden: !ws.canManage,
+                    onClick: async () => {
+                      const ok = await confirm({
+                        title: `Delete ${c.name}?`,
+                        description: "Its visits, reports and issues are deleted too. This can't be undone.",
+                        confirmText: "Delete",
+                        destructive: true,
+                      })
+                      if (!ok) return
+                      try {
+                        await delContract.mutateAsync(c.id)
+                        toast.success("Contract deleted")
+                      } catch (e) {
+                        toast.error("Could not delete", { description: errorMessage(e) })
+                      }
+                    },
+                  },
+                ]}
+              />
             </TabsContent>
 
             {/* ── Issues ─────────────────────────────────────────────── */}
@@ -308,6 +366,7 @@ export default function SlaPage() {
         )}
       </Tabs>
 
+      <SlaContractDialog open={!!editContract} onOpenChange={(o) => !o && setEditContract(null)} contract={editContract} />
       <SlaContractDialog
         open={createOpen}
         onOpenChange={setCreateOpen}

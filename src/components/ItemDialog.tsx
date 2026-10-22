@@ -65,7 +65,7 @@ function fmtSize(bytes: number | null) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
-function ItemAttachments({ itemId }: { itemId: string }) {
+export function ItemAttachments({ itemId }: { itemId: string }) {
   useItemFilesRealtime(itemId)
   const files = useItemFiles(itemId)
   const uploadFile = useUploadItemFile()
@@ -262,17 +262,8 @@ function fromItem(i: Item): FormState {
   }
 }
 
-export function ItemDialog({
-  open,
-  onOpenChange,
-  item,
-  defaultSystem,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  item: Item | null
-  defaultSystem?: System
-}) {
+/** The item form: state, fields and save. Shared by the Add dialog and the item page. */
+export function useItemForm(item: Item | null, defaultSystem?: System) {
   const { user } = useAuth()
   const { currentProject, currentProjectId } = useProject()
   const { activeSystems } = useSystems(currentProjectId)
@@ -281,23 +272,14 @@ export function ItemDialog({
   const [form, setForm] = useState<FormState>(blank(defaultSystem))
   const editing = !!item
 
-  // Only seed the form when the dialog transitions from closed → open.
-  // Excluding item/defaultSystem/currentProject from triggering a reset
-  // prevents realtime subscription refreshes from wiping a half-filled form.
-  const prevOpenRef = useRef(false)
-  useEffect(() => {
-    const justOpened = open && !prevOpenRef.current
-    prevOpenRef.current = open
-    if (!justOpened) return
-    if (item) {
-      setForm(fromItem(item))
-    } else {
+  function reset() {
+    if (item) setForm(fromItem(item))
+    else {
       const base = blank(defaultSystem)
       base.location = currentProject?.site_location ?? ""
       setForm(base)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, item])
+  }
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -340,23 +322,24 @@ export function ItemDialog({
         await create.mutateAsync({ ...payload, created_by: user?.id })
         toast.success("Item added")
       }
-      onOpenChange(false)
+      return true
     } catch (e) {
       if (e instanceof ConflictError) {
         toast.warning("Someone else changed this item", {
-          description: "Close and reopen to load the latest values.",
+          description: "Reload to get the latest values, then make your change again.",
         })
       } else {
         toast.error("Could not save", {
           description: errorMessage(e),
         })
       }
+      return false
     }
   }
 
   const busy = create.isPending || update.isPending
 
-  const detailsForm = (
+  const fields = (
     <>
       <div className="grid gap-3 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[auto_1fr] sm:items-center sm:gap-4">
         <div>
@@ -461,6 +444,54 @@ export function ItemDialog({
     </>
   )
 
+  return { form, fields, submit, busy, reset, editing }
+}
+
+/** Inline editor for the item page — the same form, no popup. */
+export function ItemEditPanel({ item, onDone }: { item: Item; onDone: () => void }) {
+  const f = useItemForm(item)
+  // Seed once per item; realtime refreshes must not wipe edits in progress.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => f.reset(), [item.id])
+  return (
+    <div className="flex flex-col gap-4 rounded-xl border bg-card p-5">
+      {f.fields}
+      <div className="flex justify-end gap-2 border-t pt-4">
+        <Button variant="outline" onClick={onDone} disabled={f.busy}>Cancel</Button>
+        <Button onClick={async () => { if (await f.submit()) onDone() }} disabled={f.busy}>
+          {f.busy && <Loader2 className="size-4 animate-spin" />} Save changes
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+export function ItemDialog({
+  open,
+  onOpenChange,
+  item,
+  defaultSystem,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  item: Item | null
+  defaultSystem?: System
+}) {
+  const f = useItemForm(item, defaultSystem)
+  const { form, fields: detailsForm, busy, editing } = f
+  // Only seed when the dialog opens, so realtime refreshes don't wipe a half-filled form.
+  const prevOpenRef = useRef(false)
+  useEffect(() => {
+    const justOpened = open && !prevOpenRef.current
+    prevOpenRef.current = open
+    if (justOpened) f.reset()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, item])
+
+  async function submit() {
+    if (await f.submit()) onOpenChange(false)
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90svh] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
@@ -515,7 +546,7 @@ export function ItemDialog({
 // ---------------------------------------------------------------------------
 // Serial Numbers Section
 
-function SerialsSection({ itemId, qty }: { itemId: string; qty: number }) {
+export function SerialsSection({ itemId, qty }: { itemId: string; qty: number }) {
   const { data: serials = [] } = useItemSerials(itemId)
   const upsert = useUpsertSerial()
   const filled = serials.filter((s) => s.serial_number).length

@@ -1,4 +1,4 @@
-import QRCode from "qrcode"
+import { styledQrSvg } from "@/lib/qrStyled"
 
 /**
  * Tags identify what a QR label points at.
@@ -6,9 +6,9 @@ import QRCode from "qrcode"
  *   unit tag = SKU + 2-digit unit number "MP-0042-03"   (devices, one label per unit)
  * They are derived, so a label can be printed before a serial number is known.
  *
- * The QR holds only "FIT:<tag>" — not a link — so a phone's camera shows a bare
- * code and nothing more. Details open only through the in-app scanner, for
- * signed-in members of the item's project.
+ * The QR holds a FIT link (…/#/t/<tag>). Opening it requires signing in, and
+ * row-level security only shows the unit to members of its project — anyone
+ * else just sees a sign-in page or "not found".
  */
 const PREFIX = "FIT:"
 
@@ -22,18 +22,19 @@ export function parseTag(raw: string): { sku: string; unit: number | null } {
   return m ? { sku: m[1], unit: Number(m[2]) } : { sku: tag, unit: null }
 }
 
+/** What the QR encodes: the tracking link for this tag. */
 export function qrPayload(tag: string): string {
-  return PREFIX + tag
+  return `${window.location.origin}${window.location.pathname}#/t/${encodeURIComponent(tag)}`
 }
 
 /** Accepts a scanned payload, a typed tag/SKU, or a serial number; returns the bare text. */
 export function extractTag(scanned: string): string {
   const s = scanned.trim()
   if (s.toUpperCase().startsWith(PREFIX)) return s.slice(PREFIX.length).trim()
-  const legacy = /#\/u\/([^?#\s]+)/.exec(s)
+  const legacy = /#\/[tu]\/([^?#\s]+)/.exec(s)
   return legacy ? decodeURIComponent(legacy[1]) : s
 }
 
 export function qrSvg(text: string): Promise<string> {
-  return QRCode.toString(text, { type: "svg", margin: 0, errorCorrectionLevel: "M" })
+  return Promise.resolve(styledQrSvg(text))
 }
